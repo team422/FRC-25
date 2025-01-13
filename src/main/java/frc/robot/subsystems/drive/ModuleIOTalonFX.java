@@ -13,8 +13,6 @@
 
 package frc.robot.subsystems.drive;
 
-import java.util.Queue;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -25,7 +23,6 @@ import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
@@ -34,6 +31,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
+import java.util.Queue;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -118,8 +116,7 @@ public class ModuleIOTalonFX implements ModuleIO {
 
     m_drivePosition = m_driveTalon.getPosition();
     m_drivePositionQueue =
-        PhoenixOdometryThread.getInstance()
-            .registerSignal(m_driveTalon.getPosition());
+        PhoenixOdometryThread.getInstance().registerSignal(m_driveTalon.getPosition());
     m_driveVelocity = m_driveTalon.getVelocity();
     m_driveAppliedVolts = m_driveTalon.getMotorVoltage();
     m_driveCurrent = m_driveTalon.getSupplyCurrent();

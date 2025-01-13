@@ -1,14 +1,12 @@
 package frc.robot;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.SubsystemProfiles;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("unused")
 public class RobotState {
@@ -16,7 +14,6 @@ public class RobotState {
   // Subsystems
   private Drive m_drive;
   private AprilTagVision m_aprilTagVision;
-
 
   public enum RobotAction {
     kTeleopDefault,
@@ -65,13 +62,9 @@ public class RobotState {
     }
   }
 
-  public void onEnable() {
+  public void onEnable() {}
 
-  }
-
-  public void onDisable() {
-
-  }
+  public void onDisable() {}
 
   public void addVisionObservation(VisionObservation observation) {
     m_drive.addVisionObservation(observation);

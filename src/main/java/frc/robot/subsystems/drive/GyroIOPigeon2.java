@@ -56,12 +56,9 @@ public class GyroIOPigeon2 implements GyroIO {
     m_pigeon.optimizeBusUtilization();
 
     m_timestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
-    m_yawPositionQueue =
-        PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getYaw());
-    m_pitchPositionQueue =
-        PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getPitch());
-    m_rollPositionQueue =
-        PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getRoll());
+    m_yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getYaw());
+    m_pitchPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getPitch());
+    m_rollPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getRoll());
   }
 
   @Override

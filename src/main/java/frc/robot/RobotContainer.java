@@ -11,7 +11,6 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -44,35 +43,35 @@ public class RobotContainer {
   private void configureSubsystems() {
     switch (Constants.kCurrentMode) {
       case REAL:
-        m_drive = new Drive(
-          new GyroIOPigeon2(),
-          new ModuleIOTalonFX(0),
-          new ModuleIOTalonFX(1),
-          new ModuleIOTalonFX(2),
-          new ModuleIOTalonFX(3)
-        );
-        
+        m_drive =
+            new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOTalonFX(0),
+                new ModuleIOTalonFX(1),
+                new ModuleIOTalonFX(2),
+                new ModuleIOTalonFX(3));
+
         break;
 
       case SIM:
-        m_drive = new Drive(
-          new GyroIOPigeon2(),
-          new ModuleIOSim(),
-          new ModuleIOSim(),
-          new ModuleIOSim(),
-          new ModuleIOSim()
-        );
-        
+        m_drive =
+            new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim());
+
         break;
 
       case REPLAY:
-        m_drive = new Drive(
-          new GyroIOPigeon2(),
-          new ModuleIOReplay(),
-          new ModuleIOReplay(),
-          new ModuleIOReplay(),
-          new ModuleIOReplay()
-        );
+        m_drive =
+            new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOReplay(),
+                new ModuleIOReplay(),
+                new ModuleIOReplay(),
+                new ModuleIOReplay());
 
         break;
     }
@@ -90,8 +89,11 @@ public class RobotContainer {
   /** Configure the commands. */
   private void configureCommands() {
     m_drive.setDefaultCommand(
-      DriveCommands.joystickDrive(m_drive, m_driverControls::getForward, m_driverControls::getStrafe, m_driverControls::getTurn)
-    );
+        DriveCommands.joystickDrive(
+            m_drive,
+            m_driverControls::getForward,
+            m_driverControls::getStrafe,
+            m_driverControls::getTurn));
   }
 
   /** Configure the controllers. */
@@ -101,8 +103,7 @@ public class RobotContainer {
   }
 
   /** Configure the button bindings. */
-  private void configureButtonBindings() {
-  }
+  private void configureButtonBindings() {}
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

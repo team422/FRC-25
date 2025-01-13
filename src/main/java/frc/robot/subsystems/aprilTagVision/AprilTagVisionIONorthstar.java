@@ -9,7 +9,6 @@ package frc.robot.subsystems.aprilTagVision;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import edu.wpi.first.networktables.DoubleArraySubscriber;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -37,7 +36,10 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
     configTable.getIntegerTopic("camera_auto_exposure").publish().set(cameraAutoExposure);
     configTable.getIntegerTopic("camera_exposure").publish().set(cameraExposure);
     configTable.getIntegerTopic("camera_gain").publish().set(cameraGain);
-    configTable.getDoubleTopic("fiducial_size_m").publish().set(AprilTagVisionConstants.kAprilTagWidth);
+    configTable
+        .getDoubleTopic("fiducial_size_m")
+        .publish()
+        .set(AprilTagVisionConstants.kAprilTagWidth);
     try {
       configTable
           .getStringTopic("tag_layout")

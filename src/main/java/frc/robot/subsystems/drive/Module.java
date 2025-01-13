@@ -111,7 +111,7 @@ public class Module {
   public SwerveModuleState runSetpoint(SwerveModuleState state) {
     // Optimize state based on current angle
     // Controllers run in "periodic" when the setpoint is not null
-    
+
     var optimizedState = new SwerveModuleState(state.speedMetersPerSecond, state.angle);
     optimizedState.optimize(getAngle());
 

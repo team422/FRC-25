@@ -99,7 +99,8 @@ public final class Constants {
 
   public static final class AprilTagVisionConstants {
     // uhhh guys i think wpilib forgot to add the april tag layout
-    public static final AprilTagFieldLayout kAprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    public static final AprilTagFieldLayout kAprilTagLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
     public static final double kAprilTagWidth = Units.inchesToMeters(6.5);
 
     public static final double kAmbiguityThreshold = 0.4;

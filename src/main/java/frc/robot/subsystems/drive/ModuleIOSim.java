@@ -33,9 +33,11 @@ public class ModuleIOSim implements ModuleIO {
   private DCMotor m_driveMotor = DCMotor.getKrakenX60(1);
   private DCMotor m_turnMotor = DCMotor.getKrakenX60(1);
 
-  private DCMotorSim m_driveSim = new DCMotorSim(
-    LinearSystemId.createDCMotorSystem(m_driveMotor, 6.75, 0.025), m_driveMotor);
-  private DCMotorSim m_turnSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(m_turnMotor, 150.0 / 7.0, 0.004), m_turnMotor);
+  private DCMotorSim m_driveSim =
+      new DCMotorSim(LinearSystemId.createDCMotorSystem(m_driveMotor, 6.75, 0.025), m_driveMotor);
+  private DCMotorSim m_turnSim =
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(m_turnMotor, 150.0 / 7.0, 0.004), m_turnMotor);
 
   private final Rotation2d m_turnAbsoluteInitPosition =
       new Rotation2d(Math.random() * 2.0 * Math.PI);
