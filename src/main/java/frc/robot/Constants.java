@@ -42,10 +42,10 @@ public final class Constants {
   }
 
   public static final class DriveConstants {
-    public static final double kMaxLinearSpeed = 3.0; // meters per second
-    public static final double kMaxLinearAcceleration = 2.5; // meters per second squared
-    public static final double kTrackWidthX = Units.inchesToMeters(15.25);
-    public static final double kTrackWidthY = Units.inchesToMeters(16.25);
+    public static final double kMaxLinearSpeed = 6.0; // meters per second
+    public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
+    public static final double kTrackWidthX = Units.inchesToMeters(28.0);
+    public static final double kTrackWidthY = Units.inchesToMeters(28.0);
     public static final double kDriveBaseRadius =
         Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
     public static final double kMaxAngularSpeed = kMaxLinearSpeed / kDriveBaseRadius;
@@ -67,9 +67,14 @@ public final class Constants {
     public static final double kWheelRadius = Units.inchesToMeters(2.0);
     public static final double kOdometryFrequency = 250.0;
 
-    public static final double kDriveGearRatio =
-        (50.0 / 14.0) * (16.0 / 28.0) * (45.0 / 15.0); // L3 ratio
+    public static final double kDriveGearRatio = 7.13; // L1+ gear ratio
     public static final double kTurnGearRatio = 150.0 / 7.0;
+
+    // Simulation constants
+    public static final double kDriveSimGearRatio = kDriveGearRatio;
+    public static final double kDriveSimMOI = 0.025;
+    public static final double kTurnSimGearRatio = kTurnGearRatio;
+    public static final double kTurnSimMOI = 0.004;
 
     public static final LoggedTunableNumber kHeadingP =
         new LoggedTunableNumber("Drive Heading P", 4.0);
@@ -79,7 +84,7 @@ public final class Constants {
         new LoggedTunableNumber("Drive Heading D", 0.05);
 
     // on real everything in drive is backwards for some reason
-    public static final boolean kRealReversed = true;
+    public static final boolean kRealReversed = false;
     public static final boolean kSimReversed = false;
 
     public static final LoggedTunableNumber kDriveToPointP =

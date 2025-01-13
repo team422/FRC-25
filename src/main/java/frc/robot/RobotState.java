@@ -33,6 +33,8 @@ public class RobotState {
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
     periodicHash.put(RobotAction.kAutoDefault, () -> {});
+
+    m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
 
   public static RobotState getInstance() {
@@ -62,7 +64,9 @@ public class RobotState {
     }
   }
 
-  public void onEnable() {}
+  public void onEnable() {
+    setDefaultAction();
+  }
 
   public void onDisable() {}
 
