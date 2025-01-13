@@ -171,7 +171,7 @@ public class Drive extends SubsystemBase {
       SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
       SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = m_modules[moduleIndex].getM_odometryPositions()[i];
+        modulePositions[moduleIndex] = m_modules[moduleIndex].getOdometryPositions()[i];
         moduleDeltas[moduleIndex] =
             new SwerveModulePosition(
                 modulePositions[moduleIndex].distanceMeters
@@ -215,7 +215,7 @@ public class Drive extends SubsystemBase {
 
   public void ampLineupPeriodic() {
     m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
-    if (Math.abs(m_headingController.getPositionError()) < Units.degreesToRadians(5)) {
+    if (Math.abs(m_headingController.getError()) < Units.degreesToRadians(5)) {
       m_withinToleranceFrames++;
       if (m_withinToleranceFrames > 10) {
         // if we reach the setpoint switch back to default
@@ -393,6 +393,6 @@ public class Drive extends SubsystemBase {
   }
 
   public boolean headingWithinTolerance() {
-    return Math.abs(m_headingController.getPositionError()) < Units.degreesToRadians(5);
+    return Math.abs(m_headingController.getError()) < Units.degreesToRadians(5);
   }
 }
