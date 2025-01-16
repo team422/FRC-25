@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.lib.utils.LoggedTunableNumber;
@@ -168,6 +169,23 @@ public final class Constants {
         new LoggedTunableNumber("cameraYaw", kCameraTransforms[kCalibIndex].getRotation().getZ());
   }
 
+  public static final class FlywheelConstants {
+    public static final LoggedTunableNumber kFlywheelP = new LoggedTunableNumber("Flywheel P", 0.0);
+    public static final LoggedTunableNumber kFlywheelI = new LoggedTunableNumber("Flywheel I", 0.0);
+    public static final LoggedTunableNumber kFlywheelD = new LoggedTunableNumber("Flywheel D", 0.0);
+    public static final LoggedTunableNumber kFlywheelKS =
+        new LoggedTunableNumber("Flywheel kS", 0.0);
+    public static final LoggedTunableNumber kFlywheelKV =
+        new LoggedTunableNumber("Flywheel kV", 0.0);
+
+    public static final double kVelocityTolerance = 0.5; // rotations per second
+
+    // Simulation constants
+    public static final double kSimGearing = 1.0;
+    public static final double kSimMOI = 0.001;
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(1);
+  }
+
   public static final class Ports {
     public static final int kFrontLeftDrive = 0;
     public static final int kFrontLeftTurn = 1;
@@ -188,6 +206,8 @@ public final class Constants {
     public static final int kPigeon = 22;
 
     public static final String kCanivoreName = "Drivetrain";
+
+    public static final int kFlywheelMotor = 17;
   }
 
   public class FieldConstants {

@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -14,6 +15,11 @@ import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.flywheel.Flywheel;
+import frc.robot.subsystems.flywheel.Flywheel.FlywheelState;
+import frc.robot.subsystems.flywheel.FlywheelIOKraken;
+import frc.robot.subsystems.flywheel.FlywheelIOReplay;
+import frc.robot.subsystems.flywheel.FlywheelIOSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -26,6 +32,7 @@ public class RobotContainer {
 
   // Subsystems
   private Drive m_drive;
+  private Flywheel m_flywheel;
   private AprilTagVision m_aprilTagVision;
 
   // Controller
@@ -54,6 +61,8 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
+        m_flywheel = new Flywheel(new FlywheelIOKraken(Ports.kFlywheelMotor));
+
         break;
 
       case SIM:
@@ -64,6 +73,8 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+
+        m_flywheel = new Flywheel(new FlywheelIOSim());
 
         break;
 
@@ -76,6 +87,8 @@ public class RobotContainer {
                 new ModuleIOReplay(),
                 new ModuleIOReplay());
 
+        m_flywheel = new Flywheel(new FlywheelIOReplay());
+
         break;
     }
 
@@ -86,7 +99,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_aprilTagVision);
+    RobotState.startInstance(m_drive, m_flywheel, m_aprilTagVision);
   }
 
   /** Configure the commands. */
@@ -115,6 +128,40 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
+
+    m_driverControls
+        .flywheelIdle()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_flywheel.updateState(FlywheelState.kIdle);
+                }));
+
+    m_driverControls
+        .flywheelSetpoint1()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_flywheel.updateState(FlywheelState.kRevving);
+                  m_flywheel.setDesiredVelocity(40.0);
+                }));
+
+    m_driverControls
+        .flywheelSetpoint2()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_flywheel.updateState(FlywheelState.kRevving);
+                  m_flywheel.setDesiredVelocity(70.0);
+                }));
+
+    m_driverControls
+        .flywheelEject()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_flywheel.updateState(FlywheelState.kEjecting);
+                }));
   }
 
   /**
