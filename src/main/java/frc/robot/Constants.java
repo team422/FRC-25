@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.utils.LoggedTunableNumber;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,6 +96,15 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Heading I", 0.0);
     public static final LoggedTunableNumber kDriveToPointHeadingD =
         new LoggedTunableNumber("DriveToPoint Heading D", 0.0);
+  }
+
+  public static final class LedConstants {
+    public static final Color kOff = Color.kRed;
+    public static final Color kAutoscore = Color.kGreen;
+    public static final Color kHasGampiece = Color.kDarkMagenta;
+    public static final Color kEnabled = Color.kYellow;
+    public static final Color kDisabled = Color.kRed;
+    public static final Color kAlert = Color.kGold;
   }
 
   public static final class AprilTagVisionConstants {
