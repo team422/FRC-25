@@ -11,8 +11,10 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.lib.utils.LoggedTunableNumber;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -100,6 +102,34 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Heading I", 0.0);
     public static final LoggedTunableNumber kDriveToPointHeadingD =
         new LoggedTunableNumber("DriveToPoint Heading D", 0.0);
+  }
+
+  public static final class ClimbConstants {
+
+    public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 3.0);
+    public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.005);
+    public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.01);
+    public static final LoggedTunableNumber kClimbKS = new LoggedTunableNumber("Climb kS", 0.0);
+    public static final LoggedTunableNumber kClimbKV = new LoggedTunableNumber("Climb kV", 0.0);
+    public static final Rotation2d kClimbTolerance = Rotation2d.fromDegrees(1);
+
+    public static final LoggedTunableNumber kClimbStowPosRad =
+        new LoggedTunableNumber("Climb Stow Rad", 0.0);
+    public static final LoggedTunableNumber kClimbDeployPosRad =
+        new LoggedTunableNumber("Climb Deploy Rad", Units.degreesToRadians(90));
+
+    // sim constants
+    public static final double kSimGearing = 1.0;
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(1);
+    public static final double kSimClimbArmLengthMeters = 0.25;
+    public static final double kSimMOI =
+        SingleJointedArmSim.estimateMOI(kSimClimbArmLengthMeters, 5.5);
+    public static final double kSimMinAngleRad =
+        Units.degreesToRadians(
+            -30); // vertical is 0deg, pos deg is towards outside of robot in position to grab cage
+    public static final double kSimMaxAngleRad = Units.degreesToRadians(135);
+    public static final double kSimStartingAngleRad = Units.degreesToRadians(0);
+    public static final boolean kSimGravity = false;
   }
 
   public static final class AprilTagVisionConstants {
