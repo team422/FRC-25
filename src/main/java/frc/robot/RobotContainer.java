@@ -8,6 +8,11 @@ import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
+import frc.robot.subsystems.climb.Climb;
+import frc.robot.subsystems.climb.Climb.ClimbState;
+import frc.robot.subsystems.climb.ClimbIOKraken;
+import frc.robot.subsystems.climb.ClimbIOReplay;
+import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
@@ -27,6 +32,7 @@ public class RobotContainer {
   // Subsystems
   private Drive m_drive;
   private AprilTagVision m_aprilTagVision;
+  private Climb m_climb;
 
   // Controller
   private DriverControls m_driverControls;
@@ -54,6 +60,8 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
+        m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
+
         break;
 
       case SIM:
@@ -64,6 +72,7 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+        m_climb = new Climb(new ClimbIOSim());
 
         break;
 
@@ -76,6 +85,8 @@ public class RobotContainer {
                 new ModuleIOReplay(),
                 new ModuleIOReplay());
 
+        m_climb = new Climb(new ClimbIOReplay());
+
         break;
     }
 
@@ -86,7 +97,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_aprilTagVision);
+    RobotState.startInstance(m_drive, m_aprilTagVision, m_climb);
   }
 
   /** Configure the commands. */
@@ -115,6 +126,20 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
+    m_driverControls
+        .getClimbStow()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_climb.updateState(ClimbState.kStow);
+                }));
+    m_driverControls
+        .getClimbDeploy()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_climb.updateState(ClimbState.kDeploy);
+                }));
   }
 
   /**

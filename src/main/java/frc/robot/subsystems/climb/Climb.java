@@ -26,9 +26,7 @@ public class Climb extends SubsystemBase {
     m_inputs = new ClimbInputsAutoLogged();
 
     m_io.setPID(
-        ClimbConstants.kClimbP.get(),
-        ClimbConstants.kClimbI.get(),
-        ClimbConstants.kClimbD.get());
+        ClimbConstants.kClimbP.get(), ClimbConstants.kClimbI.get(), ClimbConstants.kClimbD.get());
 
     // Create a map of periodic functions for each state, then make a SubsystemProfiles object
     Map<ClimbState, Runnable> periodicHash = new HashMap<>();
@@ -41,7 +39,7 @@ public class Climb extends SubsystemBase {
   @Override
   public void periodic() {
 
-    //update PIDFF Constants if any have changed
+    // update PIDFF Constants if any have changed
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
@@ -54,11 +52,11 @@ public class Climb extends SubsystemBase {
         ClimbConstants.kClimbI,
         ClimbConstants.kClimbD);
 
-    //update inputs and run periodic function for current state
+    // update inputs and run periodic function for current state
     m_io.updateInputs(m_inputs);
     m_profiles.getPeriodicFunction().run();
 
-    //log inputs and profile
+    // log inputs and profile
     Logger.processInputs("Climb", m_inputs);
     Logger.recordOutput("Climb/State", m_profiles.getCurrentProfile());
   }

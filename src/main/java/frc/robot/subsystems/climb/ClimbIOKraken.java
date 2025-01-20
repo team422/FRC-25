@@ -4,7 +4,6 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.ClimbConstants;
@@ -32,7 +31,9 @@ public class ClimbIOKraken implements ClimbIO {
   public void updateInputs(ClimbInputs inputs) {
     inputs.currPositionRad = Units.rotationsToRadians(m_motor.getPosition().getValueAsDouble());
     inputs.desiredPositionRad = m_desiredAngle.getRadians();
-    inputs.atSetpoint = Math.abs(m_desiredAngle.getRadians() - inputs.currPositionRad) < ClimbConstants.kClimbTolerance.getRadians();
+    inputs.atSetpoint =
+        Math.abs(m_desiredAngle.getRadians() - inputs.currPositionRad)
+            < ClimbConstants.kClimbTolerance.getRadians();
     inputs.voltage = m_motor.getMotorVoltage().getValueAsDouble();
     inputs.current = m_motor.getSupplyCurrent().getValueAsDouble();
   }
@@ -49,6 +50,7 @@ public class ClimbIOKraken implements ClimbIO {
   @Override
   public void setDesiredAngle(Rotation2d angle) {
     m_desiredAngle = angle;
-    m_motor.setControl(m_positionVoltage.withPosition(Units.radiansToRotations(angle.getRadians())));
+    m_motor.setControl(
+        m_positionVoltage.withPosition(Units.radiansToRotations(angle.getRadians())));
   }
 }

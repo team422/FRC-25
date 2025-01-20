@@ -106,10 +106,10 @@ public final class Constants {
 
   public static final class ClimbConstants {
 
-    public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 3.0);
-    public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.005);
-    public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.01);
-    public static final Rotation2d kClimbTolerance = Rotation2d.fromDegrees(1);
+    public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 3);
+    public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.05);
+    public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.4);
+    public static final Rotation2d kClimbTolerance = Rotation2d.fromDegrees(0.5);
 
     public static final LoggedTunableNumber kClimbStowPosRad =
         new LoggedTunableNumber("Climb Stow Rad", 0.0);
@@ -216,6 +216,8 @@ public final class Constants {
     public static final int kPigeon = 22;
 
     public static final String kCanivoreName = "Drivetrain";
+
+    public static final int kClimbMotor = 12;
   }
 
   public class FieldConstants {

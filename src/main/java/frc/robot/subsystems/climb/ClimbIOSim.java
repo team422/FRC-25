@@ -1,7 +1,6 @@
 package frc.robot.subsystems.climb;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants.ClimbConstants;
@@ -29,11 +28,11 @@ public class ClimbIOSim implements ClimbIO {
   public void updateInputs(ClimbInputs inputs) {
     double m_voltage = m_controller.calculate(m_sim.getAngleRads());
 
-    //run sim for a dt
+    // run sim for a dt
     m_sim.setInputVoltage(m_voltage);
     m_sim.update(0.02);
 
-    //update inputs
+    // update inputs
     inputs.atSetpoint = m_controller.atSetpoint();
     inputs.currPositionRad = m_sim.getAngleRads();
     inputs.desiredPositionRad = m_controller.getSetpoint();

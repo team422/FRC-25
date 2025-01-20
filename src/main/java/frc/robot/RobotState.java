@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ public class RobotState {
   // Subsystems
   private Drive m_drive;
   private AprilTagVision m_aprilTagVision;
+  private Climb m_climb;
 
   public enum RobotAction {
     kTeleopDefault,
@@ -26,9 +28,10 @@ public class RobotState {
   // Singleton logic
   private static RobotState m_instance;
 
-  private RobotState(Drive drive, AprilTagVision aprilTagVision) {
+  private RobotState(Drive drive, AprilTagVision aprilTagVision, Climb climb) {
     m_drive = drive;
     m_aprilTagVision = aprilTagVision;
+    m_climb = climb;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
@@ -41,9 +44,9 @@ public class RobotState {
     return m_instance;
   }
 
-  public static RobotState startInstance(Drive drive, AprilTagVision aprilTagVision) {
+  public static RobotState startInstance(Drive drive, AprilTagVision aprilTagVision, Climb climb) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, aprilTagVision);
+      m_instance = new RobotState(drive, aprilTagVision, climb);
     }
     return m_instance;
   }
