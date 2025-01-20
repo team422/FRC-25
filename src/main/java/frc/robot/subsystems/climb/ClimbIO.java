@@ -18,4 +18,6 @@ public interface ClimbIO {
   public void setPID(double kP, double kI, double kD);
 
   public void setDesiredAngle(Rotation2d angle);
+
+  public void zeroEncoder();
 }

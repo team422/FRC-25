@@ -76,4 +76,8 @@ public class Climb extends SubsystemBase {
   public void deployPeriodic() {
     m_io.setDesiredAngle(Rotation2d.fromRadians(ClimbConstants.kClimbDeployPosRad.get()));
   }
+
+  public void zeroEncoder() {
+    m_io.zeroEncoder();
+  }
 }

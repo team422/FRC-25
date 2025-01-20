@@ -12,4 +12,7 @@ public class ClimbIOReplay implements ClimbIO {
 
   @Override
   public void setDesiredAngle(Rotation2d angle) {}
+
+  @Override
+  public void zeroEncoder() {}
 }

@@ -49,4 +49,9 @@ public class ClimbIOSim implements ClimbIO {
   public void setDesiredAngle(Rotation2d angle) {
     m_controller.setSetpoint(angle.getRadians());
   }
+
+  @Override
+  public void zeroEncoder() {
+    m_sim.setState(0, 0);
+  }
 }

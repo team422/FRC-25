@@ -68,6 +68,7 @@ public class RobotState {
   }
 
   public void onEnable() {
+    m_climb.zeroEncoder();
     setDefaultAction();
   }
 
