@@ -10,10 +10,6 @@ public class ClimbIOSim implements ClimbIO {
 
   private SingleJointedArmSim m_sim; // We choose to simulate the climb arm as a single-jointed arm
   private PIDController m_controller = new PIDController(0, 0, 0);
-  private SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(0, 0, 0);
-
-  private boolean m_positionControl = true;
-  private double m_voltage = 0;
 
   public ClimbIOSim() {
     m_sim =
@@ -31,12 +27,7 @@ public class ClimbIOSim implements ClimbIO {
 
   @Override
   public void updateInputs(ClimbInputs inputs) {
-    //use voltage calc'ed from controller, else use set voltage
-    if (m_positionControl) {
-      double pidVoltage = m_controller.calculate(m_sim.getAngleRads());
-      double feedforwardVoltage = m_feedforward.calculate(m_controller.getSetpoint());
-      m_voltage = pidVoltage + feedforwardVoltage;
-    }
+    double m_voltage = m_controller.calculate(m_sim.getAngleRads());
 
     //run sim for a dt
     m_sim.setInputVoltage(m_voltage);
@@ -46,27 +37,17 @@ public class ClimbIOSim implements ClimbIO {
     inputs.atSetpoint = m_controller.atSetpoint();
     inputs.currPositionRad = m_sim.getAngleRads();
     inputs.desiredPositionRad = m_controller.getSetpoint();
-    inputs.positionControl = m_positionControl;
     inputs.voltage = m_voltage;
-    inputs.current = m_feedforward.calculate(m_sim.getVelocityRadPerSec());
+    inputs.current = m_sim.getCurrentDrawAmps();
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kV) {
+  public void setPID(double kP, double kI, double kD) {
     m_controller.setPID(kP, kI, kD);
-    m_feedforward = new SimpleMotorFeedforward(kS, kV);
-  }
-
-  @Override
-  public void setVoltage(double voltage) {
-    m_positionControl = false;
-    m_voltage = voltage;
-    m_sim.setInputVoltage(voltage);
   }
 
   @Override
   public void setDesiredAngle(Rotation2d angle) {
-    m_positionControl = true;
     m_controller.setSetpoint(angle.getRadians());
   }
 }
