@@ -114,7 +114,9 @@ public final class Constants {
     public static final LoggedTunableNumber kClimbStowPosRad =
         new LoggedTunableNumber("Climb Stow Rad", 0.0);
     public static final LoggedTunableNumber kClimbDeployPosRad =
-        new LoggedTunableNumber("Climb Deploy Rad", Units.degreesToRadians(90));
+        new LoggedTunableNumber("Climb Deploy Rad", Units.degreesToRadians(240));
+
+    public static final double kClimbReduction = 29.75; // TODO: find real value
 
     // sim constants
     public static final double kSimGearing = 1.0;

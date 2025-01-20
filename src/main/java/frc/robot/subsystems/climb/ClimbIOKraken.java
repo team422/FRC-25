@@ -1,9 +1,12 @@
 package frc.robot.subsystems.climb;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants.ClimbConstants;
@@ -19,12 +22,23 @@ public class ClimbIOKraken implements ClimbIO {
   public ClimbIOKraken(int port) {
     m_motor = new TalonFX(port);
 
-    var config = new TalonFXConfiguration();
+    var currentLimitConfigs =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(80)
+            .withStatorCurrentLimitEnable(true)
+            .withStatorCurrentLimit(120);
 
-    config.CurrentLimits.SupplyCurrentLimitEnable = true;
-    config.CurrentLimits.SupplyCurrentLimit = 30;
+    var feedbackConfigs =
+        new FeedbackConfigs().withSensorToMechanismRatio(ClimbConstants.kClimbReduction);
+
+    var config =
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimitConfigs)
+            .withFeedback(feedbackConfigs);
 
     m_motor.getConfigurator().apply(config);
+    m_motor.setNeutralMode(NeutralModeValue.Brake);
   }
 
   @Override
