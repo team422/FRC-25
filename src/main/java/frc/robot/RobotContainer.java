@@ -1,6 +1,8 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -8,6 +10,7 @@ import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
@@ -67,7 +70,7 @@ public class RobotContainer {
       case REPLAY:
         m_drive =
             new Drive(
-                new GyroIOPigeon2(),
+                new GyroIOReplay(),
                 new ModuleIOReplay(),
                 new ModuleIOReplay(),
                 new ModuleIOReplay(),
@@ -88,12 +91,14 @@ public class RobotContainer {
 
   /** Configure the commands. */
   private void configureCommands() {
-    m_drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            m_drive,
-            m_driverControls::getForward,
-            m_driverControls::getStrafe,
-            m_driverControls::getTurn));
+    // Auto commands
+    m_autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
+    m_autoChooser.addOption("Do Nothing", Commands.none());
+    m_autoChooser.addOption(
+        "Drive Quasistatic Characterization",
+        m_drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    m_autoChooser.addOption(
+        "Drive Dynamic Characterization", m_drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
   }
 
   /** Configure the controllers. */
@@ -103,7 +108,14 @@ public class RobotContainer {
   }
 
   /** Configure the button bindings. */
-  private void configureButtonBindings() {}
+  private void configureButtonBindings() {
+    m_drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            m_drive,
+            m_driverControls::getForward,
+            m_driverControls::getStrafe,
+            m_driverControls::getTurn));
+  }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

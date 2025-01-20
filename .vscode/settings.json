@@ -68,5 +68,7 @@
   },
   "[java]": {
     "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-  }
+  },
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false
 }
