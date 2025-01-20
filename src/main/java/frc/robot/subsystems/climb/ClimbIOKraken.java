@@ -67,4 +67,9 @@ public class ClimbIOKraken implements ClimbIO {
     m_motor.setControl(
         m_positionVoltage.withPosition(Units.radiansToRotations(angle.getRadians())));
   }
+
+  @Override
+  public void zeroEncoder() {
+    m_motor.setPosition(0);
+  }
 }
