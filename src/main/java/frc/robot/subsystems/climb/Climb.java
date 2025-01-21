@@ -1,6 +1,7 @@
 package frc.robot.subsystems.climb;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.utils.LoggedTunableNumber;
 import frc.robot.Constants.ClimbConstants;
@@ -39,6 +40,8 @@ public class Climb extends SubsystemBase {
   @Override
   public void periodic() {
 
+    double timeStartPeriodic = Timer.getFPGATimestamp();
+
     // update PIDFF Constants if any have changed
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -59,6 +62,10 @@ public class Climb extends SubsystemBase {
     // log inputs and profile
     Logger.processInputs("Climb", m_inputs);
     Logger.recordOutput("Climb/State", m_profiles.getCurrentProfile());
+
+    double dt = Timer.getFPGATimestamp() - timeStartPeriodic;
+
+    Logger.recordOutput("Timing/climberPeriodic", dt);
   }
 
   public void updateState(ClimbState state) {
