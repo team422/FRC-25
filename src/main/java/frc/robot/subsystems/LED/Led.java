@@ -1,9 +1,8 @@
-package frc.robot.subsystems.LED;
+package frc.robot.subsystems.led;
 
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LedConstants;
 import org.littletonrobotics.junction.Logger;
@@ -12,6 +11,7 @@ public class Led extends SubsystemBase {
   private AddressableLED m_strip;
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
+  private LedState m_lastState = LedState.kOff;
 
   public static enum LedState {
     kDisabled,
@@ -33,48 +33,40 @@ public class Led extends SubsystemBase {
   public void periodic() {
     Logger.recordOutput("LED/State", m_state.toString());
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
-  }
-
-  public void setSolidColor(Color color) {
-    for (int i = 0; i < m_buffer.getLength(); i++) {
-      m_buffer.setLED(i, color);
+    if (m_state == m_lastState) {
+      updateLEDState();
+      m_lastState = m_state;
     }
-    m_strip.setData(m_buffer);
   }
 
-  public void DisabledPeriodic() {
-    LEDPattern red = LEDPattern.solid(LedConstants.kDisabled);
-    red.applyTo(m_buffer);
-    m_strip.setData(m_buffer);
+  public void setState(LedState state) {
+    m_state = state;
   }
 
-  public void EnabledPeriodic() {
-    LEDPattern yellow = LEDPattern.solid(LedConstants.kEnabled);
-    yellow.applyTo(m_buffer);
-    m_strip.setData(m_buffer);
-  }
-
-  public void HasGamepiecePeriodic() {
-    LEDPattern darkMagenta = LEDPattern.solid(LedConstants.kHasGampiece);
-    darkMagenta.applyTo(m_buffer);
-    m_strip.setData(m_buffer);
-  }
-
-  public void AutoscorePeriodic() {
-    LEDPattern green = LEDPattern.solid(LedConstants.kAutoscore);
-    green.applyTo(m_buffer);
-    m_strip.setData(m_buffer);
-  }
-
-  public void AlertPeriodic() {
-    LEDPattern gold = LEDPattern.solid(LedConstants.kAlert);
-    gold.applyTo(m_buffer);
-    m_strip.setData(m_buffer);
-  }
-
-  public void OFFPeriodic() {
-    LEDPattern red = LEDPattern.solid(LedConstants.kOff);
-    red.applyTo(m_buffer);
+  public void updateLEDState() {
+    LEDPattern pattern;
+    switch (m_state) {
+      case kDisabled:
+        pattern = LEDPattern.solid(LedConstants.kDisabled);
+        break;
+      case kEnabled:
+        pattern = LEDPattern.solid(LedConstants.kEnabled);
+        break;
+      case kHasGamepiece:
+        pattern = LEDPattern.solid(LedConstants.kHasGampiece);
+        break;
+      case kAutoScore:
+        pattern = LEDPattern.solid(LedConstants.kAutoscore);
+        break;
+      case kAlert:
+        pattern = LEDPattern.solid(LedConstants.kAlert);
+        break;
+      case kOff:
+      default:
+        pattern = LEDPattern.solid(LedConstants.kOff);
+        break;
+    }
+    pattern.applyTo(m_buffer);
     m_strip.setData(m_buffer);
   }
 }
