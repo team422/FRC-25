@@ -11,6 +11,9 @@ public interface ClimbIO {
     public boolean atSetpoint;
     public double voltage;
     public double current;
+    public double statorCurrent;
+    public double temperature;
+    public boolean motorIsConnected;
   }
 
   public void updateInputs(ClimbInputs inputs);
