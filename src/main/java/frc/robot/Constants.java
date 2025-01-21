@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.lib.utils.LoggedTunableNumber;
@@ -100,6 +101,33 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Heading I", 0.0);
     public static final LoggedTunableNumber kDriveToPointHeadingD =
         new LoggedTunableNumber("DriveToPoint Heading D", 0.0);
+  }
+
+  public static final class ElevatorConstants {
+    public static final double kTopSpeed = 100000;
+    public static final double kTopAcceleration = 1029339994;
+    public static final LoggedTunableNumber kP = new LoggedTunableNumber("Elevator P", 0.0);
+    public static final LoggedTunableNumber kI = new LoggedTunableNumber("Elevator I", 0.0);
+    public static final LoggedTunableNumber kD = new LoggedTunableNumber("Elevator D", 0.0);
+    public static final LoggedTunableNumber kKS = new LoggedTunableNumber("Elevator kS", 0.0);
+    public static final LoggedTunableNumber kKG = new LoggedTunableNumber("Elevator kG", 0.0);
+    public static final LoggedTunableNumber kKV = new LoggedTunableNumber("Elevator kV", 0.0);
+    public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
+
+    public static final double kTroughHeight = 46;
+    public static final double kL2Height = 81;
+    public static final double kL3Height = 46;
+    public static final double kL4Height = 46;
+    public static final double kL5Height = 46;
+
+    // Simulation constants
+    public static final double kSimGearing = 1.0;
+    public static final double kSimMOI = 0.001;
+    public static final double kRadius = 2020202;
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
+    public static final double kMinHeight = 0;
+    public static final double kMaxHeight = 10000000;
+    public static final double kHeightTolerance = 22333333;
   }
 
   public static final class AprilTagVisionConstants {
