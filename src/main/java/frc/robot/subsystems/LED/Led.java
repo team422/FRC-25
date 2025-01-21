@@ -3,12 +3,15 @@ package frc.robot.subsystems.led;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.simulation.AddressableLEDSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.Constants.LedConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class Led extends SubsystemBase {
   private AddressableLED m_strip;
+  private AddressableLEDSim m_simStrip;
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
   private LedState m_lastState = LedState.kOff;
@@ -27,13 +30,18 @@ public class Led extends SubsystemBase {
     m_buffer = new AddressableLEDBuffer(length);
     m_strip.setLength(length);
     m_strip.start();
+
+      if (Robot.isSimulation()) {
+        m_simStrip = new AddressableLEDSim();
+      };
+
   }
 
   @Override
   public void periodic() {
     Logger.recordOutput("LED/State", m_state.toString());
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
-    if (m_state == m_lastState) {
+    if (m_state != m_lastState) {
       updateLEDState();
       m_lastState = m_state;
     }
@@ -62,6 +70,7 @@ public class Led extends SubsystemBase {
         pattern = LEDPattern.solid(LedConstants.kAlert);
         break;
       case kOff:
+        pattern = LEDPattern.kOff;
       default:
         pattern = LEDPattern.solid(LedConstants.kOff);
         break;
