@@ -27,6 +27,6 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public Trigger getClimbDeploy() {
-    return m_controller.x(); 
+    return m_controller.x();
   }
 }

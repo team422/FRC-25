@@ -116,7 +116,7 @@ public final class Constants {
     public static final LoggedTunableNumber kClimbDeployPosRad =
         new LoggedTunableNumber("Climb Deploy Rad", Units.degreesToRadians(240));
 
-    public static final double kClimbReduction = (5 / 1) * (4/1) * (68 / 18);
+    public static final double kClimbReduction = (5 / 1) * (4 / 1) * (68 / 18);
 
     // sim constants
     public static final double kSimGearing = 1.0;
@@ -219,7 +219,7 @@ public final class Constants {
 
     public static final String kCanivoreName = "Drivetrain";
 
-    //TODO: CHANGE TO ACTUAL
+    // TODO: CHANGE TO ACTUAL
     public static final int kClimbMotor = 12;
   }
 
