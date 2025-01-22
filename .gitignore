@@ -188,3 +188,6 @@ src/main/java/frc/robot/BuildConstants.java
 
 # VSCode workspace settings
 .vscode/settings.json
+
+# Gradlew
+gradlew
