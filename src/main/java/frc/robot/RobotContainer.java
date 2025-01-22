@@ -9,7 +9,6 @@ import frc.robot.oi.DriverControlsXbox;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.climb.Climb;
-import frc.robot.subsystems.climb.Climb.ClimbState;
 import frc.robot.subsystems.climb.ClimbIOKraken;
 import frc.robot.subsystems.climb.ClimbIOReplay;
 import frc.robot.subsystems.climb.ClimbIOSim;
@@ -127,18 +126,11 @@ public class RobotContainer {
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
     m_driverControls
-        .getClimbStow()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  m_climb.updateState(ClimbState.kStow);
-                }));
-    m_driverControls
         .getClimbDeploy()
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_climb.updateState(ClimbState.kDeploy);
+                  m_climb.toggleDeploy();
                 }));
   }
 

@@ -26,12 +26,8 @@ public class DriverControlsPS5 implements DriverControls {
   }
 
   @Override
-  public Trigger getClimbStow() {
-    return m_controller.cross();
+  public Trigger getClimbDeploy() {
+    return m_controller.square();
   }
 
-  @Override
-  public Trigger getClimbDeploy() {
-    return m_controller.circle();
-  }
 }

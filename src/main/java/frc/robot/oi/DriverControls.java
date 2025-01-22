@@ -9,7 +9,5 @@ public interface DriverControls {
 
   public double getTurn();
 
-  public Trigger getClimbStow();
-
   public Trigger getClimbDeploy();
 }
