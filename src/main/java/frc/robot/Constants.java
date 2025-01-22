@@ -67,7 +67,8 @@ public final class Constants {
     public static final double kWheelRadius = Units.inchesToMeters(2.0);
     public static final double kOdometryFrequency = 250.0;
 
-    public static final double kDriveGearRatio = (50.0/16.0) * (19.0/25.0) * (45.0/15.0); // L1+ gear ratio
+    public static final double kDriveGearRatio =
+        (50.0 / 16.0) * (19.0 / 25.0) * (45.0 / 15.0); // L1+ gear ratio
     public static final double kTurnGearRatio = 150.0 / 7.0;
 
     // Simulation constants
