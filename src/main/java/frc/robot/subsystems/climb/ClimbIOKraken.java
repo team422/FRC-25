@@ -83,11 +83,9 @@ public class ClimbIOKraken implements ClimbIO {
                 m_motorTemperature)
             .isOK();
 
-    inputs.currPositionDegrees = Units.rotationsToDegrees(m_motorPosition.getValueAsDouble());
+    inputs.currPositionDegrees = getCurrPositionDegrees();
     inputs.desiredPositionDegrees = m_desiredAngle.getDegrees();
-    inputs.atSetpoint =
-        Math.abs(m_desiredAngle.getDegrees() - inputs.currPositionDegrees)
-            < ClimbConstants.kClimbTolerance;
+    inputs.atSetpoint = atSetpoint();
     inputs.voltage = m_motorVoltage.getValueAsDouble();
     inputs.current = m_motorCurrent.getValueAsDouble();
     inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
@@ -113,5 +111,14 @@ public class ClimbIOKraken implements ClimbIO {
   @Override
   public void zeroEncoder() {
     m_motor.setPosition(0);
+  }
+
+  public double getCurrPositionDegrees() {
+    return Units.rotationsToDegrees(m_motorPosition.getValueAsDouble());
+  }
+
+  public boolean atSetpoint() {
+    return Math.abs(m_desiredAngle.getDegrees() - getCurrPositionDegrees())
+        < ClimbConstants.kClimbTolerance;
   }
 }
