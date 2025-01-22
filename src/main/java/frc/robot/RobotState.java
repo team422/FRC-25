@@ -33,6 +33,8 @@ public class RobotState {
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
     periodicHash.put(RobotAction.kAutoDefault, () -> {});
+
+    m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
 
   public static RobotState getInstance() {
@@ -54,6 +56,10 @@ public class RobotState {
     m_profiles.setCurrentProfile(newAction);
   }
 
+  public RobotAction getCurrentAction() {
+    return m_profiles.getCurrentProfile();
+  }
+
   public void setDefaultAction() {
     if (edu.wpi.first.wpilibj.RobotState.isAutonomous()) {
       updateRobotAction(RobotAction.kAutoDefault);
@@ -62,7 +68,9 @@ public class RobotState {
     }
   }
 
-  public void onEnable() {}
+  public void onEnable() {
+    setDefaultAction();
+  }
 
   public void onDisable() {}
 

@@ -85,7 +85,7 @@ public class Module {
         // When the error is 90 degrees, the velocity setpoint should be 0. As the wheel turns
         // towards the setpoint, its velocity should increase. This is achieved by
         // taking the component of the velocity in the direction of the setpoint.
-        double adjustSpeedSetpoint = m_speedSetpoint * Math.cos(m_turnFeedback.getPositionError());
+        double adjustSpeedSetpoint = m_speedSetpoint * Math.cos(m_turnFeedback.getError());
 
         // Run drive controller
         double velocityRadPerSec = adjustSpeedSetpoint / DriveConstants.kWheelRadius;
@@ -178,7 +178,7 @@ public class Module {
   }
 
   /** Returns the module positions received this cycle. */
-  public SwerveModulePosition[] getM_odometryPositions() {
+  public SwerveModulePosition[] getOdometryPositions() {
     return m_odometryPositions;
   }
 
@@ -190,5 +190,9 @@ public class Module {
   /** Returns the drive velocity in radians/sec. */
   public double getCharacterizationVelocity() {
     return m_inputs.driveVelocityRadPerSec;
+  }
+
+  public void setCurrentLimits(double supplyLimit) {
+    m_io.setCurrentLimits(supplyLimit);
   }
 }
