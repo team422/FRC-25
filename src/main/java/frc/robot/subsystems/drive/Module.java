@@ -191,4 +191,8 @@ public class Module {
   public double getCharacterizationVelocity() {
     return m_inputs.driveVelocityRadPerSec;
   }
+
+  public void setCurrentLimits(double supplyLimit) {
+    m_io.setCurrentLimits(supplyLimit);
+  }
 }
