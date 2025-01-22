@@ -2,6 +2,7 @@ package frc.robot.subsystems.climb;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants.ClimbConstants;
 
@@ -21,12 +22,12 @@ public class ClimbIOSim implements ClimbIO {
             ClimbConstants.kSimMaxAngleRad,
             ClimbConstants.kSimGravity,
             ClimbConstants.kSimStartingAngleRad); // init angle 90 deg
-    m_controller.setTolerance(ClimbConstants.kClimbTolerance.getRadians()); // radians
+    m_controller.setTolerance(ClimbConstants.kClimbTolerance);
   }
 
   @Override
   public void updateInputs(ClimbInputs inputs) {
-    double m_voltage = m_controller.calculate(m_sim.getAngleRads());
+    double m_voltage = m_controller.calculate(Units.radiansToDegrees(m_sim.getAngleRads()));
 
     // run sim for a dt
     m_sim.setInputVoltage(m_voltage);
@@ -34,8 +35,8 @@ public class ClimbIOSim implements ClimbIO {
 
     // update inputs
     inputs.atSetpoint = m_controller.atSetpoint();
-    inputs.currPositionRad = m_sim.getAngleRads();
-    inputs.desiredPositionRad = m_controller.getSetpoint();
+    inputs.currPositionDegrees = Units.radiansToDegrees(m_sim.getAngleRads());
+    inputs.desiredPositionDegrees = m_controller.getSetpoint();
     inputs.voltage = m_voltage;
     inputs.current = m_sim.getCurrentDrawAmps();
     inputs.motorIsConnected = true;
@@ -48,7 +49,7 @@ public class ClimbIOSim implements ClimbIO {
 
   @Override
   public void setDesiredAngle(Rotation2d angle) {
-    m_controller.setSetpoint(angle.getRadians());
+    m_controller.setSetpoint(angle.getDegrees());
   }
 
   @Override

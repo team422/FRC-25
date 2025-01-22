@@ -81,11 +81,11 @@ public class Climb extends SubsystemBase {
   }
 
   public void stowPeriodic() {
-    m_io.setDesiredAngle(Rotation2d.fromRadians(ClimbConstants.kClimbStowPosRad.get()));
+    m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbStowPosRad.get()));
   }
 
   public void deployPeriodic() {
-    m_io.setDesiredAngle(Rotation2d.fromRadians(ClimbConstants.kClimbDeployPosRad.get()));
+    m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbDeployPosRad.get()));
   }
 
   public void zeroEncoder() {

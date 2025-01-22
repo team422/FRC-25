@@ -6,8 +6,8 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ClimbIO {
   @AutoLog
   public static class ClimbInputs {
-    public double currPositionRad;
-    public double desiredPositionRad;
+    public double currPositionDegrees;
+    public double desiredPositionDegrees;
     public boolean atSetpoint;
     public double voltage;
     public double current;

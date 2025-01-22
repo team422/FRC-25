@@ -109,12 +109,12 @@ public final class Constants {
     public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 3);
     public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.05);
     public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.4);
-    public static final Rotation2d kClimbTolerance = Rotation2d.fromDegrees(0.5);
+    public static final double kClimbTolerance = 0.5; //degrees
 
     public static final LoggedTunableNumber kClimbStowPosRad =
-        new LoggedTunableNumber("Climb Stow Rad", 0.0);
+        new LoggedTunableNumber("Climb Stow Rad", 0.0); //degrees
     public static final LoggedTunableNumber kClimbDeployPosRad =
-        new LoggedTunableNumber("Climb Deploy Rad", Units.degreesToRadians(240));
+        new LoggedTunableNumber("Climb Deploy Rad", 240); //degrees
 
     public static final double kClimbReduction = (5 / 1) * (4 / 1) * (68 / 18);
 
