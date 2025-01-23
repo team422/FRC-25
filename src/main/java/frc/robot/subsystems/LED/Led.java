@@ -11,7 +11,6 @@ import org.littletonrobotics.junction.Logger;
 
 public class Led extends SubsystemBase {
   private AddressableLED m_strip;
-  private AddressableLEDSim m_simStrip;
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
   private LedState m_lastState = LedState.kOff;
@@ -30,11 +29,6 @@ public class Led extends SubsystemBase {
     m_buffer = new AddressableLEDBuffer(length);
     m_strip.setLength(length);
     m_strip.start();
-
-      if (Robot.isSimulation()) {
-        m_simStrip = new AddressableLEDSim();
-      };
-
   }
 
   @Override
