@@ -10,7 +10,6 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -83,7 +82,7 @@ public class ClimbIOKraken implements ClimbIO {
                 m_motorTemperature)
             .isOK();
 
-    inputs.currPositionDegrees = getCurrPositionDegrees();
+    inputs.currPositionDegrees = getCurrPosition().getDegrees();
     inputs.desiredPositionDegrees = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
     inputs.voltage = m_motorVoltage.getValueAsDouble();
@@ -113,12 +112,12 @@ public class ClimbIOKraken implements ClimbIO {
     m_motor.setPosition(0);
   }
 
-  public double getCurrPositionDegrees() {
-    return Units.rotationsToDegrees(m_motorPosition.getValueAsDouble());
+  public Rotation2d getCurrPosition() {
+    return Rotation2d.fromRotations(m_motorPosition.getValueAsDouble());
   }
 
   public boolean atSetpoint() {
-    return Math.abs(m_desiredAngle.getDegrees() - getCurrPositionDegrees())
+    return Math.abs(m_desiredAngle.getDegrees() - getCurrPosition().getDegrees())
         < ClimbConstants.kClimbTolerance;
   }
 }

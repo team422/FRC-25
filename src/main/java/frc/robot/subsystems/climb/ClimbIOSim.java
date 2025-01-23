@@ -35,7 +35,7 @@ public class ClimbIOSim implements ClimbIO {
 
     // update inputs
     inputs.atSetpoint = m_controller.atSetpoint();
-    inputs.currPositionDegrees = getCurrPositionDegrees();
+    inputs.currPositionDegrees = getCurrPosition().getDegrees();
     inputs.desiredPositionDegrees = m_controller.getSetpoint();
     inputs.voltage = m_voltage;
     inputs.current = m_sim.getCurrentDrawAmps();
@@ -57,7 +57,7 @@ public class ClimbIOSim implements ClimbIO {
     m_sim.setState(0, 0);
   }
 
-  public double getCurrPositionDegrees() {
-    return Units.radiansToDegrees(m_sim.getAngleRads());
+  public Rotation2d getCurrPosition() {
+    return Rotation2d.fromRadians(m_sim.getAngleRads());
   }
 }
