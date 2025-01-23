@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake.roller;
 
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.IntakeConstants;
 
@@ -25,6 +26,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
     m_sim.update(0.02);
 
     inputs.velocityRPS = m_sim.getAngularVelocityRPM() / 60;
+    inputs.accelerationRPSSq = Units.radiansToRotations(m_sim.getAngularAccelerationRadPerSecSq());
     inputs.current = m_sim.getCurrentDrawAmps();
     inputs.voltage = m_voltage;
 
@@ -42,5 +44,11 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
   @Override
   public void setCurrentLimits(double supplyLimit) {
     // Not needed for simulation
+  }
+
+  @Override
+  public boolean hasGamePiece() {
+    // Possibly implement later
+    return false;
   }
 }

@@ -60,12 +60,14 @@ public class Intake extends SubsystemBase {
               IntakeConstants.kPivotP.get(),
               IntakeConstants.kPivotI.get(),
               IntakeConstants.kPivotD.get(),
-              IntakeConstants.kPivotKS.get());
+              IntakeConstants.kPivotKS.get(),
+              IntakeConstants.kPivotKG.get());
         },
         IntakeConstants.kPivotP,
         IntakeConstants.kPivotI,
         IntakeConstants.kPivotD,
-        IntakeConstants.kPivotKS);
+        IntakeConstants.kPivotKS,
+        IntakeConstants.kPivotKG);
 
     m_rollerIO.updateInputs(m_rollerInputs);
     m_pivotIO.updateInputs(m_pivotInputs);
@@ -91,5 +93,9 @@ public class Intake extends SubsystemBase {
   public void outtakePeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerOuttakeVoltage.get());
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()));
+  }
+
+  public boolean hasGamePiece() {
+    return m_rollerIO.hasGamePiece();
   }
 }

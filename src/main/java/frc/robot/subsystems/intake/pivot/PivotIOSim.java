@@ -10,6 +10,7 @@ import frc.robot.Constants.IntakeConstants;
 public class PivotIOSim implements PivotIO {
   private SingleJointedArmSim m_sim;
   private PIDController m_controller = new PIDController(0, 0, 0);
+  private double m_kG = 0.0;
 
   public PivotIOSim() {
     var plant =
@@ -35,8 +36,9 @@ public class PivotIOSim implements PivotIO {
   @Override
   public void updateInputs(PivotInputs inputs) {
     double pidVoltage = m_controller.calculate(getCurrAngle().getDegrees());
+    double feedforwardVoltage = m_kG * Math.cos(getCurrAngle().getRadians());
 
-    m_sim.setInputVoltage(pidVoltage);
+    m_sim.setInputVoltage(pidVoltage + feedforwardVoltage);
     m_sim.update(0.020);
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
@@ -44,7 +46,7 @@ public class PivotIOSim implements PivotIO {
     inputs.atSetpoint = atSetpoint();
     inputs.velocityRPS = Units.radiansToRotations(m_sim.getVelocityRadPerSec());
     inputs.current = m_sim.getCurrentDrawAmps();
-    inputs.voltage = pidVoltage;
+    inputs.voltage = pidVoltage + feedforwardVoltage;
 
     // these don't matter in sim
     inputs.statorCurrent = 0.0;
@@ -53,9 +55,10 @@ public class PivotIOSim implements PivotIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS) {
+  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
     m_controller.setPID(kP, kI, kD);
     // kS is not used in simulation
+    m_kG = kG;
   }
 
   @Override

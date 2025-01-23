@@ -6,6 +6,7 @@ public interface IntakeRollerIO {
   @AutoLog
   public static class IntakeRollerInputs {
     public double velocityRPS;
+    public double accelerationRPSSq;
     public double current;
     public double statorCurrent;
     public double voltage;
@@ -18,4 +19,6 @@ public interface IntakeRollerIO {
   public void setVoltage(double voltage);
 
   public void setCurrentLimits(double supplyLimit);
+
+  public boolean hasGamePiece();
 }

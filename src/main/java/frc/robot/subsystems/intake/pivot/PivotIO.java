@@ -19,7 +19,7 @@ public interface PivotIO {
 
   public void updateInputs(PivotInputs inputs);
 
-  public void setPIDFF(double kP, double kI, double kD, double kS);
+  public void setPIDFF(double kP, double kI, double kD, double kS, double kG);
 
   public void setDesiredAngle(Rotation2d angle);
 

@@ -31,6 +31,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
 import java.util.Queue;
@@ -106,24 +107,23 @@ public class ModuleIOTalonFX implements ModuleIO {
     var driveCurrentLimits =
         new CurrentLimitsConfigs()
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(75.0)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kDriveDefaultSupplyCurrentLimit)
             .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(180.0);
+            .withStatorCurrentLimit(CurrentLimitConstants.kDriveDefaultStatorCurrentLimit);
 
     m_driveConfig = new TalonFXConfiguration().withCurrentLimits(driveCurrentLimits);
-    // 0.0 second timeout so we don't wait for the config to apply
-    m_driveTalon.getConfigurator().apply(m_driveConfig, 0.0);
+    m_driveTalon.getConfigurator().apply(m_driveConfig);
     setDriveBrakeMode(true);
 
     var turnCurrentLimits =
         new CurrentLimitsConfigs()
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(30.0)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kTurnDefaultSupplyCurrentLimit)
             .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(120.0);
+            .withStatorCurrentLimit(CurrentLimitConstants.kTurnDefaultStatorCurrentLimit);
 
     m_turnConfig = new TalonFXConfiguration().withCurrentLimits(turnCurrentLimits);
-    m_turnTalon.getConfigurator().apply(m_turnConfig, 0.0);
+    m_turnTalon.getConfigurator().apply(m_turnConfig);
     setTurnBrakeMode(true);
 
     // we want to keep the existing offset so we can set them in phoenix tuner rather than code

@@ -176,19 +176,18 @@ public final class Constants {
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
 
-    // default current limits
-    public static final double kPivotDefaultSupplyLimit = 80.0;
-    public static final double kPivotDefaultStatorLimit = 120.0;
-
-    public static final double kRollerDefaultSupplyLimit = 80.0;
-    public static final double kRollerDefaultStatorLimit = 120.0;
-
     public static final double kPivotTolerance = 2.0; // degrees
+
+    public static final double kRollerCurrentGamepieceThreshold =
+        0.5; // amps to be considered holding a gamepiece, temp value
+    public static final double kRollerAccelGamepieceThreshold =
+        1.0; // rotations per second squared to be considered holding a gamepiece, temp value
 
     public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 0.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
     public static final LoggedTunableNumber kPivotD = new LoggedTunableNumber("Pivot D", 0.0);
     public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.0);
+    public static final LoggedTunableNumber kPivotKG = new LoggedTunableNumber("Pivot kG", 0.0);
 
     public static final LoggedTunableNumber kPivotStowAngle =
         new LoggedTunableNumber("Pivot Stow Angle", 0.0);
@@ -213,12 +212,28 @@ public final class Constants {
         SingleJointedArmSim.estimateMOI(kPivotArmLength, kPivotArmMass);
     public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(65);
-    public static final boolean kSimSimulateGravity = false;
+    public static final boolean kSimSimulateGravity = true;
     public static final Rotation2d kSimStartingAngle = kPivotMinAngle;
 
     public static final DCMotor kRollerSimGearbox = DCMotor.getKrakenX60Foc(1);
     public static final double kRollerSimGearing = kRollerGearRatio;
     public static final double kRollerSimMOI = 0.004;
+  }
+
+  public static final class CurrentLimitConstants {
+    // Drive
+    public static final double kDriveDefaultSupplyCurrentLimit = 75.0;
+    public static final double kDriveDefaultStatorCurrentLimit = 180.0;
+
+    public static final double kTurnDefaultSupplyCurrentLimit = 30.0;
+    public static final double kTurnDefaultStatorCurrentLimit = 120.0;
+
+    // Intake
+    public static final double kIntakePivotDefaultSupplyLimit = 80.0;
+    public static final double kIntakePivotDefaultStatorLimit = 120.0;
+
+    public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
+    public static final double kIntakeRollerDefaultStatorLimit = 120.0;
   }
 
   public static final class Ports {

@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
 
 public class PivotIOKraken implements PivotIO {
@@ -39,9 +40,9 @@ public class PivotIOKraken implements PivotIO {
     var currentLimits =
         new CurrentLimitsConfigs()
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(IntakeConstants.kPivotDefaultSupplyLimit)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kIntakePivotDefaultSupplyLimit)
             .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(IntakeConstants.kPivotDefaultStatorLimit);
+            .withStatorCurrentLimit(CurrentLimitConstants.kIntakePivotDefaultStatorLimit);
 
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio);
@@ -49,7 +50,7 @@ public class PivotIOKraken implements PivotIO {
     m_config =
         new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);
 
-    m_motor.getConfigurator().apply(m_config, 0.0);
+    m_motor.getConfigurator().apply(m_config);
     m_motor.setNeutralMode(NeutralModeValue.Brake);
 
     m_motorPosition = m_motor.getPosition();
@@ -62,9 +63,9 @@ public class PivotIOKraken implements PivotIO {
     // higher frequency for position
     BaseStatusSignal.setUpdateFrequencyForAll(100.0, m_motorPosition);
 
-    // all of these are for logging so we don't need a frequency any higher than the loop frequency
+    // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
-        50.0,
+        75.0,
         m_motorVelocity,
         m_motorVoltage,
         m_motorCurrent,
@@ -97,10 +98,10 @@ public class PivotIOKraken implements PivotIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS) {
+  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
     m_motor
         .getConfigurator()
-        .apply(m_config.Slot0.withKP(kP).withKI(kI).withKD(kD).withKS(kS), 0.0);
+        .apply(m_config.Slot0.withKP(kP).withKI(kI).withKD(kD).withKS(kS).withKG(kG), 0.0);
   }
 
   @Override
