@@ -15,11 +15,14 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
 
 public class PivotIOKraken implements PivotIO {
   private TalonFX m_motor;
+
+  private DutyCycleEncoder m_absoluteEncoder;
 
   private StatusSignal<Angle> m_motorPosition;
   private StatusSignal<AngularVelocity> m_motorVelocity;
@@ -34,8 +37,10 @@ public class PivotIOKraken implements PivotIO {
       new PositionTorqueCurrentFOC(0.0).withSlot(0);
   private Rotation2d m_desiredAngle = new Rotation2d();
 
-  public PivotIOKraken(int port) {
+  public PivotIOKraken(int port, int absoluteEncoderPort) {
     m_motor = new TalonFX(port);
+
+    m_absoluteEncoder = new DutyCycleEncoder(absoluteEncoderPort);
 
     var currentLimits =
         new CurrentLimitsConfigs()
@@ -44,8 +49,14 @@ public class PivotIOKraken implements PivotIO {
             .withStatorCurrentLimitEnable(true)
             .withStatorCurrentLimit(CurrentLimitConstants.kIntakePivotDefaultStatorLimit);
 
+    // for performance, we use the absolute encoder to set the start angle but rely on the relative
+    // encoder for the rest of the time
+    double startAngle = IntakeConstants.kPivotOffset.getRotations();
+    startAngle += m_absoluteEncoder.get();
     var feedbackConfig =
-        new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio);
+        new FeedbackConfigs()
+            .withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio)
+            .withFeedbackRotorOffset(startAngle);
 
     m_config =
         new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);

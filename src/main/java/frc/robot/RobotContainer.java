@@ -66,7 +66,7 @@ public class RobotContainer {
         m_intake =
             new Intake(
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                new PivotIOKraken(Ports.kIntakePivot));
+                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         break;
 

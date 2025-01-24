@@ -178,6 +178,8 @@ public final class Constants {
 
     public static final double kPivotTolerance = 2.0; // degrees
 
+    public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
+
     public static final double kRollerCurrentGamepieceThreshold =
         0.5; // amps to be considered holding a gamepiece, temp value
     public static final double kRollerAccelGamepieceThreshold =
@@ -259,6 +261,8 @@ public final class Constants {
 
     public static final int kIntakeRoller = 15;
     public static final int kIntakePivot = 16;
+
+    public static final int kIntakeAbsoluteEncoder = 5;
   }
 
   public class FieldConstants {
