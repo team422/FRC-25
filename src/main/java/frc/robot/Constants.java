@@ -114,16 +114,26 @@ public final class Constants {
     public static final LoggedTunableNumber kKV = new LoggedTunableNumber("Elevator kV", 0.0);
     public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
 
+    public static final LoggedTunableNumber kMagicMotionCruiseVelocity =
+        new LoggedTunableNumber("Elevator MagicMotion cruise velocity", 0.0);
+    public static final LoggedTunableNumber kMagicMotionAcceleration =
+        new LoggedTunableNumber("Elevator MagicMotion acceleration", 0.0);
+    public static final LoggedTunableNumber kMagicMotionJerk =
+        new LoggedTunableNumber("Elevator MagicMotion Jerk", 0.0);
+
     public static final double kTroughHeight = 46;
     public static final double kL2Height = 81;
     public static final double kL3Height = 46;
     public static final double kL4Height = 46;
     public static final double kL5Height = 46;
 
+    public static final double kRadius = .057;
+    public static final double kSensorToMechanismRatio = 2 * kRadius * Math.PI * 54 / 12;
+    public static final double kUpdateFrequency = 100;
+
     // Simulation constants
     public static final double kSimGearing = 1.0;
     public static final double kSimMOI = 0.001;
-    public static final double kRadius = 2020202;
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
     public static final double kMinHeight = 0;
     public static final double kMaxHeight = 10000000;

@@ -35,6 +35,7 @@ public class ElevatorIOSim implements ElevatorIO {
             false,
             ElevatorConstants.kMinHeight);
 
+    // ask kent if he wants normal or profiled
     m_controller =
         new ProfiledPIDController(
             ElevatorConstants.kP.getAsDouble(),
@@ -54,22 +55,23 @@ public class ElevatorIOSim implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorInputsAutoLogged inputs) {
-    State curr =
+    State desired =
         m_trap.calculate(
             .02,
             new State(m_sim.getPositionMeters() / 100, m_sim.getVelocityMetersPerSecond()),
             m_controller.getGoal());
     m_voltage =
-        m_controller.calculate(m_sim.getPositionMeters(), curr.position)
-            + m_feedforward.calculate(curr.velocity);
+        m_controller.calculate(m_sim.getPositionMeters(), desired.position)
+            + m_feedforward.calculate(
+                desired.velocity, desired.velocity / .02); // could be incorrect
 
     m_sim.setInputVoltage(m_voltage);
     m_sim.update(.02);
 
     inputs.atSetpoint = m_controller.atGoal();
-    inputs.currLocation = m_sim.getPositionMeters();
+    inputs.leadingPosition = m_sim.getPositionMeters();
     inputs.desiredLocation = m_controller.getGoal().position;
-    inputs.voltage = 0; // idk what to do here
+    inputs.leadingVoltage = m_voltage;
   }
 
   @Override
@@ -79,8 +81,17 @@ public class ElevatorIOSim implements ElevatorIO {
 
   @Override
   public void setPIDFF(
-      double kP, double kI, double kD, double kS, double kV, double kA, double kG) {
+      int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG) {
     m_controller.setPID(kP, kI, kD);
     m_feedforward = new ElevatorFeedforward(kS, kG, kV, kA);
   }
+
+  @Override
+  public void setSlot(int slot) {}
+
+  @Override
+  public void setCurrentLimits(double supplyLimit) {}
+
+  @Override
+  public void setMagic(double velocity, double acceleration, double jerk) {}
 }
