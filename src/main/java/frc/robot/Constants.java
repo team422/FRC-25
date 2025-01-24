@@ -238,7 +238,7 @@ public final class Constants {
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
     // Indexer
-    public static final double kIndexerDefaultSupplyLimit = 80.0;
+    public static final double kIndexerDefaultSupplyLimit = 30.0;
     public static final double kIndexerDefaultStatorLimit = 120.0;
   }
 
