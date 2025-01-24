@@ -103,8 +103,7 @@ public class ClimbIOKraken implements ClimbIO {
   @Override
   public void setDesiredAngle(Rotation2d angle) {
     m_desiredAngle = angle;
-    m_motor.setControl(
-        m_positionVoltage.withPosition(angle.getDegrees()));
+    m_motor.setControl(m_positionVoltage.withPosition(angle.getDegrees()));
   }
 
   @Override

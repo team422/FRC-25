@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -18,6 +19,13 @@ import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.pivot.PivotIOKraken;
+import frc.robot.subsystems.intake.pivot.PivotIOReplay;
+import frc.robot.subsystems.intake.pivot.PivotIOSim;
+import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
+import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
+import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -30,6 +38,7 @@ public class RobotContainer {
 
   // Subsystems
   private Drive m_drive;
+  private Intake m_intake;
   private AprilTagVision m_aprilTagVision;
   private Climb m_climb;
 
@@ -60,6 +69,10 @@ public class RobotContainer {
                 new ModuleIOTalonFX(3));
 
         m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
+        m_intake =
+            new Intake(
+                new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         break;
 
@@ -73,6 +86,10 @@ public class RobotContainer {
                 new ModuleIOSim());
         m_climb = new Climb(new ClimbIOSim());
 
+        m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
+
+        m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
+
         break;
 
       case REPLAY:
@@ -85,6 +102,7 @@ public class RobotContainer {
                 new ModuleIOReplay());
 
         m_climb = new Climb(new ClimbIOReplay());
+        m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
 
         break;
     }
@@ -96,7 +114,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_aprilTagVision, m_climb);
+    RobotState.startInstance(m_drive, m_climb, m_intake, m_aprilTagVision);
   }
 
   /** Configure the commands. */

@@ -15,7 +15,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
-import frc.lib.utils.LoggedTunableNumber;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +69,8 @@ public final class Constants {
     public static final double kWheelRadius = Units.inchesToMeters(2.0);
     public static final double kOdometryFrequency = 250.0;
 
-    public static final double kDriveGearRatio = 7.13; // L1+ gear ratio
+    public static final double kDriveGearRatio =
+        (50.0 / 16.0) * (19.0 / 25.0) * (45.0 / 15.0); // L1+ gear ratio
     public static final double kTurnGearRatio = 150.0 / 7.0;
 
     // Simulation constants
@@ -85,7 +86,7 @@ public final class Constants {
     public static final LoggedTunableNumber kHeadingD =
         new LoggedTunableNumber("Drive Heading D", 0.05);
 
-    // on real everything in drive is backwards for some reason
+    // universal reversals for drive (aka the big negative sign)
     public static final boolean kRealReversed = false;
     public static final boolean kSimReversed = false;
 
@@ -109,12 +110,12 @@ public final class Constants {
     public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 3);
     public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.05);
     public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.4);
-    public static final double kClimbTolerance = 0.5; //degrees
+    public static final double kClimbTolerance = 0.5; // degrees
 
     public static final LoggedTunableNumber kClimbStowPosRad =
-        new LoggedTunableNumber("Climb Stow Rad", 0.0); //degrees
+        new LoggedTunableNumber("Climb Stow Rad", 0.0); // degrees
     public static final LoggedTunableNumber kClimbDeployPosRad =
-        new LoggedTunableNumber("Climb Deploy Rad", 240); //degrees
+        new LoggedTunableNumber("Climb Deploy Rad", 240); // degrees
 
     public static final double kClimbReduction = (5 / 1) * (4 / 1) * (68 / 18);
 
@@ -127,7 +128,7 @@ public final class Constants {
     public static final double kSimMinAngleRad =
         Units.degreesToRadians(
             -30); // vertical is 0deg, pos deg is towards outside of robot in position to grab cage
-    public static final double kSimMaxAngleRad = Units.degreesToRadians(135);
+    public static final double kSimMaxAngleRad = Units.degreesToRadians(360);
     public static final double kSimStartingAngleRad = Units.degreesToRadians(0);
     public static final boolean kSimGravity = false;
   }
@@ -198,6 +199,73 @@ public final class Constants {
         new LoggedTunableNumber("cameraYaw", kCameraTransforms[kCalibIndex].getRotation().getZ());
   }
 
+  public static final class IntakeConstants {
+    public static final double kPivotGearRatio = (66.0 / 10.0) * (32.0 / 14.0);
+    public static final double kRollerGearRatio = (30.0 / 12.0);
+    public static final double kRollerRadius = Units.inchesToMeters(1.5);
+
+    public static final double kPivotTolerance = 2.0; // degrees
+
+    public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
+
+    public static final double kRollerCurrentGamepieceThreshold =
+        0.5; // amps to be considered holding a gamepiece, temp value
+    public static final double kRollerAccelGamepieceThreshold =
+        1.0; // rotations per second squared to be considered holding a gamepiece, temp value
+
+    public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 0.0);
+    public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
+    public static final LoggedTunableNumber kPivotD = new LoggedTunableNumber("Pivot D", 0.0);
+    public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.0);
+    public static final LoggedTunableNumber kPivotKG = new LoggedTunableNumber("Pivot kG", 0.0);
+
+    public static final LoggedTunableNumber kPivotStowAngle =
+        new LoggedTunableNumber("Pivot Stow Angle", 0.0);
+    public static final LoggedTunableNumber kPivotIntakeAngle =
+        new LoggedTunableNumber("Pivot Intake Angle", 0.0);
+    public static final LoggedTunableNumber kPivotOuttakeAngle =
+        new LoggedTunableNumber("Pivot Outtake Angle", 0.0);
+
+    public static final LoggedTunableNumber kRollerStowVoltage =
+        new LoggedTunableNumber("Roller Stow Voltage", 0.0);
+    public static final LoggedTunableNumber kRollerIntakeVoltage =
+        new LoggedTunableNumber("Roller Intake Voltage", 0.0);
+    public static final LoggedTunableNumber kRollerOuttakeVoltage =
+        new LoggedTunableNumber("Roller Outtake Voltage", 0.0);
+
+    // Simulation constants
+    public static final DCMotor kPivotSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final double kPivotSimGearing = kPivotGearRatio;
+    public static final double kPivotArmMass = Units.lbsToKilograms(3.419);
+    public static final double kPivotArmLength = Units.inchesToMeters(17.5);
+    public static final double kPivotSimMOI =
+        SingleJointedArmSim.estimateMOI(kPivotArmLength, kPivotArmMass);
+    public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(0.0);
+    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(65);
+    public static final boolean kSimSimulateGravity = true;
+    public static final Rotation2d kSimStartingAngle = kPivotMinAngle;
+
+    public static final DCMotor kRollerSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final double kRollerSimGearing = kRollerGearRatio;
+    public static final double kRollerSimMOI = 0.004;
+  }
+
+  public static final class CurrentLimitConstants {
+    // Drive
+    public static final double kDriveDefaultSupplyCurrentLimit = 75.0;
+    public static final double kDriveDefaultStatorCurrentLimit = 180.0;
+
+    public static final double kTurnDefaultSupplyCurrentLimit = 30.0;
+    public static final double kTurnDefaultStatorCurrentLimit = 120.0;
+
+    // Intake
+    public static final double kIntakePivotDefaultSupplyLimit = 80.0;
+    public static final double kIntakePivotDefaultStatorLimit = 120.0;
+
+    public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
+    public static final double kIntakeRollerDefaultStatorLimit = 120.0;
+  }
+
   public static final class Ports {
     public static final int kFrontLeftDrive = 0;
     public static final int kFrontLeftTurn = 1;
@@ -221,6 +289,10 @@ public final class Constants {
 
     // TODO: CHANGE TO ACTUAL
     public static final int kClimbMotor = 12;
+    public static final int kIntakeRoller = 15;
+    public static final int kIntakePivot = 16;
+
+    public static final int kIntakeAbsoluteEncoder = 5;
   }
 
   public class FieldConstants {

@@ -3,7 +3,7 @@ package frc.robot.subsystems.climb;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.utils.LoggedTunableNumber;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ClimbConstants;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
