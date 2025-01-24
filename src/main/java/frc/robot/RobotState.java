@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +14,7 @@ public class RobotState {
 
   // Subsystems
   private Drive m_drive;
+  private Indexer m_indexer;
   private AprilTagVision m_aprilTagVision;
 
   public enum RobotAction {
@@ -26,8 +28,9 @@ public class RobotState {
   // Singleton logic
   private static RobotState m_instance;
 
-  private RobotState(Drive drive, AprilTagVision aprilTagVision) {
+  private RobotState(Drive drive, Indexer indexer, AprilTagVision aprilTagVision) {
     m_drive = drive;
+    m_indexer = indexer;
     m_aprilTagVision = aprilTagVision;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
@@ -41,9 +44,10 @@ public class RobotState {
     return m_instance;
   }
 
-  public static RobotState startInstance(Drive drive, AprilTagVision aprilTagVision) {
+  public static RobotState startInstance(
+      Drive drive, Indexer indexer, AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, aprilTagVision);
+      m_instance = new RobotState(drive, indexer, aprilTagVision);
     }
     return m_instance;
   }

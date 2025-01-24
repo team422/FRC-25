@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
@@ -169,6 +170,28 @@ public final class Constants {
         new LoggedTunableNumber("cameraYaw", kCameraTransforms[kCalibIndex].getRotation().getZ());
   }
 
+  public static final class IndexerConstants {
+
+    public static final double kGearRatio = 30 / 8;
+    public static final double kRollerRadius = Units.inchesToMeters(2);
+
+    public static final LoggedTunableNumber kIndexerIdleVoltage =
+        new LoggedTunableNumber("Indexer Idle Voltage", 0.0);
+    public static final LoggedTunableNumber kIndexerIndexingVoltage =
+        new LoggedTunableNumber("Indexer Indexing Voltage", 12.0);
+
+    // Simulation constants
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final double kSimGearing = kGearRatio;
+    public static final double kSimMOI = 0.005;
+  }
+
+  public static final class CurrentLimitConstants {
+    // Indexer
+    public static final double kIndexerDefaultSupplyLimit = 80.0;
+    public static final double kIndexerDefaultStatorLimit = 120.0;
+  }
+
   public static final class Ports {
     public static final int kFrontLeftDrive = 0;
     public static final int kFrontLeftTurn = 1;
@@ -189,6 +212,8 @@ public final class Constants {
     public static final int kPigeon = 22;
 
     public static final String kCanivoreName = "Drivetrain";
+
+    public static final int kIndexerMotor = 13;
   }
 
   public class FieldConstants {
