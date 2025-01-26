@@ -49,6 +49,15 @@ public class ElevatorIOKraken implements ElevatorIO {
             .withSupplyCurrentLimitEnable(true)
             .withSupplyCurrentLimit(65.0);
 
+    m_feedbackConfigs =
+        new FeedbackConfigs().withSensorToMechanismRatio(ElevatorConstants.kSensorToMechanismRatio);
+
+    m_configs = m_configs.withFeedback(m_feedbackConfigs).withCurrentLimits(currentConfigs);
+
+    m_leadingMotor.getConfigurator().apply(m_configs);
+    m_followingMotor.getConfigurator().apply(m_configs);
+    m_followingMotor.setControl(new Follower(leadPort, true));
+
     m_leadingPosition = m_leadingMotor.getPosition();
     m_followingPosition = m_followingMotor.getPosition();
     m_leadingVoltage = m_leadingMotor.getMotorVoltage();
@@ -59,11 +68,9 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_followingStatorCurrent = m_followingMotor.getStatorCurrent();
     m_leadingTemp = m_leadingMotor.getDeviceTemp();
     m_followingTemp = m_followingMotor.getDeviceTemp();
-
+    BaseStatusSignal.setUpdateFrequencyForAll(100, m_leadingPosition, m_followingPosition);
     BaseStatusSignal.setUpdateFrequencyForAll(
-        ElevatorConstants.kUpdateFrequency,
-        m_leadingPosition,
-        m_followingPosition,
+        75,
         m_leadingVoltage,
         m_followingVoltage,
         m_leadingSupplyCurrent,
@@ -72,19 +79,6 @@ public class ElevatorIOKraken implements ElevatorIO {
         m_followingStatorCurrent,
         m_leadingTemp,
         m_followingTemp);
-
-    m_leadingMotor.optimizeBusUtilization(0, 1.0);
-
-    m_feedbackConfigs =
-        new FeedbackConfigs().withSensorToMechanismRatio(ElevatorConstants.kSensorToMechanismRatio);
-
-    m_configs = m_configs.withFeedback(m_feedbackConfigs).withCurrentLimits(currentConfigs);
-
-    m_leadingMotor.getConfigurator().DefaultTimeoutSeconds = 0.0;
-    m_followingMotor.getConfigurator().DefaultTimeoutSeconds = 0.0;
-    m_leadingMotor.getConfigurator().apply(m_configs);
-    m_followingMotor.getConfigurator().apply(m_configs);
-    m_followingMotor.setControl(new Follower(leadPort, true));
 
     ParentDevice.optimizeBusUtilizationForAll(m_leadingMotor, m_followingMotor);
   }
@@ -107,9 +101,7 @@ public class ElevatorIOKraken implements ElevatorIO {
                 m_followingStatorCurrent,
                 m_followingTemp)
             .isOK();
-    inputs.atSetpoint =
-        (m_leadingPosition.getValueAsDouble() - m_desiredHeight)
-            <= ElevatorConstants.kHeightTolerance;
+    inputs.atSetpoint = atSetpoint();
     inputs.desiredLocation = m_desiredHeight;
     inputs.leadingPosition = m_leadingPosition.getValueAsDouble();
     inputs.followingPosition = m_followingPosition.getValueAsDouble();
@@ -143,7 +135,8 @@ public class ElevatorIOKraken implements ElevatorIO {
                   .withKS(kS)
                   .withKV(kV)
                   .withKA(kA)
-                  .withKG(kG));
+                  .withKG(kG),
+              0.0);
     } else if (slot == 1) {
       m_leadingMotor
           .getConfigurator()
@@ -154,7 +147,8 @@ public class ElevatorIOKraken implements ElevatorIO {
                   .withKS(kS)
                   .withKV(kV)
                   .withKA(kA)
-                  .withKG(kG));
+                  .withKG(kG),
+              0.0);
     } else {
       m_leadingMotor
           .getConfigurator()
@@ -165,7 +159,8 @@ public class ElevatorIOKraken implements ElevatorIO {
                   .withKS(kS)
                   .withKV(kV)
                   .withKA(kA)
-                  .withKG(kG));
+                  .withKG(kG),
+              0.0);
     }
   }
 
@@ -174,29 +169,42 @@ public class ElevatorIOKraken implements ElevatorIO {
     var newConfigs = m_configs.CurrentLimits;
     newConfigs.StatorCurrentLimit = supplyLimit;
     newConfigs.SupplyCurrentLimit = supplyLimit;
-    m_leadingMotor.getConfigurator().apply(newConfigs);
+    m_leadingMotor.getConfigurator().apply(newConfigs, 0.0);
   }
 
   @Override
   public void setSlot(int slot) {
     if (slot == 0) {
-      m_leadingMotor.getConfigurator().apply(m_configs.Slot0);
+      m_leadingMotor.getConfigurator().apply(m_configs.Slot0, 0.0);
       m_magicMotion.withSlot(0);
     }
     if (slot == 1) {
-      m_leadingMotor.getConfigurator().apply(m_configs.Slot1);
+      m_leadingMotor.getConfigurator().apply(m_configs.Slot1, 0.0);
       m_magicMotion.withSlot(1);
     }
     if (slot == 2) {
-      m_leadingMotor.getConfigurator().apply(m_configs.Slot2);
+      m_leadingMotor.getConfigurator().apply(m_configs.Slot2, 0.0);
       m_magicMotion.withSlot(2);
     }
   }
 
   @Override
   public void setMagic(double velocity, double acceleration, double jerk) {
-    m_configs.MotionMagic.withMotionMagicCruiseVelocity(velocity)
-        .withMotionMagicAcceleration(acceleration)
-        .withMotionMagicJerk(jerk);
+    var magic =
+        m_configs.MotionMagic.withMotionMagicCruiseVelocity(velocity)
+            .withMotionMagicAcceleration(acceleration)
+            .withMotionMagicJerk(jerk);
+    m_leadingMotor.getConfigurator().apply(magic, 0.0);
+  }
+
+  @Override
+  public boolean atSetpoint() {
+    return (m_leadingPosition.getValueAsDouble() - m_desiredHeight)
+        <= ElevatorConstants.kHeightTolerance;
+  }
+
+  @Override
+  public double getCurrHeight() {
+    return m_leadingPosition.getValueAsDouble();
   }
 }

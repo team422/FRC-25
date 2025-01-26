@@ -68,7 +68,7 @@ public class ElevatorIOSim implements ElevatorIO {
     m_sim.setInputVoltage(m_voltage);
     m_sim.update(.02);
 
-    inputs.atSetpoint = m_controller.atGoal();
+    inputs.atSetpoint = atSetpoint();
     inputs.leadingPosition = m_sim.getPositionMeters();
     inputs.desiredLocation = m_controller.getGoal().position;
     inputs.leadingVoltage = m_voltage;
@@ -94,4 +94,15 @@ public class ElevatorIOSim implements ElevatorIO {
 
   @Override
   public void setMagic(double velocity, double acceleration, double jerk) {}
+
+  @Override
+  public boolean atSetpoint() {
+    return m_controller.atSetpoint();
+  }
+
+  @Override
+  public double getCurrHeight() {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented method 'getCurrHeight'");
+  }
 }

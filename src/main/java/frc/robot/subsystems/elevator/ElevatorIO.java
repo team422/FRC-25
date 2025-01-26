@@ -33,4 +33,8 @@ public interface ElevatorIO {
   public void setCurrentLimits(double supplyLimit);
 
   public void setMagic(double velocity, double acceleration, double jerk);
+
+  public boolean atSetpoint();
+
+  public double getCurrHeight();
 }

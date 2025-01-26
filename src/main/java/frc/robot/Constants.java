@@ -121,15 +121,16 @@ public final class Constants {
     public static final LoggedTunableNumber kMagicMotionJerk =
         new LoggedTunableNumber("Elevator MagicMotion Jerk", 0.0);
 
+    public static final double kStowHeight = 0;
+    public static final double kIntakingHeight = 0;
     public static final double kTroughHeight = 46;
     public static final double kL2Height = 81;
     public static final double kL3Height = 46;
     public static final double kL4Height = 46;
-    public static final double kL5Height = 46;
+    public static final double kKnockingHeight = 100;
 
     public static final double kRadius = .057;
     public static final double kSensorToMechanismRatio = 2 * kRadius * Math.PI * 54 / 12;
-    public static final double kUpdateFrequency = 100;
 
     // Simulation constants
     public static final double kSimGearing = 1.0;
