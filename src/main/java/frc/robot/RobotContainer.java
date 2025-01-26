@@ -9,6 +9,10 @@ import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
+import frc.robot.subsystems.climb.Climb;
+import frc.robot.subsystems.climb.ClimbIOKraken;
+import frc.robot.subsystems.climb.ClimbIOReplay;
+import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
@@ -41,6 +45,7 @@ public class RobotContainer {
   private Intake m_intake;
   private Indexer m_indexer;
   private AprilTagVision m_aprilTagVision;
+  private Climb m_climb;
 
   // Controller
   private DriverControls m_driverControls;
@@ -68,6 +73,7 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
+        m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
         m_intake =
             new Intake(
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
@@ -85,6 +91,9 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+        m_climb = new Climb(new ClimbIOSim());
+
+        m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
 
         m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
 
@@ -101,6 +110,7 @@ public class RobotContainer {
                 new ModuleIOReplay(),
                 new ModuleIOReplay());
 
+        m_climb = new Climb(new ClimbIOReplay());
         m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
 
         m_indexer = new Indexer(new IndexerIOReplay());
@@ -115,7 +125,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_intake, m_indexer, m_aprilTagVision);
+    RobotState.startInstance(m_drive, m_climb, m_intake, m_indexer, m_aprilTagVision);
   }
 
   /** Configure the commands. */
