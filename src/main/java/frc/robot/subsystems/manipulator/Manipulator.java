@@ -1,6 +1,7 @@
 package frc.robot.subsystems.manipulator;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ManipulatorConstants;
@@ -51,6 +52,8 @@ public class Manipulator extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double start = Timer.getFPGATimestamp();
+
     m_rollerIO.updateInputs(m_rollerInputs);
     m_wristIO.updateInputs(m_wristInputs);
     m_coralDetectorIO.updateInputs(m_coralDetectorInputs);
@@ -60,6 +63,8 @@ public class Manipulator extends SubsystemBase {
     Logger.processInputs("Manipulator/Roller", m_rollerInputs);
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
     Logger.processInputs("Manipulator/CoralDetector", m_coralDetectorInputs);
+    Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
+    Logger.recordOutput("PeriodicTime/Manipulator", Timer.getFPGATimestamp() - start);
   }
 
   public void updateState(ManipulatorState state) {

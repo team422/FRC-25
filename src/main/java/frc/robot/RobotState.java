@@ -3,7 +3,9 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.util.SubsystemProfiles;
@@ -16,7 +18,9 @@ public class RobotState {
   // Subsystems
   private Drive m_drive;
   private Intake m_intake;
+  private Indexer m_indexer;
   private Manipulator m_manipulator;
+  private Climb m_climb;
   private AprilTagVision m_aprilTagVision;
 
   public enum RobotAction {
@@ -31,11 +35,18 @@ public class RobotState {
   private static RobotState m_instance;
 
   private RobotState(
-      Drive drive, Intake intake, Manipulator manipulator, AprilTagVision aprilTagVision) {
+      Drive drive,
+      Intake intake,
+      Indexer indexer,
+      Manipulator manipulator,
+      Climb climb,
+      AprilTagVision aprilTagVision) {
     m_drive = drive;
     m_intake = intake;
+    m_indexer = indexer;
     m_manipulator = manipulator;
     m_aprilTagVision = aprilTagVision;
+    m_climb = climb;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
@@ -49,9 +60,14 @@ public class RobotState {
   }
 
   public static RobotState startInstance(
-      Drive drive, Intake intake, Manipulator manipulator, AprilTagVision aprilTagVision) {
+      Drive drive,
+      Intake intake,
+      Indexer indexer,
+      Manipulator manipulator,
+      Climb climb,
+      AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, intake, manipulator, aprilTagVision);
+      m_instance = new RobotState(drive, intake, indexer, manipulator, climb, aprilTagVision);
     }
     return m_instance;
   }
@@ -77,6 +93,7 @@ public class RobotState {
   }
 
   public void onEnable() {
+    m_climb.zeroEncoder();
     setDefaultAction();
   }
 

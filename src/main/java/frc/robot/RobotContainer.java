@@ -9,12 +9,20 @@ import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
+import frc.robot.subsystems.climb.Climb;
+import frc.robot.subsystems.climb.ClimbIOKraken;
+import frc.robot.subsystems.climb.ClimbIOReplay;
+import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.IndexerIOKraken;
+import frc.robot.subsystems.indexer.IndexerIOReplay;
+import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.pivot.PivotIOKraken;
 import frc.robot.subsystems.intake.pivot.PivotIOReplay;
@@ -44,7 +52,9 @@ public class RobotContainer {
   // Subsystems
   private Drive m_drive;
   private Intake m_intake;
+  private Indexer m_indexer;
   private Manipulator m_manipulator;
+  private Climb m_climb;
   private AprilTagVision m_aprilTagVision;
 
   // Controller
@@ -78,11 +88,15 @@ public class RobotContainer {
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
+        m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+
         m_manipulator =
             new Manipulator(
                 new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
                 new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
                 new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+
+        m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
 
         break;
 
@@ -97,11 +111,15 @@ public class RobotContainer {
 
         m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
 
+        m_indexer = new Indexer(new IndexerIOSim());
+
         m_manipulator =
             new Manipulator(
                 new ManipulatorRollerIOSim(),
                 new WristIOSim(),
                 new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+
+        m_climb = new Climb(new ClimbIOSim());
 
         break;
 
@@ -116,9 +134,13 @@ public class RobotContainer {
 
         m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
 
+        m_indexer = new Indexer(new IndexerIOReplay());
+
         m_manipulator =
             new Manipulator(
                 new ManipulatorRollerIOReplay(), new WristIOReplay(), new CoralDetectorIOReplay());
+
+        m_climb = new Climb(new ClimbIOReplay());
 
         break;
     }
@@ -130,7 +152,8 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_intake, m_manipulator, m_aprilTagVision);
+    RobotState.startInstance(
+        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_aprilTagVision);
   }
 
   /** Configure the commands. */
