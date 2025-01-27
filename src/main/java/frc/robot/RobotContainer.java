@@ -22,6 +22,15 @@ import frc.robot.subsystems.intake.pivot.PivotIOSim;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
+import frc.robot.subsystems.manipulator.Manipulator;
+import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOPhotoelectric;
+import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOReplay;
+import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOKraken;
+import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOReplay;
+import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOSim;
+import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
+import frc.robot.subsystems.manipulator.wrist.WristIOReplay;
+import frc.robot.subsystems.manipulator.wrist.WristIOSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -35,6 +44,7 @@ public class RobotContainer {
   // Subsystems
   private Drive m_drive;
   private Intake m_intake;
+  private Manipulator m_manipulator;
   private AprilTagVision m_aprilTagVision;
 
   // Controller
@@ -68,6 +78,12 @@ public class RobotContainer {
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
+        m_manipulator =
+            new Manipulator(
+                new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
+                new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
+                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+
         break;
 
       case SIM:
@@ -80,6 +96,12 @@ public class RobotContainer {
                 new ModuleIOSim());
 
         m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
+
+        m_manipulator =
+            new Manipulator(
+                new ManipulatorRollerIOSim(),
+                new WristIOSim(),
+                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
 
         break;
 
@@ -94,6 +116,10 @@ public class RobotContainer {
 
         m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
 
+        m_manipulator =
+            new Manipulator(
+                new ManipulatorRollerIOReplay(), new WristIOReplay(), new CoralDetectorIOReplay());
+
         break;
     }
 
@@ -104,7 +130,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_intake, m_aprilTagVision);
+    RobotState.startInstance(m_drive, m_intake, m_manipulator, m_aprilTagVision);
   }
 
   /** Configure the commands. */

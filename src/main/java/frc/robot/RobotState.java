@@ -5,6 +5,7 @@ import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +16,7 @@ public class RobotState {
   // Subsystems
   private Drive m_drive;
   private Intake m_intake;
+  private Manipulator m_manipulator;
   private AprilTagVision m_aprilTagVision;
 
   public enum RobotAction {
@@ -28,9 +30,11 @@ public class RobotState {
   // Singleton logic
   private static RobotState m_instance;
 
-  private RobotState(Drive drive, Intake intake, AprilTagVision aprilTagVision) {
+  private RobotState(
+      Drive drive, Intake intake, Manipulator manipulator, AprilTagVision aprilTagVision) {
     m_drive = drive;
     m_intake = intake;
+    m_manipulator = manipulator;
     m_aprilTagVision = aprilTagVision;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
@@ -45,9 +49,9 @@ public class RobotState {
   }
 
   public static RobotState startInstance(
-      Drive drive, Intake intake, AprilTagVision aprilTagVision) {
+      Drive drive, Intake intake, Manipulator manipulator, AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, intake, aprilTagVision);
+      m_instance = new RobotState(drive, intake, manipulator, aprilTagVision);
     }
     return m_instance;
   }
