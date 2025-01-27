@@ -77,8 +77,8 @@ public class Elevator extends SubsystemBase {
     Logger.recordOutput("Timing/elevatorPeriodic", Timer.getFPGATimestamp() - startingTime);
   }
 
-  public void changeState() {
-    switch (m_states.getCurrentProfile()) {
+  public void changeState(ElevatorState state) {
+    switch (state) {
       case kStow:
         m_states.setCurrentProfile(ElevatorState.kStow);
       case kScoring:

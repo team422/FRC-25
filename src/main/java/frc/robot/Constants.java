@@ -138,7 +138,7 @@ public final class Constants {
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
     public static final double kMinHeight = 0;
     public static final double kMaxHeight = 10000000;
-    public static final double kHeightTolerance = 22333333;
+    public static final double kHeightTolerance = .10;
   }
 
   public static final class AprilTagVisionConstants {
