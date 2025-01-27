@@ -264,6 +264,26 @@ public final class Constants {
 
     public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
+
+    // Indexer
+    public static final double kIndexerDefaultSupplyLimit = 30.0;
+    public static final double kIndexerDefaultStatorLimit = 120.0;
+  }
+
+  public static final class IndexerConstants {
+
+    public static final double kGearRatio = 30 / 8;
+    public static final double kRollerRadius = Units.inchesToMeters(2);
+
+    public static final LoggedTunableNumber kIndexerIdleVoltage =
+        new LoggedTunableNumber("Indexer Idle Voltage", 0.0);
+    public static final LoggedTunableNumber kIndexerIndexingVoltage =
+        new LoggedTunableNumber("Indexer Indexing Voltage", 12.0);
+
+    // Simulation constants
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final double kSimGearing = kGearRatio;
+    public static final double kSimMOI = 0.005;
   }
 
   public static final class Ports {
@@ -293,6 +313,8 @@ public final class Constants {
     public static final int kIntakePivot = 16;
 
     public static final int kIntakeAbsoluteEncoder = 5;
+
+    public static final int kIndexerMotor = 13;
   }
 
   public class FieldConstants {

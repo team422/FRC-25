@@ -1,7 +1,6 @@
 package frc.robot.oi;
 
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class DriverControlsXbox implements DriverControls {
   private CommandXboxController m_controller;
@@ -23,10 +22,5 @@ public class DriverControlsXbox implements DriverControls {
   @Override
   public double getTurn() {
     return m_controller.getRightX();
-  }
-
-  @Override
-  public Trigger getClimbDeploy() {
-    return m_controller.x();
   }
 }

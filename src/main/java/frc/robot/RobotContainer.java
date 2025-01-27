@@ -19,6 +19,10 @@ import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.IndexerIOKraken;
+import frc.robot.subsystems.indexer.IndexerIOReplay;
+import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.pivot.PivotIOKraken;
 import frc.robot.subsystems.intake.pivot.PivotIOReplay;
@@ -39,6 +43,7 @@ public class RobotContainer {
   // Subsystems
   private Drive m_drive;
   private Intake m_intake;
+  private Indexer m_indexer;
   private AprilTagVision m_aprilTagVision;
   private Climb m_climb;
 
@@ -74,6 +79,8 @@ public class RobotContainer {
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
+        m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+
         break;
 
       case SIM:
@@ -90,6 +97,8 @@ public class RobotContainer {
 
         m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
 
+        m_indexer = new Indexer(new IndexerIOSim());
+
         break;
 
       case REPLAY:
@@ -104,6 +113,8 @@ public class RobotContainer {
         m_climb = new Climb(new ClimbIOReplay());
         m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
 
+        m_indexer = new Indexer(new IndexerIOReplay());
+
         break;
     }
 
@@ -114,7 +125,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_climb, m_intake, m_aprilTagVision);
+    RobotState.startInstance(m_drive, m_climb, m_intake, m_indexer, m_aprilTagVision);
   }
 
   /** Configure the commands. */
@@ -143,13 +154,6 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
-    m_driverControls
-        .getClimbDeploy()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  m_climb.toggleDeploy();
-                }));
   }
 
   /**

@@ -5,6 +5,7 @@ import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ public class RobotState {
   // Subsystems
   private Drive m_drive;
   private Intake m_intake;
+  private Indexer m_indexer;
   private AprilTagVision m_aprilTagVision;
   private Climb m_climb;
 
@@ -30,9 +32,11 @@ public class RobotState {
   // Singleton logic
   private static RobotState m_instance;
 
-  private RobotState(Drive drive, Climb climb, Intake intake, AprilTagVision aprilTagVision) {
+  private RobotState(
+      Drive drive, Climb climb, Intake intake, Indexer indexer, AprilTagVision aprilTagVision) {
     m_drive = drive;
     m_intake = intake;
+    m_indexer = indexer;
     m_aprilTagVision = aprilTagVision;
     m_climb = climb;
 
@@ -48,9 +52,9 @@ public class RobotState {
   }
 
   public static RobotState startInstance(
-      Drive drive, Climb climb, Intake intake, AprilTagVision aprilTagVision) {
+      Drive drive, Climb climb, Intake intake, Indexer indexer, AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, climb, intake, aprilTagVision);
+      m_instance = new RobotState(drive, climb, intake, indexer, aprilTagVision);
     }
     return m_instance;
   }
