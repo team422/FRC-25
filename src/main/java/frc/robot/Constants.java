@@ -200,7 +200,7 @@ public final class Constants {
   }
 
   public static final class IntakeConstants {
-    public static final double kPivotGearRatio = (66.0 / 10.0) * (32.0 / 14.0);
+    public static final double kPivotGearRatio = (84.0 / 8.0) * (36.0 / 14.0);
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
 
@@ -250,6 +250,52 @@ public final class Constants {
     public static final double kRollerSimMOI = 0.004;
   }
 
+  public static final class ManipulatorConstants {
+    public static final double kWristGearRatio = (66.0 / 10.0) * (32.0 / 14.0);
+    public static final double kRollerGearRatio = (58.0 / 16.0);
+    public static final double kRollerRadius = Units.inchesToMeters(3);
+
+    public static final double kWristTolerance = 2.0; // degrees
+
+    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
+
+    public static final LoggedTunableNumber kWristP = new LoggedTunableNumber("Wrist P", 0.0);
+    public static final LoggedTunableNumber kWristI = new LoggedTunableNumber("Wrist I", 0.0);
+    public static final LoggedTunableNumber kWristD = new LoggedTunableNumber("Wrist D", 0.0);
+    public static final LoggedTunableNumber kWristKS = new LoggedTunableNumber("Wrist kS", 0.0);
+    public static final LoggedTunableNumber kWristKG = new LoggedTunableNumber("Wrist kG", 0.0);
+
+    public static final LoggedTunableNumber kWristStowAngle =
+        new LoggedTunableNumber("Wrist Stow Angle", 0.0);
+    public static final LoggedTunableNumber kWristIntakeAngle =
+        new LoggedTunableNumber("Wrist Intake Angle", 0.0);
+    public static final LoggedTunableNumber kWristScoringOffset =
+        new LoggedTunableNumber("Wrist Scoring Offset", 0.0);
+
+    public static final LoggedTunableNumber kRollerStowVoltage =
+        new LoggedTunableNumber("Roller Stow Voltage", 0.0);
+    public static final LoggedTunableNumber kRollerIntakeVoltage =
+        new LoggedTunableNumber("Roller Intake Voltage", 0.0);
+    public static final LoggedTunableNumber kRollerScoringVoltage =
+        new LoggedTunableNumber("Roller Scoring Voltage", 0.0);
+
+    // Simulation constants
+    public static final DCMotor kWristSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final double kWristSimGearing = kWristGearRatio;
+    public static final double kWristArmMass = Units.lbsToKilograms(3.373);
+    public static final double kWristArmLength = Units.inchesToMeters(7.75);
+    public static final double kWristSimMOI =
+        SingleJointedArmSim.estimateMOI(kWristArmLength, kWristArmMass);
+    public static final Rotation2d kWristMinAngle = Rotation2d.fromDegrees(0.0);
+    public static final Rotation2d kWristMaxAngle = Rotation2d.fromDegrees(130.0);
+    public static final boolean kSimSimulateGravity = true;
+    public static final Rotation2d kSimStartingAngle = kWristMinAngle;
+
+    public static final DCMotor kRollerSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final double kRollerSimGearing = kRollerGearRatio;
+    public static final double kRollerSimMOI = 0.004;
+  }
+
   public static final class CurrentLimitConstants {
     // Drive
     public static final double kDriveDefaultSupplyCurrentLimit = 75.0;
@@ -264,6 +310,13 @@ public final class Constants {
 
     public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
+
+    // Manipulator
+    public static final double kManipulatorWristDefaultSupplyLimit = 80.0;
+    public static final double kManipulatorWristDefaultStatorLimit = 120.0;
+
+    public static final double kManipulatorRollerDefaultSupplyLimit = 80.0;
+    public static final double kManipulatorRollerDefaultStatorLimit = 120.0;
 
     // Indexer
     public static final double kIndexerDefaultSupplyLimit = 30.0;
@@ -312,9 +365,17 @@ public final class Constants {
     public static final int kIntakeRoller = 15;
     public static final int kIntakePivot = 16;
 
+    public static final int kManipulatorRoller = 17;
+    public static final int kManipulatorWrist = 18;
+
     public static final int kIntakeAbsoluteEncoder = 5;
 
     public static final int kIndexerMotor = 13;
+
+    public static final int kManipulatorAbsoluteEncoder = 6;
+
+    public static final int kPhotoElectricOne = 8;
+    public static final int kPhotoElectricTwo = 9;
   }
 
   public class FieldConstants {

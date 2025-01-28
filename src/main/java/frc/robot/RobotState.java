@@ -7,6 +7,7 @@ import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,8 +19,9 @@ public class RobotState {
   private Drive m_drive;
   private Intake m_intake;
   private Indexer m_indexer;
-  private AprilTagVision m_aprilTagVision;
+  private Manipulator m_manipulator;
   private Climb m_climb;
+  private AprilTagVision m_aprilTagVision;
 
   public enum RobotAction {
     kTeleopDefault,
@@ -33,10 +35,16 @@ public class RobotState {
   private static RobotState m_instance;
 
   private RobotState(
-      Drive drive, Climb climb, Intake intake, Indexer indexer, AprilTagVision aprilTagVision) {
+      Drive drive,
+      Intake intake,
+      Indexer indexer,
+      Manipulator manipulator,
+      Climb climb,
+      AprilTagVision aprilTagVision) {
     m_drive = drive;
     m_intake = intake;
     m_indexer = indexer;
+    m_manipulator = manipulator;
     m_aprilTagVision = aprilTagVision;
     m_climb = climb;
 
@@ -52,9 +60,14 @@ public class RobotState {
   }
 
   public static RobotState startInstance(
-      Drive drive, Climb climb, Intake intake, Indexer indexer, AprilTagVision aprilTagVision) {
+      Drive drive,
+      Intake intake,
+      Indexer indexer,
+      Manipulator manipulator,
+      Climb climb,
+      AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, climb, intake, indexer, aprilTagVision);
+      m_instance = new RobotState(drive, intake, indexer, manipulator, climb, aprilTagVision);
     }
     return m_instance;
   }

@@ -30,6 +30,15 @@ import frc.robot.subsystems.intake.pivot.PivotIOSim;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
+import frc.robot.subsystems.manipulator.Manipulator;
+import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOPhotoelectric;
+import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOReplay;
+import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOKraken;
+import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOReplay;
+import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOSim;
+import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
+import frc.robot.subsystems.manipulator.wrist.WristIOReplay;
+import frc.robot.subsystems.manipulator.wrist.WristIOSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -44,8 +53,9 @@ public class RobotContainer {
   private Drive m_drive;
   private Intake m_intake;
   private Indexer m_indexer;
-  private AprilTagVision m_aprilTagVision;
+  private Manipulator m_manipulator;
   private Climb m_climb;
+  private AprilTagVision m_aprilTagVision;
 
   // Controller
   private DriverControls m_driverControls;
@@ -73,13 +83,20 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
-        m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
         m_intake =
             new Intake(
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+
+        m_manipulator =
+            new Manipulator(
+                new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
+                new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
+                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+
+        m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
 
         break;
 
@@ -91,13 +108,18 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
-        m_climb = new Climb(new ClimbIOSim());
-
-        m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
 
         m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
 
         m_indexer = new Indexer(new IndexerIOSim());
+
+        m_manipulator =
+            new Manipulator(
+                new ManipulatorRollerIOSim(),
+                new WristIOSim(),
+                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+
+        m_climb = new Climb(new ClimbIOSim());
 
         break;
 
@@ -110,10 +132,15 @@ public class RobotContainer {
                 new ModuleIOReplay(),
                 new ModuleIOReplay());
 
-        m_climb = new Climb(new ClimbIOReplay());
         m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
 
         m_indexer = new Indexer(new IndexerIOReplay());
+
+        m_manipulator =
+            new Manipulator(
+                new ManipulatorRollerIOReplay(), new WristIOReplay(), new CoralDetectorIOReplay());
+
+        m_climb = new Climb(new ClimbIOReplay());
 
         break;
     }
@@ -125,7 +152,8 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_climb, m_intake, m_indexer, m_aprilTagVision);
+    RobotState.startInstance(
+        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_aprilTagVision);
   }
 
   /** Configure the commands. */
