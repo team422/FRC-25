@@ -3,6 +3,7 @@ package frc.robot.subsystems.manipulator;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIO;
@@ -21,7 +22,7 @@ public class Manipulator extends SubsystemBase {
   private WristIO m_wristIO;
   private CoralDetectorIO m_coralDetectorIO;
 
-  private FieldConstants.ReefHeight m_desiredScoringLocation;
+  private FieldConstants.ReefHeight m_desiredScoringLocation = FieldConstants.ReefHeight.L1;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -52,6 +53,22 @@ public class Manipulator extends SubsystemBase {
 
   @Override
   public void periodic() {
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_wristIO.setPIDFF(
+              ManipulatorConstants.kWristP.get(),
+              ManipulatorConstants.kWristI.get(),
+              ManipulatorConstants.kWristD.get(),
+              ManipulatorConstants.kWristKS.get(),
+              ManipulatorConstants.kWristKG.get());
+        },
+        ManipulatorConstants.kWristP,
+        ManipulatorConstants.kWristI,
+        ManipulatorConstants.kWristD,
+        ManipulatorConstants.kWristKS,
+        ManipulatorConstants.kWristKG);
+
     double start = Timer.getFPGATimestamp();
 
     m_rollerIO.updateInputs(m_rollerInputs);
@@ -77,6 +94,10 @@ public class Manipulator extends SubsystemBase {
 
   public void setDesiredScoringLocation(FieldConstants.ReefHeight location) {
     m_desiredScoringLocation = location;
+  }
+
+  public FieldConstants.ReefHeight getScoringLocation() {
+    return m_desiredScoringLocation;
   }
 
   public void stowPeriodic() {

@@ -24,10 +24,16 @@ public class WristIOSim implements WristIO {
             ManipulatorConstants.kWristSimGearbox,
             ManipulatorConstants.kWristSimGearing,
             ManipulatorConstants.kWristArmLength,
-            ManipulatorConstants.kWristMinAngle.getRadians(),
-            ManipulatorConstants.kWristMaxAngle.getRadians(),
+            ManipulatorConstants.kWristMinAngle
+                .plus(ManipulatorConstants.kWristOffset)
+                .getRadians(),
+            ManipulatorConstants.kWristMaxAngle
+                .plus(ManipulatorConstants.kWristOffset)
+                .getRadians(),
             ManipulatorConstants.kSimSimulateGravity,
-            ManipulatorConstants.kSimStartingAngle.getRadians());
+            ManipulatorConstants.kSimStartingAngle
+                .plus(ManipulatorConstants.kWristOffset)
+                .getRadians());
 
     m_controller.setTolerance(ManipulatorConstants.kWristTolerance);
   }
