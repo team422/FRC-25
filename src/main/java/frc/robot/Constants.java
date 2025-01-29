@@ -15,6 +15,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,6 +132,17 @@ public final class Constants {
     public static final double kSimMaxAngleRad = Units.degreesToRadians(360);
     public static final double kSimStartingAngleRad = Units.degreesToRadians(0);
     public static final boolean kSimGravity = false;
+  }
+
+  public static final class LedConstants {
+    public static final int kStripLength = 60;
+
+    public static final Color kOff = Color.kRed;
+    public static final Color kAutoscore = Color.kGreen;
+    public static final Color kHasGampiece = Color.kDarkMagenta;
+    public static final Color kEnabled = Color.kYellow;
+    public static final Color kDisabled = Color.kRed;
+    public static final Color kAlert = Color.kGold;
   }
 
   public static final class AprilTagVisionConstants {
@@ -376,6 +388,8 @@ public final class Constants {
 
     public static final int kPhotoElectricOne = 8;
     public static final int kPhotoElectricTwo = 9;
+
+    public static final int kLed = 2;
   }
 
   public class FieldConstants {
