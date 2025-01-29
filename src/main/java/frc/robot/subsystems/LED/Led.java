@@ -62,9 +62,8 @@ public class Led extends SubsystemBase {
         pattern = LEDPattern.solid(LedConstants.kAlert);
         break;
       case kOff:
-        pattern = LEDPattern.kOff;
       default:
-        pattern = LEDPattern.solid(LedConstants.kOff);
+        pattern = LEDPattern.kOff;
         break;
     }
     pattern.applyTo(m_buffer);

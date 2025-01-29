@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.Ports;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
@@ -32,6 +31,7 @@ import frc.robot.subsystems.intake.pivot.PivotIOSim;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
+import frc.robot.subsystems.led.Led;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOPhotoelectric;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOReplay;
@@ -41,8 +41,6 @@ import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOSim;
 import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
 import frc.robot.subsystems.manipulator.wrist.WristIOReplay;
 import frc.robot.subsystems.manipulator.wrist.WristIOSim;
-import frc.robot.subsystems.led.Led;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -160,7 +158,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
     RobotState.startInstance(
-        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_aprilTagVision);
+        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_led, m_aprilTagVision);
   }
 
   /** Configure the commands. */

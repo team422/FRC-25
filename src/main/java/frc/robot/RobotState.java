@@ -7,6 +7,7 @@ import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.led.Led;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class RobotState {
   private Indexer m_indexer;
   private Manipulator m_manipulator;
   private Climb m_climb;
+  private Led m_led;
   private AprilTagVision m_aprilTagVision;
 
   public enum RobotAction {
@@ -40,13 +42,15 @@ public class RobotState {
       Indexer indexer,
       Manipulator manipulator,
       Climb climb,
+      Led led,
       AprilTagVision aprilTagVision) {
     m_drive = drive;
     m_intake = intake;
     m_indexer = indexer;
     m_manipulator = manipulator;
-    m_aprilTagVision = aprilTagVision;
     m_climb = climb;
+    m_led = led;
+    m_aprilTagVision = aprilTagVision;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
@@ -65,9 +69,10 @@ public class RobotState {
       Indexer indexer,
       Manipulator manipulator,
       Climb climb,
+      Led led,
       AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, intake, indexer, manipulator, climb, aprilTagVision);
+      m_instance = new RobotState(drive, intake, indexer, manipulator, climb, led, aprilTagVision);
     }
     return m_instance;
   }
