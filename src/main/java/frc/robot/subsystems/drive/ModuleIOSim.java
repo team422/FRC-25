@@ -89,4 +89,7 @@ public class ModuleIOSim implements ModuleIO {
 
   @Override
   public void setTurnBrakeMode(boolean enable) {}
+
+  @Override
+  public void setCurrentLimits(double supplyLimit) {}
 }
