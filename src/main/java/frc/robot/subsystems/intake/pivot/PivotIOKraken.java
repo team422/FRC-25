@@ -8,6 +8,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -112,7 +113,14 @@ public class PivotIOKraken implements PivotIO {
   public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
     m_motor
         .getConfigurator()
-        .apply(m_config.Slot0.withKP(kP).withKI(kI).withKD(kD).withKS(kS).withKG(kG), 0.0);
+        .apply(
+            m_config.Slot0.withKP(kP)
+                .withKI(kI)
+                .withKD(kD)
+                .withKS(kS)
+                .withKG(kG)
+                .withGravityType(GravityTypeValue.Arm_Cosine),
+            0.0);
   }
 
   @Override
