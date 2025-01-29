@@ -104,6 +104,8 @@ public final class Constants {
   }
 
   public static final class LedConstants {
+    public static final int kStripLength = 60;
+
     public static final Color kOff = Color.kRed;
     public static final Color kAutoscore = Color.kGreen;
     public static final Color kHasGampiece = Color.kDarkMagenta;
@@ -198,6 +200,8 @@ public final class Constants {
     public static final int kPigeon = 22;
 
     public static final String kCanivoreName = "Drivetrain";
+
+    public static final int kLed = 2;
   }
 
   public class FieldConstants {

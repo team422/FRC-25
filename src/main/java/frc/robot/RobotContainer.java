@@ -3,6 +3,8 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.LedConstants;
+import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -14,6 +16,8 @@ import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.led.Led;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -26,6 +30,7 @@ public class RobotContainer {
 
   // Subsystems
   private Drive m_drive;
+  private Led m_led;
   private AprilTagVision m_aprilTagVision;
 
   // Controller
@@ -78,6 +83,8 @@ public class RobotContainer {
 
         break;
     }
+
+    m_led = new Led(Ports.kLed, LedConstants.kStripLength);
 
     m_aprilTagVision =
         new AprilTagVision(
