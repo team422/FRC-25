@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
@@ -118,6 +119,7 @@ public class AprilTagVision extends SubsystemBase {
         Pose3d cameraPose = null;
         Pose3d robotPose3d = null;
         boolean useVisionRotation = false;
+        double error = 0;
         switch (tagCount) {
           case 0:
             // No tag, do nothing
@@ -141,6 +143,9 @@ public class AprilTagVision extends SubsystemBase {
                     AprilTagVisionConstants.kCameraTransforms[instanceIndex].inverse());
 
             useVisionRotation = true;
+
+            error = values[1];
+
             break;
           case 2:
             // Two possible poses (one tag detected), need to choose one
@@ -163,6 +168,8 @@ public class AprilTagVision extends SubsystemBase {
             double rotationX2 = values[14];
             double rotationY2 = values[15];
             double rotationZ2 = values[16];
+
+            // TODO: add blacklist TO PI, NOT HERE
 
             Pose3d cameraPose1 =
                 new Pose3d(
@@ -196,14 +203,13 @@ public class AprilTagVision extends SubsystemBase {
               if (angle1 < angle2) {
                 cameraPose = cameraPose1;
                 robotPose3d = robotPose3d1;
+                error = error1;
               } else {
                 cameraPose = cameraPose2;
                 robotPose3d = robotPose3d2;
+                error = error2;
               }
             }
-
-            useVisionRotation =
-                false; // since there are two possible poses we shouldn't rely on the rotation
 
             Logger.recordOutput(
                 "AprilTagVision/Inst" + instanceIndex + "/robotPose3d1", robotPose3d1);
@@ -263,6 +269,20 @@ public class AprilTagVision extends SubsystemBase {
           tagPose.ifPresent(tagPoses::add);
         }
 
+        // if camera error low, distance to tag small, robot not moving, we can trust rotation
+        // should only ever be single tag but leaving it in for now in case we switch
+        if (!useVisionRotation) {
+          Pose3d tagPose = tagPoses.get(0);
+          double distance = tagPose.getTranslation().getDistance(cameraPose.getTranslation());
+          ChassisSpeeds speeds = RobotState.getInstance().getRobotSpeeds();
+          if (error < AprilTagVisionConstants.kRotationErrorThreshold
+              && distance < AprilTagVisionConstants.kRotationDistanceThreshold
+              && speeds.vxMetersPerSecond < AprilTagVisionConstants.kRotationSpeedThreshold
+              && speeds.vyMetersPerSecond < AprilTagVisionConstants.kRotationSpeedThreshold) {
+            useVisionRotation = true;
+          }
+        }
+
         // Calculate average distance to tag
         double totalDistance = 0.0;
         for (Pose3d tagPose : tagPoses) {
@@ -272,18 +292,18 @@ public class AprilTagVision extends SubsystemBase {
 
         // Add observation to list
         double xyStandardDeviation = 1;
-        if (edu.wpi.first.wpilibj.RobotState.isAutonomous()) {
-          xyStandardDeviation =
-              3.3
-                  * AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
-                  * Math.pow(averageDistance, 2.0)
-                  / tagPoses.size();
-        } else {
-          xyStandardDeviation =
-              AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
-                  * Math.pow(averageDistance, 2.0)
-                  / tagPoses.size();
-        }
+        xyStandardDeviation =
+            AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
+                // evil math
+                // if the error is under the threshold, we make the standard deviation smaller
+                // but if the error is above the threshold, we make the standard deviation larger
+                // i had to use desmos for this
+                * Math.pow(error + 1 - AprilTagVisionConstants.kErrorStandardDeviationThreshold, 4)
+
+                // back to normal math
+                * Math.pow(averageDistance, 2.0)
+                / tagPoses.size();
+
         double thetaStandardDeviation = 1;
         if (useVisionRotation) {
           thetaStandardDeviation =
@@ -345,6 +365,7 @@ public class AprilTagVision extends SubsystemBase {
     }
 
     // Send to RobotState
+    // TODO: mess around
     int maxObservations = 10;
     if (allVisionObservations.size() > maxObservations) {
       allVisionObservations = allVisionObservations.subList(0, maxObservations);

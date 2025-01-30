@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
@@ -116,5 +117,9 @@ public class RobotState {
 
   public Pose2d getRobotPose() {
     return m_drive.getPose();
+  }
+
+  public ChassisSpeeds getRobotSpeeds() {
+    return m_drive.getChassisSpeeds();
   }
 }
