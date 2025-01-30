@@ -44,17 +44,17 @@ public class DynamicCurrentLimitsManager {
 
     // if robot is in a drive action
 
-    for (RobotAction action : driveActions) {
-      if (frc.robot.RobotState.getInstance().getCurrentAction() == action) {
-        // TODO: increase minimums
-        double moduleBudget = Math.max(Math.floor(CURRENT_BUDGET * 0.7 / 4), 30);
-        double shooterBudget = Math.max(Math.floor(CURRENT_BUDGET * 0.15), 25);
-        double shooterPivotBudget = Math.max(Math.floor(CURRENT_BUDGET * 0.05), 10);
+    // for (RobotAction action : driveActions) {
+    //   if (frc.robot.RobotState.getInstance().getCurrentAction() == action) {
+    //     // TODO: increase minimums
+    //     double moduleBudget = Math.max(Math.floor(CURRENT_BUDGET * 0.7 / 4), 30);
+    //     double shooterBudget = Math.max(Math.floor(CURRENT_BUDGET * 0.15), 25);
+    //     double shooterPivotBudget = Math.max(Math.floor(CURRENT_BUDGET * 0.05), 10);
 
-        // frc.robot.RobotState.getInstance().setCurrentLimits(moduleBudget, shooterBudget,
-        // shooterPivotBudget);
-      }
-    }
+    //     // frc.robot.RobotState.getInstance().setCurrentLimits(moduleBudget, shooterBudget,
+    //     // shooterPivotBudget);
+    //   }
+    // }
 
     // // if robot is in a shooting action
     // for (RobotAction action : shootingActions) {

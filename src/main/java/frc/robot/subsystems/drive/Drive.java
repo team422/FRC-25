@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.lib.utils.LoggedTunableNumber;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.util.SubsystemProfiles;
@@ -398,5 +398,11 @@ public class Drive extends SubsystemBase {
 
   public boolean headingWithinTolerance() {
     return Math.abs(m_headingController.getError()) < Units.degreesToRadians(5);
+  }
+
+  public void setModuleCurrentLimits(double supplyLimit) {
+    for (var module : m_modules) {
+      module.setCurrentLimits(supplyLimit);
+    }
   }
 }

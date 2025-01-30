@@ -16,6 +16,8 @@ package frc.robot.subsystems.drive;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -29,6 +31,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
 import java.util.Queue;
@@ -65,8 +68,11 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final StatusSignal<Voltage> m_turnAppliedVolts;
   private final StatusSignal<Current> m_turnCurrent;
 
-  private final boolean isTurnMotorInverted = true;
-  private final Rotation2d absoluteEncoderOffset;
+  private final boolean m_isTurnMotorInverted = true;
+  private final Rotation2d m_absoluteEncoderOffset;
+
+  private final TalonFXConfiguration m_driveConfig;
+  private final TalonFXConfiguration m_turnConfig;
 
   public ModuleIOTalonFX(int index) {
     switch (index) {
@@ -74,48 +80,57 @@ public class ModuleIOTalonFX implements ModuleIO {
         m_driveTalon = new TalonFX(Ports.kFrontLeftDrive, Ports.kCanivoreName);
         m_turnTalon = new TalonFX(Ports.kFrontLeftTurn, Ports.kCanivoreName);
         m_cancoder = new CANcoder(Ports.kFrontLeftCancoder, Ports.kCanivoreName);
-        absoluteEncoderOffset = new Rotation2d(1.617); // MUST BE CALIBRATED
+        m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       case 1:
         m_driveTalon = new TalonFX(Ports.kFrontRightDrive, Ports.kCanivoreName);
         m_turnTalon = new TalonFX(Ports.kFrontRightTurn, Ports.kCanivoreName);
         m_cancoder = new CANcoder(Ports.kFrontRightCancoder, Ports.kCanivoreName);
-        absoluteEncoderOffset = new Rotation2d(2.750); // MUST BE CALIBRATED
+        m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       case 2:
         m_driveTalon = new TalonFX(Ports.kBackLeftDrive, Ports.kCanivoreName);
         m_turnTalon = new TalonFX(Ports.kBackLeftTurn, Ports.kCanivoreName);
         m_cancoder = new CANcoder(Ports.kBackLeftCancoder, Ports.kCanivoreName);
-        absoluteEncoderOffset = new Rotation2d(-0.948); // MUST BE CALIBRATED
+        m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       case 3:
         m_driveTalon = new TalonFX(Ports.kBackRightDrive, Ports.kCanivoreName);
         m_turnTalon = new TalonFX(Ports.kBackRightTurn, Ports.kCanivoreName);
         m_cancoder = new CANcoder(Ports.kBackRightCancoder, Ports.kCanivoreName);
-        absoluteEncoderOffset = new Rotation2d(2.049); // MUST BE CALIBRATED
+        m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       default:
         throw new RuntimeException("Invalid module index");
     }
 
-    // TODO: update to look prettier (cool method chaining tech)
-    var driveConfig = new TalonFXConfiguration();
-    driveConfig.CurrentLimits.SupplyCurrentLimit = 75.0;
-    driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    driveConfig.CurrentLimits.StatorCurrentLimit = 180.0;
-    driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    m_driveTalon.getConfigurator().apply(driveConfig);
+    var driveCurrentLimits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kDriveDefaultSupplyCurrentLimit)
+            .withStatorCurrentLimitEnable(true)
+            .withStatorCurrentLimit(CurrentLimitConstants.kDriveDefaultStatorCurrentLimit);
+
+    m_driveConfig = new TalonFXConfiguration().withCurrentLimits(driveCurrentLimits);
+    m_driveTalon.getConfigurator().apply(m_driveConfig);
     setDriveBrakeMode(true);
 
-    var turnConfig = new TalonFXConfiguration();
-    turnConfig.CurrentLimits.SupplyCurrentLimit = 30.0;
-    turnConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-    turnConfig.CurrentLimits.StatorCurrentLimit = 120.0;
-    turnConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    m_turnTalon.getConfigurator().apply(turnConfig);
+    var turnCurrentLimits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kTurnDefaultSupplyCurrentLimit)
+            .withStatorCurrentLimitEnable(true)
+            .withStatorCurrentLimit(CurrentLimitConstants.kTurnDefaultStatorCurrentLimit);
+
+    m_turnConfig = new TalonFXConfiguration().withCurrentLimits(turnCurrentLimits);
+    m_turnTalon.getConfigurator().apply(m_turnConfig);
     setTurnBrakeMode(true);
 
-    m_cancoder.getConfigurator().apply(new CANcoderConfiguration());
+    // we want to keep the existing offset so we can set them in phoenix tuner rather than code
+    var currMagnet = new MagnetSensorConfigs();
+    m_cancoder.getConfigurator().refresh(currMagnet);
+
+    m_cancoder.getConfigurator().apply(new CANcoderConfiguration().withMagnetSensor(currMagnet));
 
     m_timestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
 
@@ -173,7 +188,7 @@ public class ModuleIOTalonFX implements ModuleIO {
 
     inputs.turnAbsolutePosition =
         Rotation2d.fromRotations(m_turnAbsolutePosition.getValueAsDouble())
-            .minus(absoluteEncoderOffset);
+            .minus(m_absoluteEncoderOffset);
     inputs.turnPosition =
         Rotation2d.fromRotations(m_turnPosition.getValueAsDouble() / DriveConstants.kTurnGearRatio);
     inputs.turnVelocityRadPerSec =
@@ -219,10 +234,16 @@ public class ModuleIOTalonFX implements ModuleIO {
   public void setTurnBrakeMode(boolean enable) {
     var config = new MotorOutputConfigs();
     config.Inverted =
-        isTurnMotorInverted
+        m_isTurnMotorInverted
             ? InvertedValue.Clockwise_Positive
             : InvertedValue.CounterClockwise_Positive;
     config.NeutralMode = enable ? NeutralModeValue.Brake : NeutralModeValue.Coast;
     m_turnTalon.getConfigurator().apply(config);
+  }
+
+  @Override
+  public void setCurrentLimits(double supplyLimit) {
+    m_driveConfig.CurrentLimits.SupplyCurrentLimit = supplyLimit;
+    m_driveTalon.getConfigurator().apply(m_driveConfig.CurrentLimits, 0.0);
   }
 }
