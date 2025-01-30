@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
@@ -22,7 +21,6 @@ import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.Elevator.ElevatorState;
 import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOReplay;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
@@ -201,29 +199,6 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
-    m_driverControls
-        .elevatorStow()
-        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kStow)));
-    m_driverControls
-        .elevatorScoring()
-        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kScoring)));
-    m_driverControls
-        .elevatorIntaking()
-        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kIntaking)));
-    m_driverControls
-        .elevatorKnocking()
-        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kKnocking)));
-    m_driverControls
-        .incrementScoringLocation()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  var curr = m_elevator.getDesiredScoringLocation();
-                  FieldConstants.ReefHeight[] heights = FieldConstants.ReefHeight.values();
-                  int val = curr.ordinal();
-                  val = (val + 1) % heights.length;
-                  m_elevator.setDesiredScoringLocation(heights[val]);
-                }));
   }
 
   /**
