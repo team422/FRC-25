@@ -131,6 +131,8 @@ public final class Constants {
 
     public static final double kRadius = .057;
     public static final double kSensorToMechanismRatio = 2 * kRadius * Math.PI * 54 / 12;
+    public static final LoggedTunableNumber kElevatorOffset =
+        new LoggedTunableNumber("Elevator MIGO", Units.inchesToMeters(10));
 
     // Simulation constants
     public static final double kSimGearing = 1.0;
