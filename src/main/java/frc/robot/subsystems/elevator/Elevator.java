@@ -5,19 +5,18 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.utils.LoggedTunableNumber;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
-import frc.robot.subsystems.elevator.ElevatorIO.ElevatorInputsAutoLogged;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
-  private ElevatorInputsAutoLogged m_inputs;
+  public final ElevatorInputsAutoLogged m_inputs;
   private ElevatorIO m_io;
   private int m_currSlot;
-  private FieldConstants.ReefHeight m_desiredLocation;
+  private FieldConstants.ReefHeight m_desiredLocation = FieldConstants.ReefHeight.L1;
 
-  private static enum ElevatorState {
+  public static enum ElevatorState {
     kStow,
     kScoring,
     kIntaking,
@@ -40,10 +39,10 @@ public class Elevator extends SubsystemBase {
         ElevatorConstants.kKG.getAsDouble());
 
     Map<ElevatorState, Runnable> periodicHash = new HashMap<>();
-    periodicHash.put(ElevatorState.kStow, () -> stowPeriodic());
-    periodicHash.put(ElevatorState.kScoring, () -> scoringPeriodic());
-    periodicHash.put(ElevatorState.kIntaking, () -> intakingPeriodic());
-    periodicHash.put(ElevatorState.kKnocking, () -> knockingPeriodic());
+    periodicHash.put(ElevatorState.kStow, this::stowPeriodic);
+    periodicHash.put(ElevatorState.kScoring, this::scoringPeriodic);
+    periodicHash.put(ElevatorState.kIntaking, this::intakingPeriodic);
+    periodicHash.put(ElevatorState.kKnocking, this::knockingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
   }
@@ -74,12 +73,32 @@ public class Elevator extends SubsystemBase {
     m_io.updateInputs(m_inputs);
     m_profiles.getPeriodicFunction().run();
 
-    Logger.recordOutput("ElevatorState", m_profiles.getCurrentProfile());
-    Logger.recordOutput("Timing/elevatorPeriodic", Timer.getFPGATimestamp() - startingTime);
+    Logger.processInputs("Elevator", m_inputs);
+    Logger.recordOutput("Elevator/DesiredLocation", m_desiredLocation);
+    Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());
+    Logger.recordOutput("PeriodicTime/Elevator", Timer.getFPGATimestamp() - startingTime);
   }
 
   public void updateState(ElevatorState state) {
     m_profiles.setCurrentProfile(state);
+    switch (state) {
+      case kIntaking:
+        m_io.setDesiredHeight(ElevatorConstants.kIntakingHeight);
+        break;
+      case kKnocking:
+        m_io.setDesiredHeight(ElevatorConstants.kKnockingHeight);
+
+        break;
+      case kScoring:
+        double desiredHeight = m_desiredLocation.height + ElevatorConstants.kElevatorOffset.get();
+        m_io.setDesiredHeight(desiredHeight);
+
+        break;
+      case kStow:
+        m_io.setDesiredHeight(ElevatorConstants.kStowHeight);
+
+        break;
+    }
   }
 
   public ElevatorState getState() {
@@ -88,22 +107,21 @@ public class Elevator extends SubsystemBase {
 
   public void setDesiredScoringLocation(FieldConstants.ReefHeight desired) {
     m_desiredLocation = desired;
+    if (m_profiles.getCurrentProfile() == ElevatorState.kScoring) {
+      double desiredHeight = m_desiredLocation.height + ElevatorConstants.kElevatorOffset.get();
+      m_io.setDesiredHeight(desiredHeight);
+    }
   }
 
-  public void stowPeriodic() {
-    m_io.setDesiredHeight(ElevatorConstants.kStowHeight);
+  public FieldConstants.ReefHeight getDesiredScoringLocation() {
+    return m_desiredLocation;
   }
 
-  public void scoringPeriodic() {
-    double desiredHeight = m_desiredLocation.height + ElevatorConstants.kElevatorOffset.get();
-    m_io.setDesiredHeight(desiredHeight);
-  }
+  public void stowPeriodic() {}
 
-  public void intakingPeriodic() {
-    m_io.setDesiredHeight(ElevatorConstants.kIntakingHeight);
-  }
+  public void scoringPeriodic() {}
 
-  public void knockingPeriodic() {
-    m_io.setDesiredHeight(ElevatorConstants.kKnockingHeight);
-  }
+  public void intakingPeriodic() {}
+
+  public void knockingPeriodic() {}
 }

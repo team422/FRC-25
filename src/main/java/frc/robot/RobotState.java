@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,7 @@ public class RobotState {
   // Singleton logic
   private static RobotState m_instance;
 
-  private RobotState(Drive drive, AprilTagVision aprilTagVision) {
+  private RobotState(Drive drive, Elevator elevator, AprilTagVision aprilTagVision) {
     m_drive = drive;
     m_aprilTagVision = aprilTagVision;
 
@@ -41,9 +42,10 @@ public class RobotState {
     return m_instance;
   }
 
-  public static RobotState startInstance(Drive drive, AprilTagVision aprilTagVision) {
+  public static RobotState startInstance(
+      Drive drive, Elevator elevator, AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, aprilTagVision);
+      m_instance = new RobotState(drive, elevator, aprilTagVision);
     }
     return m_instance;
   }

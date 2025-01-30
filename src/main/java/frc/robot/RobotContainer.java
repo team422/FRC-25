@@ -3,6 +3,8 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -14,6 +16,11 @@ import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.Elevator.ElevatorState;
+import frc.robot.subsystems.elevator.ElevatorIOKraken;
+import frc.robot.subsystems.elevator.ElevatorIOReplay;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -26,6 +33,7 @@ public class RobotContainer {
 
   // Subsystems
   private Drive m_drive;
+  private Elevator m_elevator;
   private AprilTagVision m_aprilTagVision;
 
   // Controller
@@ -54,6 +62,9 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
+        m_elevator =
+            new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+
         break;
 
       case SIM:
@@ -64,6 +75,8 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+
+        m_elevator = new Elevator(new ElevatorIOSim());
 
         break;
 
@@ -76,6 +89,8 @@ public class RobotContainer {
                 new ModuleIOReplay(),
                 new ModuleIOReplay());
 
+        m_elevator = new Elevator(new ElevatorIOReplay());
+
         break;
     }
 
@@ -86,7 +101,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
-    RobotState.startInstance(m_drive, m_aprilTagVision);
+    RobotState.startInstance(m_drive, m_elevator, m_aprilTagVision);
   }
 
   /** Configure the commands. */
@@ -115,6 +130,29 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
+    m_driverControls
+        .elevatorStow()
+        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kStow)));
+    m_driverControls
+        .elevatorScoring()
+        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kScoring)));
+    m_driverControls
+        .elevatorIntaking()
+        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kIntaking)));
+    m_driverControls
+        .elevatorKnocking()
+        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kKnocking)));
+    m_driverControls
+        .incrementScoringLocation()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  var curr = m_elevator.getDesiredScoringLocation();
+                  FieldConstants.ReefHeight[] heights = FieldConstants.ReefHeight.values();
+                  int val = curr.ordinal();
+                  val = (val + 1) % heights.length;
+                  m_elevator.setDesiredScoringLocation(heights[val]);
+                }));
   }
 
   /**

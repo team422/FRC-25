@@ -4,7 +4,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 public interface ElevatorIO {
   @AutoLog
-  public static class ElevatorInputsAutoLogged {
+  public static class ElevatorInputs {
     public boolean isLeadingMotorConnected;
     public boolean isFollowingMotorConnected;
     public double desiredLocation;
@@ -19,9 +19,10 @@ public interface ElevatorIO {
     public double followingStatorCurrent;
     public double leadingTemp;
     public double followingTemp;
+    public double velocity;
   }
 
-  public void updateInputs(ElevatorInputsAutoLogged inputs);
+  public void updateInputs(ElevatorInputs inputs);
 
   public void setDesiredHeight(double metersHeight);
 

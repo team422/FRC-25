@@ -84,7 +84,7 @@ public class ElevatorIOKraken implements ElevatorIO {
   }
 
   @Override
-  public void updateInputs(ElevatorInputsAutoLogged inputs) {
+  public void updateInputs(ElevatorInputs inputs) {
     inputs.isLeadingMotorConnected =
         BaseStatusSignal.refreshAll(
                 m_leadingPosition,
