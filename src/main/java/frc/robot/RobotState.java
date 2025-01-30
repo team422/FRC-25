@@ -5,6 +5,7 @@ import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.led.Led;
@@ -22,6 +23,7 @@ public class RobotState {
   private Indexer m_indexer;
   private Manipulator m_manipulator;
   private Climb m_climb;
+  private Elevator m_elevator;
   private Led m_led;
   private AprilTagVision m_aprilTagVision;
 
@@ -42,6 +44,7 @@ public class RobotState {
       Indexer indexer,
       Manipulator manipulator,
       Climb climb,
+      Elevator elevator,
       Led led,
       AprilTagVision aprilTagVision) {
     m_drive = drive;
@@ -49,6 +52,7 @@ public class RobotState {
     m_indexer = indexer;
     m_manipulator = manipulator;
     m_climb = climb;
+    m_elevator = elevator;
     m_led = led;
     m_aprilTagVision = aprilTagVision;
 
@@ -69,10 +73,12 @@ public class RobotState {
       Indexer indexer,
       Manipulator manipulator,
       Climb climb,
+      Elevator elevator,
       Led led,
       AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, intake, indexer, manipulator, climb, led, aprilTagVision);
+      m_instance =
+          new RobotState(drive, intake, indexer, manipulator, climb, elevator, led, aprilTagVision);
     }
     return m_instance;
   }

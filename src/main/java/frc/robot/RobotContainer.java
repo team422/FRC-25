@@ -20,6 +20,10 @@ import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIOKraken;
+import frc.robot.subsystems.elevator.ElevatorIOReplay;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.indexer.IndexerIOKraken;
 import frc.robot.subsystems.indexer.IndexerIOReplay;
@@ -57,6 +61,7 @@ public class RobotContainer {
   private Indexer m_indexer;
   private Manipulator m_manipulator;
   private Climb m_climb;
+  private Elevator m_elevator;
   private Led m_led;
   private AprilTagVision m_aprilTagVision;
 
@@ -101,6 +106,9 @@ public class RobotContainer {
 
         m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
 
+        m_elevator =
+            new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+
         break;
 
       case SIM:
@@ -124,6 +132,8 @@ public class RobotContainer {
 
         m_climb = new Climb(new ClimbIOSim());
 
+        m_elevator = new Elevator(new ElevatorIOSim());
+
         break;
 
       case REPLAY:
@@ -145,6 +155,8 @@ public class RobotContainer {
 
         m_climb = new Climb(new ClimbIOReplay());
 
+        m_elevator = new Elevator(new ElevatorIOReplay());
+
         break;
     }
 
@@ -158,7 +170,7 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_3", ""));
 
     RobotState.startInstance(
-        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_led, m_aprilTagVision);
+        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_elevator, m_led, m_aprilTagVision);
   }
 
   /** Configure the commands. */

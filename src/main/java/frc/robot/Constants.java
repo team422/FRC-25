@@ -145,6 +145,43 @@ public final class Constants {
     public static final Color kAlert = Color.kGold;
   }
 
+  public static final class ElevatorConstants {
+    public static final double kTopSpeed = 1;
+    public static final double kTopAcceleration = 5;
+    public static final LoggedTunableNumber kP = new LoggedTunableNumber("Elevator P", 1.0);
+    public static final LoggedTunableNumber kI = new LoggedTunableNumber("Elevator I", 0.0);
+    public static final LoggedTunableNumber kD = new LoggedTunableNumber("Elevator D", 0.0);
+    public static final LoggedTunableNumber kKS = new LoggedTunableNumber("Elevator kS", 0.0);
+    public static final LoggedTunableNumber kKG = new LoggedTunableNumber("Elevator kG", 0.0);
+    public static final LoggedTunableNumber kKV = new LoggedTunableNumber("Elevator kV", 0.2);
+    public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
+
+    public static final LoggedTunableNumber kMagicMotionCruiseVelocity =
+        new LoggedTunableNumber("Elevator MagicMotion cruise velocity", 0.0);
+    public static final LoggedTunableNumber kMagicMotionAcceleration =
+        new LoggedTunableNumber("Elevator MagicMotion acceleration", 0.0);
+    public static final LoggedTunableNumber kMagicMotionJerk =
+        new LoggedTunableNumber("Elevator MagicMotion Jerk", 0.0);
+
+    public static final double kStowHeight = 0;
+    public static final double kIntakingHeight = 0;
+    public static final double kKnockingHeight = 2;
+
+    public static final double kRadius = Units.inchesToMeters(2.256);
+    public static final double kGearRatio = 54 / 12;
+    public static final double kSensorToMechanismRatio = 2 * kRadius * Math.PI * kGearRatio;
+    public static final LoggedTunableNumber kElevatorOffset =
+        new LoggedTunableNumber("Elevator/Offset", Units.inchesToMeters(0));
+
+    // Simulation constants
+    public static final double kSimGearing = kGearRatio;
+    public static final double kSimMOI = .001;
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
+    public static final double kMinHeight = 0;
+    public static final double kMaxHeight = 2;
+    public static final double kHeightTolerance = .10;
+  }
+
   public static final class AprilTagVisionConstants {
     public static final AprilTagFieldLayout kAprilTagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
@@ -390,6 +427,9 @@ public final class Constants {
     public static final int kPhotoElectricTwo = 9;
 
     public static final int kLed = 2;
+
+    public static final int kElevatorLead = 27;
+    public static final int kElevatorFollowing = 28;
   }
 
   public class FieldConstants {
