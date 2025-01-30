@@ -3,8 +3,13 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
+import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.led.Led;
+import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +19,12 @@ public class RobotState {
 
   // Subsystems
   private Drive m_drive;
+  private Intake m_intake;
+  private Indexer m_indexer;
+  private Manipulator m_manipulator;
+  private Climb m_climb;
+  private Elevator m_elevator;
+  private Led m_led;
   private AprilTagVision m_aprilTagVision;
 
   public enum RobotAction {
@@ -27,8 +38,22 @@ public class RobotState {
   // Singleton logic
   private static RobotState m_instance;
 
-  private RobotState(Drive drive, Elevator elevator, AprilTagVision aprilTagVision) {
+  private RobotState(
+      Drive drive,
+      Intake intake,
+      Indexer indexer,
+      Manipulator manipulator,
+      Climb climb,
+      Elevator elevator,
+      Led led,
+      AprilTagVision aprilTagVision) {
     m_drive = drive;
+    m_intake = intake;
+    m_indexer = indexer;
+    m_manipulator = manipulator;
+    m_climb = climb;
+    m_elevator = elevator;
+    m_led = led;
     m_aprilTagVision = aprilTagVision;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
@@ -43,9 +68,17 @@ public class RobotState {
   }
 
   public static RobotState startInstance(
-      Drive drive, Elevator elevator, AprilTagVision aprilTagVision) {
+      Drive drive,
+      Intake intake,
+      Indexer indexer,
+      Manipulator manipulator,
+      Climb climb,
+      Elevator elevator,
+      Led led,
+      AprilTagVision aprilTagVision) {
     if (m_instance == null) {
-      m_instance = new RobotState(drive, elevator, aprilTagVision);
+      m_instance =
+          new RobotState(drive, intake, indexer, manipulator, climb, elevator, led, aprilTagVision);
     }
     return m_instance;
   }
@@ -58,6 +91,10 @@ public class RobotState {
     m_profiles.setCurrentProfile(newAction);
   }
 
+  public RobotAction getCurrentAction() {
+    return m_profiles.getCurrentProfile();
+  }
+
   public void setDefaultAction() {
     if (edu.wpi.first.wpilibj.RobotState.isAutonomous()) {
       updateRobotAction(RobotAction.kAutoDefault);
@@ -67,6 +104,7 @@ public class RobotState {
   }
 
   public void onEnable() {
+    m_climb.zeroEncoder();
     setDefaultAction();
   }
 

@@ -16,4 +16,7 @@ public class ModuleIOReplay implements ModuleIO {
 
   @Override
   public void setTurnBrakeMode(boolean enable) {}
+
+  @Override
+  public void setCurrentLimits(double supplyLimit) {}
 }

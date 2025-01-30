@@ -15,6 +15,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,6 +25,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -31,7 +34,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.lib.utils.LoggedTunableNumber;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.util.SubsystemProfiles;
@@ -375,8 +378,8 @@ public class Drive extends SubsystemBase {
    * @param visionPose The pose of the robot as measured by the vision camera.
    * @param timestamp The timestamp of the vision measurement in seconds.
    */
-  public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
-    m_poseEstimator.addVisionMeasurement(visionPose, timestamp);
+  public void addVisionMeasurement(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {
+    m_poseEstimator.addVisionMeasurement(visionPose, timestamp, stdDevs);
   }
 
   /**
@@ -385,7 +388,8 @@ public class Drive extends SubsystemBase {
    * @param observation The VisionObservation object containing the vision data.
    */
   public void addVisionObservation(VisionObservation observation) {
-    addVisionMeasurement(observation.visionPose(), observation.timestamp());
+    addVisionMeasurement(
+        observation.visionPose(), observation.timestamp(), observation.standardDeviations());
   }
 
   public void updateProfile(DriveProfiles newProfile) {
@@ -394,5 +398,11 @@ public class Drive extends SubsystemBase {
 
   public boolean headingWithinTolerance() {
     return Math.abs(m_headingController.getError()) < Units.degreesToRadians(5);
+  }
+
+  public void setModuleCurrentLimits(double supplyLimit) {
+    for (var module : m_modules) {
+      module.setCurrentLimits(supplyLimit);
+    }
   }
 }
