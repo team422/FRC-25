@@ -98,15 +98,20 @@ public class ModuleIOTalonFX implements ModuleIO {
         throw new RuntimeException("Invalid module index");
     }
 
+    // TODO: update to look prettier (cool method chaining tech)
     var driveConfig = new TalonFXConfiguration();
-    driveConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
+    driveConfig.CurrentLimits.SupplyCurrentLimit = 75.0;
     driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    driveConfig.CurrentLimits.StatorCurrentLimit = 180.0;
+    driveConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     m_driveTalon.getConfigurator().apply(driveConfig);
     setDriveBrakeMode(true);
 
     var turnConfig = new TalonFXConfiguration();
     turnConfig.CurrentLimits.SupplyCurrentLimit = 30.0;
     turnConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    turnConfig.CurrentLimits.StatorCurrentLimit = 120.0;
+    turnConfig.CurrentLimits.StatorCurrentLimitEnable = true;
     m_turnTalon.getConfigurator().apply(turnConfig);
     setTurnBrakeMode(true);
 

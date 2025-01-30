@@ -110,7 +110,11 @@ public final class Constants {
     public static final double kAmbiguityThreshold = 0.4;
     public static final double kTargetLogTimeSecs = 0.1;
     public static final double kFieldBorderMargin = 0.5;
-    public static final double kZMargin = 0.75;
+    // z margin is much smaller because the camera should be perfectly level with the tag
+    public static final double kZMargin = Units.inchesToMeters(1);
+
+    public static final double kErrorStandardDeviationThreshold = 0.2; // acceptable error
+
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.005);
     public static final LoggedTunableNumber kThetaStandardDeviationCoefficient =
@@ -151,6 +155,11 @@ public final class Constants {
               new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
                   .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
         };
+
+    // tolerances for using the vision rotation, temp values
+    public static final double kRotationErrorThreshold = 0.1;
+    public static final double kRotationDistanceThreshold = Units.inchesToMeters(8);
+    public static final double kRotationSpeedThreshold = 0.2; // m/s
 
     public static final int kCalibIndex = 3;
 

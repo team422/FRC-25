@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.drive.Drive;
@@ -56,6 +57,10 @@ public class RobotState {
     m_profiles.setCurrentProfile(newAction);
   }
 
+  public RobotAction getCurrentAction() {
+    return m_profiles.getCurrentProfile();
+  }
+
   public void setDefaultAction() {
     if (edu.wpi.first.wpilibj.RobotState.isAutonomous()) {
       updateRobotAction(RobotAction.kAutoDefault);
@@ -76,5 +81,9 @@ public class RobotState {
 
   public Pose2d getRobotPose() {
     return m_drive.getPose();
+  }
+
+  public ChassisSpeeds getRobotSpeeds() {
+    return m_drive.getChassisSpeeds();
   }
 }
