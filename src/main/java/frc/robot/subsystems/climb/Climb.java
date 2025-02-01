@@ -68,12 +68,8 @@ public class Climb extends SubsystemBase {
     Logger.recordOutput("Timing/climberPeriodic", dt);
   }
 
-  public void toggleDeploy() {
-    if (m_profiles.getCurrentProfile() == ClimbState.kStow) {
-      m_profiles.setCurrentProfile(ClimbState.kDeploy);
-    } else {
-      m_profiles.setCurrentProfile(ClimbState.kStow);
-    }
+  public void updateState(ClimbState newState) {
+    m_profiles.setCurrentProfile(newState);
   }
 
   public ClimbState getState() {
