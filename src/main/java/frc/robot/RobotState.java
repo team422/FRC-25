@@ -106,12 +106,12 @@ public class RobotState {
     // TODO: implement later cuz i can't do it right - Aahil Syed 1/31/2025
   }
   public void coralIntakingPeriodic() {
-    if (m_manipulator.atSetpoint && m_elevator.atSetpoint) {
+    if (m_manipulator.atSetpoint() && m_elevator.atSetpoint()) {
       m_indexer.updateState(IndexerState.kIndexing);
     } else {
       m_indexer.updateState(IndexerState.kIdle);
     }
-    // TODO: implement the atSetpoint logic - Aahil Syed 1/31/2025
+    // TODO: check the atSetpoint logic - Aahil Syed 1/31/2025
   }
   public void climbingIntakingPeriodic() {
     // TODO: implement later cuz i can't do it right - Aahil Syed 1/31/2025

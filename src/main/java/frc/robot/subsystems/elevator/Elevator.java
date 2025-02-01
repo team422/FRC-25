@@ -124,4 +124,7 @@ public class Elevator extends SubsystemBase {
   public void intakingPeriodic() {}
 
   public void knockingPeriodic() {}
+  public boolean atSetpoint() {
+    return m_io.atSetpoint();
+  }
 }
