@@ -44,6 +44,8 @@ public final class Constants {
     REPLAY
   }
 
+  public static final boolean kUseComponents = true;
+
   public static final class DriveConstants {
     public static final double kMaxLinearSpeed = 6.0; // meters per second
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared

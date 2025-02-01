@@ -98,4 +98,8 @@ public class Intake extends SubsystemBase {
   public boolean hasGamePiece() {
     return m_rollerIO.hasGamePiece();
   }
+
+  public Rotation2d getRotation() {
+    return m_pivotIO.getCurrAngle();
+  }
 }

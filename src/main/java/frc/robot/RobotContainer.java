@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.commands.drive.DriveCommands;
@@ -21,6 +22,7 @@ import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.Elevator.ElevatorState;
 import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOReplay;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
@@ -29,6 +31,7 @@ import frc.robot.subsystems.indexer.IndexerIOKraken;
 import frc.robot.subsystems.indexer.IndexerIOReplay;
 import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.IntakeState;
 import frc.robot.subsystems.intake.pivot.PivotIOKraken;
 import frc.robot.subsystems.intake.pivot.PivotIOReplay;
 import frc.robot.subsystems.intake.pivot.PivotIOSim;
@@ -37,6 +40,7 @@ import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
 import frc.robot.subsystems.led.Led;
 import frc.robot.subsystems.manipulator.Manipulator;
+import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOPhotoelectric;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOReplay;
 import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOKraken;
@@ -199,6 +203,49 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
+    m_driverControls
+        .level1()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_elevator.setDesiredScoringLocation(FieldConstants.ReefHeight.L1);
+                  m_elevator.updateState(ElevatorState.kScoring);
+                }));
+    m_driverControls
+        .level2()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_elevator.setDesiredScoringLocation(FieldConstants.ReefHeight.L2);
+                  m_elevator.updateState(ElevatorState.kScoring);
+                }));
+    m_driverControls
+        .level3()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_elevator.setDesiredScoringLocation(FieldConstants.ReefHeight.L3);
+                  m_elevator.updateState(ElevatorState.kScoring);
+                }));
+    ;
+    m_driverControls
+        .level4()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_elevator.setDesiredScoringLocation(FieldConstants.ReefHeight.L4);
+                  m_elevator.updateState(ElevatorState.kScoring);
+                }));
+    ;
+    m_driverControls
+        .intake()
+        .onTrue(Commands.runOnce(() -> m_intake.updateState(IntakeState.kIntake)));
+    m_driverControls
+        .manipulate()
+        .onTrue(Commands.runOnce(() -> m_manipulator.updateState(ManipulatorState.kIntaking)));
+    m_driverControls
+        .stowElevator()
+        .onTrue(Commands.runOnce(() -> m_elevator.updateState(ElevatorState.kStow)));
   }
 
   /**

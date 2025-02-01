@@ -123,4 +123,8 @@ public class Manipulator extends SubsystemBase {
     m_wristIO.setDesiredAngle(desiredAngle);
     m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
   }
+
+  public Rotation2d getPose() {
+    return m_wristIO.getCurrAngle();
+  }
 }
