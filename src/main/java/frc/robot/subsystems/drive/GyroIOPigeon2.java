@@ -29,7 +29,7 @@ import java.util.Queue;
 
 /** IO implementation for Pigeon2 */
 public class GyroIOPigeon2 implements GyroIO {
-  private final Pigeon2 m_pigeon = new Pigeon2(Ports.kPigeon, Ports.kCanivoreName);
+  private final Pigeon2 m_pigeon = new Pigeon2(Ports.kPigeon, Ports.kDriveCanivoreName);
   private final StatusSignal<Angle> m_yaw = m_pigeon.getYaw();
   private final StatusSignal<Angle> m_pitch = m_pigeon.getPitch();
   private final StatusSignal<Angle> m_roll = m_pigeon.getRoll();

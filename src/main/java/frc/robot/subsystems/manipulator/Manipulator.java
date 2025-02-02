@@ -127,4 +127,8 @@ public class Manipulator extends SubsystemBase {
   public boolean atSetpoint() {
     return m_wristIO.atSetpoint();
   }
+
+  public boolean hasGamePiece() {
+    return m_coralDetectorIO.hasGamePiece();
+  }
 }

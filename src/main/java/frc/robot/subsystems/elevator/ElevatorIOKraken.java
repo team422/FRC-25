@@ -6,21 +6,26 @@ import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.Ports;
 
 public class ElevatorIOKraken implements ElevatorIO {
   private TalonFX m_leadingMotor;
   private TalonFX m_followingMotor;
   private TalonFXConfiguration m_configs;
   private FeedbackConfigs m_feedbackConfigs;
-  private MotionMagicTorqueCurrentFOC m_magicMotion = new MotionMagicTorqueCurrentFOC(0);
+
+  // TODO: re-enable when phoenix pro is purchased
+  // private MotionMagicTorqueCurrentFOC m_magicMotion = new MotionMagicTorqueCurrentFOC(0);
+  private MotionMagicVoltage m_magicMotion = new MotionMagicVoltage(0);
 
   // Status Signals
   private StatusSignal<Angle> m_leadingPosition;
@@ -37,17 +42,17 @@ public class ElevatorIOKraken implements ElevatorIO {
   private double m_desiredHeight;
 
   public ElevatorIOKraken(int leadPort, int followerPort) {
-    m_leadingMotor = new TalonFX(leadPort);
-    m_followingMotor = new TalonFX(followerPort);
+    m_leadingMotor = new TalonFX(leadPort, Ports.kMainCanivoreName);
+    m_followingMotor = new TalonFX(followerPort, Ports.kMainCanivoreName);
 
     m_configs = new TalonFXConfiguration();
 
     var currentConfigs =
         new CurrentLimitsConfigs()
             .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(95.0)
+            .withStatorCurrentLimit(CurrentLimitConstants.kElevatorDefaultStatorLimit)
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(65.0);
+            .withSupplyCurrentLimit(CurrentLimitConstants.kElevatorDefaultSupplyLimit);
 
     m_feedbackConfigs =
         new FeedbackConfigs().withSensorToMechanismRatio(ElevatorConstants.kSensorToMechanismRatio);
@@ -105,6 +110,8 @@ public class ElevatorIOKraken implements ElevatorIO {
     inputs.desiredLocation = m_desiredHeight;
     inputs.leadingPosition = m_leadingPosition.getValueAsDouble();
     inputs.followingPosition = m_followingPosition.getValueAsDouble();
+    inputs.leadingVelocity = m_leadingMotor.getVelocity().getValueAsDouble();
+    inputs.followingVelocity = m_followingMotor.getVelocity().getValueAsDouble();
     inputs.leadingVoltage = m_leadingVoltage.getValueAsDouble();
     inputs.followingVoltage = m_followingVoltage.getValueAsDouble();
     inputs.leadingSupplyCurrent = m_leadingSupplyCurrent.getValueAsDouble();
@@ -119,7 +126,9 @@ public class ElevatorIOKraken implements ElevatorIO {
   public void setDesiredHeight(double meters) {
     // feedback
     m_desiredHeight = meters;
-    m_leadingMotor.setControl(m_magicMotion.withUseTimesync(false).withPosition(meters));
+    m_leadingMotor.setControl(m_magicMotion.withPosition(meters).withSlot(0));
+    // m_leadingMotor.setControl(new MotionMagicVoltage(meters).withSlot(0));
+    // m_leadingMotor.setControl(new VoltageOut(3));
   }
 
   @Override

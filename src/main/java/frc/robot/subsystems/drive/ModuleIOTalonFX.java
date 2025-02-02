@@ -77,27 +77,27 @@ public class ModuleIOTalonFX implements ModuleIO {
   public ModuleIOTalonFX(int index) {
     switch (index) {
       case 0:
-        m_driveTalon = new TalonFX(Ports.kFrontLeftDrive, Ports.kCanivoreName);
-        m_turnTalon = new TalonFX(Ports.kFrontLeftTurn, Ports.kCanivoreName);
-        m_cancoder = new CANcoder(Ports.kFrontLeftCancoder, Ports.kCanivoreName);
+        m_driveTalon = new TalonFX(Ports.kFrontLeftDrive, Ports.kDriveCanivoreName);
+        m_turnTalon = new TalonFX(Ports.kFrontLeftTurn, Ports.kDriveCanivoreName);
+        m_cancoder = new CANcoder(Ports.kFrontLeftCancoder, Ports.kDriveCanivoreName);
         m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       case 1:
-        m_driveTalon = new TalonFX(Ports.kFrontRightDrive, Ports.kCanivoreName);
-        m_turnTalon = new TalonFX(Ports.kFrontRightTurn, Ports.kCanivoreName);
-        m_cancoder = new CANcoder(Ports.kFrontRightCancoder, Ports.kCanivoreName);
+        m_driveTalon = new TalonFX(Ports.kFrontRightDrive, Ports.kDriveCanivoreName);
+        m_turnTalon = new TalonFX(Ports.kFrontRightTurn, Ports.kDriveCanivoreName);
+        m_cancoder = new CANcoder(Ports.kFrontRightCancoder, Ports.kDriveCanivoreName);
         m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       case 2:
-        m_driveTalon = new TalonFX(Ports.kBackLeftDrive, Ports.kCanivoreName);
-        m_turnTalon = new TalonFX(Ports.kBackLeftTurn, Ports.kCanivoreName);
-        m_cancoder = new CANcoder(Ports.kBackLeftCancoder, Ports.kCanivoreName);
+        m_driveTalon = new TalonFX(Ports.kBackLeftDrive, Ports.kDriveCanivoreName);
+        m_turnTalon = new TalonFX(Ports.kBackLeftTurn, Ports.kDriveCanivoreName);
+        m_cancoder = new CANcoder(Ports.kBackLeftCancoder, Ports.kDriveCanivoreName);
         m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       case 3:
-        m_driveTalon = new TalonFX(Ports.kBackRightDrive, Ports.kCanivoreName);
-        m_turnTalon = new TalonFX(Ports.kBackRightTurn, Ports.kCanivoreName);
-        m_cancoder = new CANcoder(Ports.kBackRightCancoder, Ports.kCanivoreName);
+        m_driveTalon = new TalonFX(Ports.kBackRightDrive, Ports.kDriveCanivoreName);
+        m_turnTalon = new TalonFX(Ports.kBackRightTurn, Ports.kDriveCanivoreName);
+        m_cancoder = new CANcoder(Ports.kBackRightCancoder, Ports.kDriveCanivoreName);
         m_absoluteEncoderOffset = new Rotation2d(); // we set this in Phoenix Tuner so no need here
         break;
       default:

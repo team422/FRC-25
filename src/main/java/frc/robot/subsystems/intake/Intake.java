@@ -24,6 +24,7 @@ public class Intake extends SubsystemBase {
   public static enum IntakeState {
     kStow,
     kIntake,
+    kGamepieceHold,
     kOuttake,
   }
 
@@ -36,6 +37,7 @@ public class Intake extends SubsystemBase {
     Map<IntakeState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(IntakeState.kStow, this::stowPeriodic);
     periodicHash.put(IntakeState.kIntake, this::intakePeriodic);
+    periodicHash.put(IntakeState.kGamepieceHold, this::gamepieceHoldPeriodic);
     periodicHash.put(IntakeState.kOuttake, this::outtakePeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IntakeState.kStow);
@@ -90,9 +92,23 @@ public class Intake extends SubsystemBase {
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
   }
 
+  public void gamepieceHoldPeriodic() {
+    m_rollerIO.setVoltage(IntakeConstants.kRollerHoldVoltage.get());
+    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotHoldAngle.get()));
+  }
+
   public void outtakePeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerOuttakeVoltage.get());
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()));
+  }
+
+  public void manageStowOrHold() {
+    // if we have a game piece, do nothing and continue to hold
+    // otherwise, stow
+    if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
+      return;
+    }
+    updateState(IntakeState.kGamepieceHold);
   }
 
   public boolean hasGamePiece() {

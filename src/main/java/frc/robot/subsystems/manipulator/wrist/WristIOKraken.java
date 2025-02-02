@@ -5,7 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -19,6 +19,7 @@ import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.Constants.Ports;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -34,12 +35,14 @@ public class WristIOKraken implements WristIO {
 
   private final TalonFXConfiguration m_config;
 
-  private PositionTorqueCurrentFOC m_positionControl =
-      new PositionTorqueCurrentFOC(0.0).withSlot(0);
+  // TODO: re-enable when phoenix pro is purchased
+  // private PositionTorqueCurrentFOC m_positionControl =
+  //     new PositionTorqueCurrentFOC(0.0).withSlot(0);
+  private PositionVoltage m_positionControl = new PositionVoltage(0.0).withSlot(0);
   private Rotation2d m_desiredAngle = new Rotation2d();
 
   public WristIOKraken(int port, int absoluteEncoderPort) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
 
     m_absoluteEncoder = new DutyCycleEncoder(absoluteEncoderPort);
 

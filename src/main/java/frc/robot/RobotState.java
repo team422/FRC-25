@@ -38,9 +38,12 @@ public class RobotState {
   public enum RobotAction {
     kTeleopDefault,
     kCoralIntaking, // run indexer only when the manipulator and elevator are in the right position
-    kAlgaeIntaking, // run the intake
-    kAutoScore, // set the manipulator and elevator to the right position to score, use DriveToPoint to get to the right position
-    kClimbing, // run the climb
+    kAlgaeIntaking, // run the intake until we have a gamepiece, then hold
+    kAlgaeOuttaking,
+    kAutoScore, // set the manipulator and elevator to the right position to score, use DriveToPoint
+    // to get to the right position
+    kClimbing,
+
     kAutoDefault,
   }
 
@@ -71,9 +74,9 @@ public class RobotState {
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
     periodicHash.put(RobotAction.kAutoDefault, () -> {});
     periodicHash.put(RobotAction.kAlgaeIntaking, this::algaeIntakingPeriodic);
+    periodicHash.put(RobotAction.kAlgaeOuttaking, () -> {});
     periodicHash.put(RobotAction.kCoralIntaking, this::coralIntakingPeriodic);
-    periodicHash.put(RobotAction.kClimbing, this::climbingIntakingPeriodic);
-
+    periodicHash.put(RobotAction.kClimbing, this::climbingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -103,18 +106,26 @@ public class RobotState {
   }
 
   public void algaeIntakingPeriodic() {
-    // TODO: implement later cuz i can't do it right - Aahil Syed 1/31/2025
+    if (m_intake.hasGamePiece()) {
+      m_intake.updateState(IntakeState.kGamepieceHold);
+    }
   }
+
   public void coralIntakingPeriodic() {
-    if (m_manipulator.atSetpoint() && m_elevator.atSetpoint()) {
+    // when we have a game piece don't runm
+    if (m_manipulator.hasGamePiece()) {
+      m_indexer.updateState(IndexerState.kIdle);
+    }
+    // wait until the manipulator is in position before we intake
+    else if (m_manipulator.atSetpoint() && m_elevator.atSetpoint()) {
       m_indexer.updateState(IndexerState.kIndexing);
     } else {
       m_indexer.updateState(IndexerState.kIdle);
     }
-    // TODO: check the atSetpoint logic - Aahil Syed 1/31/2025
   }
-  public void climbingIntakingPeriodic() {
-    // TODO: implement later cuz i can't do it right - Aahil Syed 1/31/2025
+
+  public void climbingPeriodic() {
+    // TODO: implement later
   }
 
   public void updateRobotAction(RobotAction newAction) {
@@ -125,16 +136,24 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
-        m_led.setState(LedState.kHasGamepiece);
+        m_led.setState(LedState.kEnabled);
         break;
 
+      case kAlgaeOuttaking:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.updateState(IntakeState.kOuttake);
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kStow);
+        m_led.setState(LedState.kEnabled);
+
       case kAutoScore:
-        // TODO: implement later cuz i can't do it right - Aahil Syed 1/31/2025
+        // TODO: implement later with setpoint generator
         break;
 
       case kClimbing:
         m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.updateState(IntakeState.kStow);
+        m_intake.manageStowOrHold();
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kDeploy);
         m_elevator.updateState(ElevatorState.kStow);
@@ -144,25 +163,24 @@ public class RobotState {
 
       case kCoralIntaking:
         m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.updateState(IntakeState.kIntake);
-        m_indexer.updateState(IndexerState.kIndexing);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kStow);
-        m_led.setState(LedState.kHasGamepiece);
+        m_elevator.updateState(ElevatorState.kIntaking);
+        m_manipulator.updateState(ManipulatorState.kIntaking);
+        m_led.setState(LedState.kEnabled);
         break;
 
       case kAutoDefault:
       case kTeleopDefault:
         m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.updateState(IntakeState.kStow);
+        m_intake.manageStowOrHold();
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
         m_manipulator.updateState(ManipulatorState.kStow);
         m_led.setState(LedState.kEnabled);
         break;
-      
     }
     m_profiles.setCurrentProfile(newAction);
   }

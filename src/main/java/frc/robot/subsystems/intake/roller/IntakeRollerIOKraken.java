@@ -16,6 +16,7 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.Ports;
 
 public class IntakeRollerIOKraken implements IntakeRollerIO {
   private TalonFX m_motor;
@@ -29,10 +30,12 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
 
   private final TalonFXConfiguration m_config;
 
-  private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
+  // TODO: re-enable when phoenix pro is purchased
+  // private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
+  private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
 
   public IntakeRollerIOKraken(int port) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
 
     var currentLimits =
         new CurrentLimitsConfigs()

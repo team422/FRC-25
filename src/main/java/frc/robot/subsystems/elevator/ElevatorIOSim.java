@@ -69,7 +69,7 @@ public class ElevatorIOSim implements ElevatorIO {
     m_sim.setInputVoltage(m_voltage);
     m_sim.update(.02);
 
-    inputs.velocity = m_sim.getVelocityMetersPerSecond();
+    inputs.leadingVelocity = m_sim.getVelocityMetersPerSecond();
     inputs.atSetpoint = atSetpoint();
     inputs.leadingPosition = m_sim.getPositionMeters();
     inputs.desiredLocation = m_desiredHeight;

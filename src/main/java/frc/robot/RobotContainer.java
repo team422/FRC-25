@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.Constants.ProtoConstants;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -108,6 +109,71 @@ public class RobotContainer {
 
         m_elevator =
             new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+
+        break;
+
+      case PROTO:
+        if (ProtoConstants.kRealDrive) {
+          m_drive =
+              new Drive(
+                  new GyroIOPigeon2(),
+                  new ModuleIOTalonFX(0),
+                  new ModuleIOTalonFX(1),
+                  new ModuleIOTalonFX(2),
+                  new ModuleIOTalonFX(3));
+        } else {
+          m_drive =
+              new Drive(
+                  new GyroIOPigeon2(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim());
+        }
+
+        if (ProtoConstants.kRealIntake) {
+          m_intake =
+              new Intake(
+                  new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                  new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        } else {
+          m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
+        }
+
+        if (ProtoConstants.kRealIndexer) {
+          m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+        } else {
+          m_indexer = new Indexer(new IndexerIOSim());
+        }
+
+        if (ProtoConstants.kRealManipulator) {
+          m_manipulator =
+              new Manipulator(
+                  new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
+                  new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
+                  new CoralDetectorIOPhotoelectric(
+                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+        } else {
+          m_manipulator =
+              new Manipulator(
+                  new ManipulatorRollerIOSim(),
+                  new WristIOSim(),
+                  new CoralDetectorIOPhotoelectric(
+                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+        }
+
+        if (ProtoConstants.kRealClimb) {
+          m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
+        } else {
+          m_climb = new Climb(new ClimbIOSim());
+        }
+
+        if (ProtoConstants.kRealElevator) {
+          m_elevator =
+              new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+        } else {
+          m_elevator = new Elevator(new ElevatorIOSim());
+        }
 
         break;
 

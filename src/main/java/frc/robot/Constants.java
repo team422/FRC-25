@@ -30,12 +30,16 @@ import java.util.Map;
 public final class Constants {
   public static final boolean kTuningMode = true;
 
+  public static final Mode kRealMode = Mode.PROTO;
   public static final Mode kSimMode = Mode.SIM;
-  public static final Mode kCurrentMode = RobotBase.isReal() ? Mode.REAL : kSimMode;
+  public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
   public static enum Mode {
     /** Running on a real robot. */
     REAL,
+
+    /** Running on the proto board */
+    PROTO,
 
     /** Running a physics simulator. */
     SIM,
@@ -281,6 +285,8 @@ public final class Constants {
         new LoggedTunableNumber("Pivot Stow Angle", 0.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
         new LoggedTunableNumber("Pivot Intake Angle", 0.0);
+    public static final LoggedTunableNumber kPivotHoldAngle =
+        new LoggedTunableNumber("Pivot Hold Angle", 0.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =
         new LoggedTunableNumber("Pivot Outtake Angle", 0.0);
 
@@ -288,6 +294,8 @@ public final class Constants {
         new LoggedTunableNumber("Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
         new LoggedTunableNumber("Roller Intake Voltage", 0.0);
+    public static final LoggedTunableNumber kRollerHoldVoltage =
+        new LoggedTunableNumber("Roller Hold Voltage", 0.0);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
         new LoggedTunableNumber("Roller Outtake Voltage", 0.0);
 
@@ -356,29 +364,40 @@ public final class Constants {
 
   public static final class CurrentLimitConstants {
     // Drive
-    public static final double kDriveDefaultSupplyCurrentLimit = 75.0;
+    public static final double kDriveDefaultSupplyCurrentLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 75.0;
     public static final double kDriveDefaultStatorCurrentLimit = 180.0;
 
-    public static final double kTurnDefaultSupplyCurrentLimit = 30.0;
+    public static final double kTurnDefaultSupplyCurrentLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 30.0;
     public static final double kTurnDefaultStatorCurrentLimit = 120.0;
 
     // Intake
-    public static final double kIntakePivotDefaultSupplyLimit = 80.0;
+    public static final double kIntakePivotDefaultSupplyLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
     public static final double kIntakePivotDefaultStatorLimit = 120.0;
 
-    public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
+    public static final double kIntakeRollerDefaultSupplyLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
     // Manipulator
-    public static final double kManipulatorWristDefaultSupplyLimit = 80.0;
+    public static final double kManipulatorWristDefaultSupplyLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
     public static final double kManipulatorWristDefaultStatorLimit = 120.0;
 
-    public static final double kManipulatorRollerDefaultSupplyLimit = 80.0;
+    public static final double kManipulatorRollerDefaultSupplyLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
     public static final double kManipulatorRollerDefaultStatorLimit = 120.0;
 
     // Indexer
-    public static final double kIndexerDefaultSupplyLimit = 30.0;
+    public static final double kIndexerDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 30.0;
     public static final double kIndexerDefaultStatorLimit = 120.0;
+
+    // Elevator
+    public static final double kElevatorDefaultSupplyLimit =
+        kCurrentMode == Mode.PROTO ? 5.0 : 65.0;
+    public static final double kElevatorDefaultStatorLimit = 95.0;
   }
 
   public static final class IndexerConstants {
@@ -416,7 +435,7 @@ public final class Constants {
 
     public static final int kPigeon = 22;
 
-    public static final String kCanivoreName = "Drivetrain";
+    public static final String kDriveCanivoreName = "Drivetrain";
 
     // TODO: CHANGE TO ACTUAL
     public static final int kClimbMotor = 12;
@@ -437,8 +456,20 @@ public final class Constants {
 
     public static final int kLed = 2;
 
-    public static final int kElevatorLead = 27;
-    public static final int kElevatorFollowing = 28;
+    public static final int kElevatorLead = 7;
+    public static final int kElevatorFollowing = 9;
+
+    public static final String kMainCanivoreName = "Drivetrain";
+  }
+
+  /** Whether or not subsystems are enabled on the proto board */
+  public static final class ProtoConstants {
+    public static final boolean kRealDrive = false;
+    public static final boolean kRealIntake = false;
+    public static final boolean kRealIndexer = false;
+    public static final boolean kRealManipulator = false;
+    public static final boolean kRealClimb = false;
+    public static final boolean kRealElevator = true;
   }
 
   public class FieldConstants {

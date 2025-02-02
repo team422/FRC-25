@@ -11,6 +11,8 @@ public interface ElevatorIO {
     public boolean atSetpoint;
     public double leadingPosition;
     public double followingPosition;
+    public double leadingVelocity;
+    public double followingVelocity;
     public double leadingVoltage;
     public double followingVoltage;
     public double leadingSupplyCurrent;
@@ -19,7 +21,6 @@ public interface ElevatorIO {
     public double followingStatorCurrent;
     public double leadingTemp;
     public double followingTemp;
-    public double velocity;
   }
 
   public void updateInputs(ElevatorInputs inputs);

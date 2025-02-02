@@ -45,6 +45,10 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kKnocking, this::knockingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
+
+    updateState(ElevatorState.kStow);
+
+    m_io.setMagic(20, 2, 1);
   }
 
   @Override
@@ -124,6 +128,7 @@ public class Elevator extends SubsystemBase {
   public void intakingPeriodic() {}
 
   public void knockingPeriodic() {}
+
   public boolean atSetpoint() {
     return m_io.atSetpoint();
   }

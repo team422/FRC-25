@@ -41,6 +41,7 @@ public class Robot extends LoggedRobot {
     // Set up data receivers & replay source
     switch (Constants.kCurrentMode) {
       case REAL:
+      case PROTO:
         // Running on a real robot, log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());

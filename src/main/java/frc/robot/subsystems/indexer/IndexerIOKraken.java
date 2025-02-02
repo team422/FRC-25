@@ -15,6 +15,7 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IndexerConstants;
+import frc.robot.Constants.Ports;
 
 public class IndexerIOKraken implements IndexerIO {
   private TalonFX m_motor;
@@ -27,10 +28,12 @@ public class IndexerIOKraken implements IndexerIO {
 
   private final TalonFXConfiguration m_config;
 
-  private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
+  // TODO: re-enable when phoenix pro is purchased
+  // private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
+  private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
 
   public IndexerIOKraken(int port) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
 
     var currentLimits =
         new CurrentLimitsConfigs()
