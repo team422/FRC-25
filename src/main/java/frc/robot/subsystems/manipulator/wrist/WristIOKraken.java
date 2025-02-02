@@ -3,13 +3,13 @@ package frc.robot.subsystems.manipulator.wrist;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -35,6 +35,8 @@ public class WristIOKraken implements WristIO {
 
   private final TalonFXConfiguration m_config;
 
+  private boolean m_relativeEncoderReset = false;
+
   // TODO: re-enable when phoenix pro is purchased
   // private PositionTorqueCurrentFOC m_positionControl =
   //     new PositionTorqueCurrentFOC(0.0).withSlot(0);
@@ -53,17 +55,7 @@ public class WristIOKraken implements WristIO {
             .withStatorCurrentLimitEnable(true)
             .withStatorCurrentLimit(CurrentLimitConstants.kManipulatorWristDefaultStatorLimit);
 
-    // for performance, we use the absolute encoder to set the start angle but rely on the relative
-    // encoder for the rest of the time
-    double startAngle = ManipulatorConstants.kWristOffset.getRotations();
-    startAngle += m_absoluteEncoder.get();
-    var feedbackConfig =
-        new FeedbackConfigs()
-            .withSensorToMechanismRatio(ManipulatorConstants.kWristGearRatio)
-            .withFeedbackRotorOffset(startAngle);
-
-    m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);
+    m_config = new TalonFXConfiguration().withCurrentLimits(currentLimits);
 
     m_motor.getConfigurator().apply(m_config);
     m_motor.setNeutralMode(NeutralModeValue.Brake);
@@ -102,7 +94,13 @@ public class WristIOKraken implements WristIO {
                 m_motorTemperature)
             .isOK();
 
-    inputs.currAngleDeg = getCurrAngle().getDegrees();
+    // wait until the absolute encoder is actually giving a reading
+    if (!m_relativeEncoderReset && m_absoluteEncoder.get() != 1) {
+      m_relativeEncoderReset = true;
+      resetRelativeEncoder();
+    }
+
+    inputs.currAngleDeg = getCurrAngle().getRotations();
     inputs.desiredAngleDeg = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
@@ -122,7 +120,8 @@ public class WristIOKraken implements WristIO {
                 .withKD(kD)
                 .withKS(kS)
                 .withKG(kG)
-                .withGravityType(GravityTypeValue.Arm_Cosine),
+                .withGravityType(GravityTypeValue.Arm_Cosine)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
             0.0);
   }
 
@@ -148,5 +147,17 @@ public class WristIOKraken implements WristIO {
     m_motor
         .getConfigurator()
         .apply(m_config.CurrentLimits.withSupplyCurrentLimit(supplyLimit), 0.0);
+  }
+
+  private void resetRelativeEncoder() {
+    // for performance, we use the absolute encoder to set the start angle but rely on the relative
+    // encoder for the rest of the time
+    double offset =
+        ManipulatorConstants.kWristOffset.getRotations()
+            + m_absoluteEncoder.get()
+            - getCurrAngle().getRotations();
+    m_config.Feedback.withFeedbackRotorOffset(offset)
+        .withSensorToMechanismRatio(ManipulatorConstants.kWristGearRatio);
+    m_motor.getConfigurator().apply(m_config.Feedback, 0.0);
   }
 }

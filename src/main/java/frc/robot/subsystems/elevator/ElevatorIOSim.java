@@ -23,7 +23,9 @@ public class ElevatorIOSim implements ElevatorIO {
 
   public ElevatorIOSim() {
     Constraints constraints =
-        new Constraints(ElevatorConstants.kTopSpeed, ElevatorConstants.kTopAcceleration);
+        new Constraints(
+            ElevatorConstants.kMagicMotionCruiseVelocity.get(),
+            ElevatorConstants.kMagicMotionAcceleration.get());
 
     var plant =
         LinearSystemId.createElevatorSystem(
@@ -97,7 +99,9 @@ public class ElevatorIOSim implements ElevatorIO {
   public void setCurrentLimits(double supplyLimit) {}
 
   @Override
-  public void setMagic(double velocity, double acceleration, double jerk) {}
+  public void setMagic(double velocity, double acceleration, double jerk) {
+    m_trap = new TrapezoidProfile(new Constraints(velocity, acceleration));
+  }
 
   @Override
   public boolean atSetpoint() {

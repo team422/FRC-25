@@ -19,15 +19,15 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
 
   @Override
   public boolean hasGamePiece() {
-    return photoElectricOneDetected() || photoElectricTwoDetected();
+    return photoElectricOneDetected() && photoElectricTwoDetected();
   }
 
   // photoelectrics return false when detected so we invert
   private boolean photoElectricOneDetected() {
-    return !m_photoElectricOne.get();
+    return m_photoElectricOne.get();
   }
 
   private boolean photoElectricTwoDetected() {
-    return !m_photoElectricTwo.get();
+    return m_photoElectricTwo.get();
   }
 }

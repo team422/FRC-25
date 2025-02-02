@@ -21,6 +21,7 @@ import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
+import org.littletonrobotics.junction.Logger;
 
 @SuppressWarnings("unused")
 public class RobotState {
@@ -103,6 +104,8 @@ public class RobotState {
 
   public void updateRobotState() {
     m_profiles.getPeriodicFunction().run();
+
+    Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
   }
 
   public void algaeIntakingPeriodic() {

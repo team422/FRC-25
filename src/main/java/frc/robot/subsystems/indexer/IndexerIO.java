@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 public interface IndexerIO {
   @AutoLog
   public static class IndexerInputs {
+    public double position;
     public double velocityRPS;
     public double current;
     public double statorCurrent;

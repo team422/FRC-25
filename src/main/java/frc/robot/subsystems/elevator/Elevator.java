@@ -46,9 +46,12 @@ public class Elevator extends SubsystemBase {
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
-    updateState(ElevatorState.kStow);
+    // updateState(ElevatorState.kStow);
 
-    m_io.setMagic(20, 2, 1);
+    m_io.setMagic(
+        ElevatorConstants.kMagicMotionCruiseVelocity.get(),
+        ElevatorConstants.kMagicMotionAcceleration.get(),
+        ElevatorConstants.kMagicMotionJerk.get());
   }
 
   @Override
@@ -74,6 +77,19 @@ public class Elevator extends SubsystemBase {
         ElevatorConstants.kKV,
         ElevatorConstants.kKA,
         ElevatorConstants.kKG);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_io.setMagic(
+              ElevatorConstants.kMagicMotionCruiseVelocity.get(),
+              ElevatorConstants.kMagicMotionAcceleration.get(),
+              ElevatorConstants.kMagicMotionJerk.get());
+        },
+        ElevatorConstants.kMagicMotionCruiseVelocity,
+        ElevatorConstants.kMagicMotionAcceleration,
+        ElevatorConstants.kMagicMotionJerk);
+
     m_io.updateInputs(m_inputs);
     m_profiles.getPeriodicFunction().run();
 

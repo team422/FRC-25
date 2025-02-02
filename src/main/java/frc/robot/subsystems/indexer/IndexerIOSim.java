@@ -21,13 +21,14 @@ public class IndexerIOSim implements IndexerIO {
     m_sim.setInputVoltage(m_voltage);
     m_sim.update(0.02);
 
+    inputs.position = m_sim.getAngularPositionRotations();
     inputs.velocityRPS = m_sim.getAngularVelocityRPM() / 60;
     inputs.current = m_sim.getCurrentDrawAmps();
     inputs.voltage = m_voltage;
 
     // these don't matter in sim
     inputs.statorCurrent = 0.0;
-    inputs.motorIsConnected = true;
+    inputs.motorIsConnected = false;
   }
 
   @Override

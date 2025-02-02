@@ -108,7 +108,7 @@ public class Intake extends SubsystemBase {
     if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
       return;
     }
-    updateState(IntakeState.kGamepieceHold);
+    updateState(IntakeState.kStow);
   }
 
   public boolean hasGamePiece() {

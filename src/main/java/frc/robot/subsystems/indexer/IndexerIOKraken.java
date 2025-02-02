@@ -9,6 +9,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -20,6 +21,7 @@ import frc.robot.Constants.Ports;
 public class IndexerIOKraken implements IndexerIO {
   private TalonFX m_motor;
 
+  private StatusSignal<Angle> m_motorPosition;
   private StatusSignal<AngularVelocity> m_motorVelocity;
   private StatusSignal<Current> m_motorCurrent;
   private StatusSignal<Current> m_motorStatorCurrent;
@@ -51,6 +53,7 @@ public class IndexerIOKraken implements IndexerIO {
     m_motor.getConfigurator().apply(m_config);
     m_motor.setNeutralMode(NeutralModeValue.Brake);
 
+    m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
     m_motorCurrent = m_motor.getSupplyCurrent();
     m_motorStatorCurrent = m_motor.getStatorCurrent();
@@ -73,6 +76,7 @@ public class IndexerIOKraken implements IndexerIO {
   public void updateInputs(IndexerInputs inputs) {
     inputs.motorIsConnected =
         BaseStatusSignal.refreshAll(
+                m_motorPosition,
                 m_motorVelocity,
                 m_motorCurrent,
                 m_motorStatorCurrent,
@@ -80,6 +84,7 @@ public class IndexerIOKraken implements IndexerIO {
                 m_motorTemperature)
             .isOK();
 
+    inputs.position = m_motorPosition.getValueAsDouble();
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
     inputs.current = m_motorCurrent.getValueAsDouble();
     inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();

@@ -161,14 +161,14 @@ public final class Constants {
     public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
 
     public static final LoggedTunableNumber kMagicMotionCruiseVelocity =
-        new LoggedTunableNumber("Elevator MagicMotion cruise velocity", 0.0);
+        new LoggedTunableNumber("Elevator MagicMotion cruise velocity", 5.0);
     public static final LoggedTunableNumber kMagicMotionAcceleration =
-        new LoggedTunableNumber("Elevator MagicMotion acceleration", 0.0);
+        new LoggedTunableNumber("Elevator MagicMotion acceleration", 10.0);
     public static final LoggedTunableNumber kMagicMotionJerk =
-        new LoggedTunableNumber("Elevator MagicMotion Jerk", 0.0);
+        new LoggedTunableNumber("Elevator MagicMotion Jerk", 100.0);
 
     public static final double kStowHeight = 0;
-    public static final double kIntakingHeight = 0;
+    public static final double kIntakingHeight = 0.5;
     public static final double kKnockingHeight = 2;
 
     public static final double kRadius = Units.inchesToMeters(2.256);
@@ -291,13 +291,13 @@ public final class Constants {
         new LoggedTunableNumber("Pivot Outtake Angle", 0.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
-        new LoggedTunableNumber("Roller Stow Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Stow Voltage", 2.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Roller Intake Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Intake Voltage", 0.0);
     public static final LoggedTunableNumber kRollerHoldVoltage =
-        new LoggedTunableNumber("Roller Hold Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.0);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
-        new LoggedTunableNumber("Roller Outtake Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Outtake Voltage", 0.0);
 
     // Simulation constants
     public static final DCMotor kPivotSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -325,7 +325,7 @@ public final class Constants {
 
     public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
-    public static final LoggedTunableNumber kWristP = new LoggedTunableNumber("Wrist P", 0.0);
+    public static final LoggedTunableNumber kWristP = new LoggedTunableNumber("Wrist P", 1.0);
     public static final LoggedTunableNumber kWristI = new LoggedTunableNumber("Wrist I", 0.0);
     public static final LoggedTunableNumber kWristD = new LoggedTunableNumber("Wrist D", 0.0);
     public static final LoggedTunableNumber kWristKS = new LoggedTunableNumber("Wrist kS", 0.0);
@@ -334,16 +334,16 @@ public final class Constants {
     public static final LoggedTunableNumber kWristStowAngle =
         new LoggedTunableNumber("Wrist Stow Angle", 0.0);
     public static final LoggedTunableNumber kWristIntakeAngle =
-        new LoggedTunableNumber("Wrist Intake Angle", 0.0);
+        new LoggedTunableNumber("Wrist Intake Angle", 50.0);
     public static final LoggedTunableNumber kWristScoringOffset =
         new LoggedTunableNumber("Wrist Scoring Offset", 0.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
-        new LoggedTunableNumber("Roller Stow Voltage", 0.0);
+        new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Roller Intake Voltage", 0.0);
+        new LoggedTunableNumber("Manipulator Roller Intake Voltage", 2.0);
     public static final LoggedTunableNumber kRollerScoringVoltage =
-        new LoggedTunableNumber("Roller Scoring Voltage", 0.0);
+        new LoggedTunableNumber("Manipulator Roller Scoring Voltage", 0.0);
 
     // Simulation constants
     public static final DCMotor kWristSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -408,7 +408,7 @@ public final class Constants {
     public static final LoggedTunableNumber kIndexerIdleVoltage =
         new LoggedTunableNumber("Indexer Idle Voltage", 0.0);
     public static final LoggedTunableNumber kIndexerIndexingVoltage =
-        new LoggedTunableNumber("Indexer Indexing Voltage", 12.0);
+        new LoggedTunableNumber("Indexer Indexing Voltage", 2.0);
 
     // Simulation constants
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -437,22 +437,21 @@ public final class Constants {
 
     public static final String kDriveCanivoreName = "Drivetrain";
 
-    // TODO: CHANGE TO ACTUAL
     public static final int kClimbMotor = 12;
-    public static final int kIntakeRoller = 15;
-    public static final int kIntakePivot = 16;
+    public static final int kIntakeRoller = 0;
+    public static final int kIntakePivot = 28;
 
-    public static final int kManipulatorRoller = 17;
-    public static final int kManipulatorWrist = 18;
+    public static final int kManipulatorRoller = 0;
+    public static final int kManipulatorWrist = 28;
 
-    public static final int kIntakeAbsoluteEncoder = 5;
+    public static final int kIntakeAbsoluteEncoder = 9;
 
-    public static final int kIndexerMotor = 13;
+    public static final int kIndexerMotor = 31;
 
-    public static final int kManipulatorAbsoluteEncoder = 6;
+    public static final int kManipulatorAbsoluteEncoder = 9;
 
-    public static final int kPhotoElectricOne = 8;
-    public static final int kPhotoElectricTwo = 9;
+    public static final int kPhotoElectricOne = 0;
+    public static final int kPhotoElectricTwo = 1;
 
     public static final int kLed = 2;
 
@@ -466,8 +465,8 @@ public final class Constants {
   public static final class ProtoConstants {
     public static final boolean kRealDrive = false;
     public static final boolean kRealIntake = false;
-    public static final boolean kRealIndexer = false;
-    public static final boolean kRealManipulator = false;
+    public static final boolean kRealIndexer = true;
+    public static final boolean kRealManipulator = true;
     public static final boolean kRealClimb = false;
     public static final boolean kRealElevator = true;
   }

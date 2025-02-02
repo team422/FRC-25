@@ -51,7 +51,7 @@ public class PivotIOSim implements PivotIO {
     // these don't matter in sim
     inputs.statorCurrent = 0.0;
     inputs.temperature = 0.0;
-    inputs.motorIsConnected = true;
+    inputs.motorIsConnected = false;
   }
 
   @Override

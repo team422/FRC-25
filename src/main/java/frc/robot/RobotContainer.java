@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.ProtoConstants;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -265,6 +266,48 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
+
+    m_driverControls
+        .robotstateDefault()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .robotstateCoralIntake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+                }));
+
+    m_driverControls
+        .robotstateAlgaeIntake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntaking);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .robotstateAlgaeOuttake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeOuttaking);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
   }
 
   /**
