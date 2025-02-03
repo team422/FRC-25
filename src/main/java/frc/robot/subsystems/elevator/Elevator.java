@@ -121,7 +121,7 @@ public class Elevator extends SubsystemBase {
     }
   }
 
-  public ElevatorState getState() {
+  public ElevatorState getCurrentState() {
     return m_profiles.getCurrentProfile();
   }
 

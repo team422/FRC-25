@@ -111,6 +111,16 @@ public class Intake extends SubsystemBase {
     updateState(IntakeState.kStow);
   }
 
+  public void manageIntakeOrOuttake() {
+    // our button is a toggle, so we need to check if we are holding a game piece
+    // if we are, outtake
+    if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
+      updateState(IntakeState.kOuttake);
+    } else {
+      updateState(IntakeState.kIntake);
+    }
+  }
+
   public boolean hasGamePiece() {
     return m_rollerIO.hasGamePiece();
   }

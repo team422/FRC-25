@@ -39,8 +39,7 @@ public class RobotState {
   public enum RobotAction {
     kTeleopDefault,
     kCoralIntaking, // run indexer only when the manipulator and elevator are in the right position
-    kAlgaeIntaking, // run the intake until we have a gamepiece, then hold
-    kAlgaeOuttaking,
+    kAlgaeIntakingOuttaking,
     kAutoScore, // set the manipulator and elevator to the right position to score, use DriveToPoint
     // to get to the right position
     kClimbing,
@@ -74,8 +73,7 @@ public class RobotState {
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
     periodicHash.put(RobotAction.kAutoDefault, () -> {});
-    periodicHash.put(RobotAction.kAlgaeIntaking, this::algaeIntakingPeriodic);
-    periodicHash.put(RobotAction.kAlgaeOuttaking, () -> {});
+    periodicHash.put(RobotAction.kAlgaeIntakingOuttaking, this::algaeIntakingOuttakingPeriodic);
     periodicHash.put(RobotAction.kCoralIntaking, this::coralIntakingPeriodic);
     periodicHash.put(RobotAction.kClimbing, this::climbingPeriodic);
 
@@ -108,9 +106,13 @@ public class RobotState {
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
   }
 
-  public void algaeIntakingPeriodic() {
-    if (m_intake.hasGamePiece()) {
-      m_intake.updateState(IntakeState.kGamepieceHold);
+  public void algaeIntakingOuttakingPeriodic() {
+    // we could be intaking or outtaking here
+    // if we're outtaking we don't want to go to hold
+    if (m_intake.getCurrentState() == IntakeState.kIntake) {
+      if (m_intake.hasGamePiece()) {
+        m_intake.updateState(IntakeState.kGamepieceHold);
+      }
     }
   }
 
@@ -133,22 +135,14 @@ public class RobotState {
 
   public void updateRobotAction(RobotAction newAction) {
     switch (newAction) {
-      case kAlgaeIntaking:
+      case kAlgaeIntakingOuttaking:
         m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.updateState(IntakeState.kIntake);
+        m_intake.manageIntakeOrOuttake();
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
-        m_led.setState(LedState.kEnabled);
+        m_led.updateState(LedState.kEnabled);
         break;
-
-      case kAlgaeOuttaking:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.updateState(IntakeState.kOuttake);
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_led.setState(LedState.kEnabled);
 
       case kAutoScore:
         // TODO: implement later with setpoint generator
@@ -161,7 +155,7 @@ public class RobotState {
         m_climb.updateState(ClimbState.kDeploy);
         m_elevator.updateState(ElevatorState.kStow);
         m_manipulator.updateState(ManipulatorState.kStow);
-        m_led.setState(LedState.kEnabled);
+        m_led.updateState(LedState.kEnabled);
         break;
 
       case kCoralIntaking:
@@ -171,7 +165,7 @@ public class RobotState {
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kIntaking);
         m_manipulator.updateState(ManipulatorState.kIntaking);
-        m_led.setState(LedState.kEnabled);
+        m_led.updateState(LedState.kEnabled);
         break;
 
       case kAutoDefault:
@@ -182,7 +176,7 @@ public class RobotState {
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
         m_manipulator.updateState(ManipulatorState.kStow);
-        m_led.setState(LedState.kEnabled);
+        m_led.updateState(LedState.kEnabled);
         break;
     }
     m_profiles.setCurrentProfile(newAction);
@@ -217,5 +211,33 @@ public class RobotState {
 
   public ChassisSpeeds getRobotSpeeds() {
     return m_drive.getChassisSpeeds();
+  }
+
+  public DriveProfiles getDriveProfile() {
+    return m_drive.getCurrentProfile();
+  }
+
+  public IntakeState getIntakeState() {
+    return m_intake.getCurrentState();
+  }
+
+  public IndexerState getIndexerState() {
+    return m_indexer.getCurrentState();
+  }
+
+  public ManipulatorState getManipulatorState() {
+    return m_manipulator.getCurrentState();
+  }
+
+  public ClimbState getClimbState() {
+    return m_climb.getCurrentState();
+  }
+
+  public ElevatorState getElevatorState() {
+    return m_elevator.getCurrentState();
+  }
+
+  public LedState getLedState() {
+    return m_led.getCurrentState();
   }
 }

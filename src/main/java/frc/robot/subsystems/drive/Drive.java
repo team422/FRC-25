@@ -405,4 +405,8 @@ public class Drive extends SubsystemBase {
       module.setCurrentLimits(supplyLimit);
     }
   }
+
+  public DriveProfiles getCurrentProfile() {
+    return m_profiles.getCurrentProfile();
+  }
 }

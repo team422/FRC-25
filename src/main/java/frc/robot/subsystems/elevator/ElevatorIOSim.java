@@ -64,7 +64,7 @@ public class ElevatorIOSim implements ElevatorIO {
     State desired = m_trap.calculate(m_timer.get(), m_startingState, new State(m_desiredHeight, 0));
     m_voltage =
         m_controller.calculate(m_sim.getPositionMeters(), desired.position)
-            + m_feedforward.calculate(desired.velocity, 0); // could be incorrect
+            + m_feedforward.calculate(desired.velocity);
 
     Logger.recordOutput("Elevator/DesiredPosition", desired.position);
     Logger.recordOutput("Elevator/DesiredVelocity", desired.velocity);

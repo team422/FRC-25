@@ -34,13 +34,17 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
   }
 
-  public void setState(LedState state) {
+  public void updateState(LedState state) {
     if (m_state == state) {
       // exit early so we don't have to update
       return;
     }
     m_state = state;
     updateLEDState();
+  }
+
+  public LedState getCurrentState() {
+    return m_state;
   }
 
   private void updateLEDState() {

@@ -288,20 +288,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntaking);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
-                }));
-
-    m_driverControls
-        .robotstateAlgaeOuttake()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeOuttaking);
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
                 }))
         .onFalse(
             Commands.runOnce(

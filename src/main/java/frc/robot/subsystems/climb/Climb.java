@@ -72,7 +72,7 @@ public class Climb extends SubsystemBase {
     m_profiles.setCurrentProfile(newState);
   }
 
-  public ClimbState getState() {
+  public ClimbState getCurrentState() {
     return m_profiles.getCurrentProfile();
   }
 

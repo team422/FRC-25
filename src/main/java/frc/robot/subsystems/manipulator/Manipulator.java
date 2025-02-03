@@ -6,6 +6,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.RobotState;
+import frc.robot.subsystems.indexer.Indexer.IndexerState;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIO;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorInputsAutoLogged;
 import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIO;
@@ -88,7 +90,7 @@ public class Manipulator extends SubsystemBase {
     m_profiles.setCurrentProfile(state);
   }
 
-  public ManipulatorState getState() {
+  public ManipulatorState getCurrentState() {
     return m_profiles.getCurrentProfile();
   }
 
@@ -107,7 +109,11 @@ public class Manipulator extends SubsystemBase {
 
   public void intakingPeriodic() {
     m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
-    if (m_coralDetectorIO.hasGamePiece()) {
+    // if we have a game piece stop
+    // if the indexer isn't running then the elevator and manipulator aren't both in position yet
+    // so we don't want to intake yet
+    if (m_coralDetectorIO.hasGamePiece()
+        || RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
       m_rollerIO.setVoltage(0.0);
     } else {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
