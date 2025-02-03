@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -47,11 +48,15 @@ public class IndexerIOKraken implements IndexerIO {
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(IndexerConstants.kGearRatio);
 
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
+
     m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withFeedback(feedbackConfig)
+            .withMotorOutput(motorOutput);
 
     m_motor.getConfigurator().apply(m_config);
-    m_motor.setNeutralMode(NeutralModeValue.Brake);
 
     m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
@@ -63,6 +68,7 @@ public class IndexerIOKraken implements IndexerIO {
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
         75.0,
+        m_motorPosition,
         m_motorVelocity,
         m_motorCurrent,
         m_motorStatorCurrent,

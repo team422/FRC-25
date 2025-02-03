@@ -1,6 +1,6 @@
 package frc.robot.subsystems.indexer;
 
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.IndexerConstants;
 import frc.robot.util.SubsystemProfiles;
@@ -39,7 +39,7 @@ public class Indexer extends SubsystemBase {
 
   @Override
   public void periodic() {
-    double start = Timer.getFPGATimestamp();
+    double start = HALUtil.getFPGATime();
 
     m_io.updateInputs(m_inputs);
 
@@ -47,7 +47,7 @@ public class Indexer extends SubsystemBase {
 
     Logger.processInputs("Indexer", m_inputs);
     Logger.recordOutput("Indexer/State", m_profiles.getCurrentProfile());
-    Logger.recordOutput("PeriodicTime/Indexer", Timer.getFPGATimestamp() - start);
+    Logger.recordOutput("PeriodicTime/Indexer", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void idlePeriodic() {

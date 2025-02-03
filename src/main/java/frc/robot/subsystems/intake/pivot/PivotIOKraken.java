@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake.pivot;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -55,10 +56,12 @@ public class PivotIOKraken implements PivotIO {
             .withStatorCurrentLimitEnable(true)
             .withStatorCurrentLimit(CurrentLimitConstants.kIntakePivotDefaultStatorLimit);
 
-    m_config = new TalonFXConfiguration().withCurrentLimits(currentLimits);
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
+
+    m_config =
+        new TalonFXConfiguration().withCurrentLimits(currentLimits).withMotorOutput(motorOutput);
 
     m_motor.getConfigurator().apply(m_config);
-    m_motor.setNeutralMode(NeutralModeValue.Brake);
 
     m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
@@ -156,8 +159,11 @@ public class PivotIOKraken implements PivotIO {
         IntakeConstants.kPivotOffset.getRotations()
             + m_absoluteEncoder.get()
             - getCurrAngle().getRotations();
-    m_config.Feedback.withFeedbackRotorOffset(offset)
-        .withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio);
-    m_motor.getConfigurator().apply(m_config.Feedback, 0.0);
+    m_motor
+        .getConfigurator()
+        .apply(
+            m_config.Feedback.withFeedbackRotorOffset(offset)
+                .withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio),
+            0.0);
   }
 }

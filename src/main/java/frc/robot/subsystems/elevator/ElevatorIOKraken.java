@@ -4,11 +4,13 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -20,8 +22,8 @@ import frc.robot.Constants.Ports;
 public class ElevatorIOKraken implements ElevatorIO {
   private TalonFX m_leadingMotor;
   private TalonFX m_followingMotor;
-  private TalonFXConfiguration m_configs;
-  private FeedbackConfigs m_feedbackConfigs;
+
+  private final TalonFXConfiguration m_config;
 
   // TODO: re-enable when phoenix pro is purchased
   // private MotionMagicTorqueCurrentFOC m_magicMotion = new MotionMagicTorqueCurrentFOC(0);
@@ -45,22 +47,26 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_leadingMotor = new TalonFX(leadPort, Ports.kMainCanivoreName);
     m_followingMotor = new TalonFX(followerPort, Ports.kMainCanivoreName);
 
-    m_configs = new TalonFXConfiguration();
-
     var currentConfigs =
         new CurrentLimitsConfigs()
-            .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(CurrentLimitConstants.kElevatorDefaultStatorLimit)
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(CurrentLimitConstants.kElevatorDefaultSupplyLimit);
+            .withSupplyCurrentLimit(CurrentLimitConstants.kElevatorDefaultSupplyLimit)
+            .withStatorCurrentLimitEnable(true)
+            .withStatorCurrentLimit(CurrentLimitConstants.kElevatorDefaultStatorLimit);
 
-    m_feedbackConfigs =
+    var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(ElevatorConstants.kSensorToMechanismRatio);
 
-    m_configs = m_configs.withFeedback(m_feedbackConfigs).withCurrentLimits(currentConfigs);
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
 
-    m_leadingMotor.getConfigurator().apply(m_configs);
-    m_followingMotor.getConfigurator().apply(m_configs);
+    m_config =
+        new TalonFXConfiguration()
+            .withFeedback(feedbackConfig)
+            .withCurrentLimits(currentConfigs)
+            .withMotorOutput(motorOutput);
+
+    m_leadingMotor.getConfigurator().apply(m_config);
+    m_followingMotor.getConfigurator().apply(m_config);
     m_followingMotor.setControl(new Follower(leadPort, true));
 
     m_leadingPosition = m_leadingMotor.getPosition();
@@ -98,6 +104,7 @@ public class ElevatorIOKraken implements ElevatorIO {
                 m_leadingStatorCurrent,
                 m_leadingTemp)
             .isOK();
+
     inputs.isFollowingMotorConnected =
         BaseStatusSignal.refreshAll(
                 m_followingPosition,
@@ -106,6 +113,7 @@ public class ElevatorIOKraken implements ElevatorIO {
                 m_followingStatorCurrent,
                 m_followingTemp)
             .isOK();
+
     inputs.atSetpoint = atSetpoint();
     inputs.desiredLocation = m_desiredHeight;
     inputs.leadingPosition = m_leadingPosition.getValueAsDouble();
@@ -138,7 +146,7 @@ public class ElevatorIOKraken implements ElevatorIO {
       m_leadingMotor
           .getConfigurator()
           .apply(
-              m_configs.Slot0.withKP(kP)
+              m_config.Slot0.withKP(kP)
                   .withKI(kI)
                   .withKD(kD)
                   .withKS(kS)
@@ -150,7 +158,7 @@ public class ElevatorIOKraken implements ElevatorIO {
       m_leadingMotor
           .getConfigurator()
           .apply(
-              m_configs.Slot1.withKP(kP)
+              m_config.Slot1.withKP(kP)
                   .withKI(kI)
                   .withKD(kD)
                   .withKS(kS)
@@ -162,7 +170,7 @@ public class ElevatorIOKraken implements ElevatorIO {
       m_leadingMotor
           .getConfigurator()
           .apply(
-              m_configs.Slot2.withKP(kP)
+              m_config.Slot2.withKP(kP)
                   .withKI(kI)
                   .withKD(kD)
                   .withKS(kS)
@@ -175,35 +183,36 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   @Override
   public void setCurrentLimits(double supplyLimit) {
-    var newConfigs = m_configs.CurrentLimits;
-    newConfigs.StatorCurrentLimit = supplyLimit;
-    newConfigs.SupplyCurrentLimit = supplyLimit;
-    m_leadingMotor.getConfigurator().apply(newConfigs, 0.0);
+    m_config.CurrentLimits.withSupplyCurrentLimit(supplyLimit);
+    m_leadingMotor.getConfigurator().apply(m_config.CurrentLimits, 0.0);
+    m_followingMotor.getConfigurator().apply(m_config.CurrentLimits, 0.0);
   }
 
   @Override
   public void setSlot(int slot) {
     if (slot == 0) {
-      m_leadingMotor.getConfigurator().apply(m_configs.Slot0, 0.0);
+      m_leadingMotor.getConfigurator().apply(m_config.Slot0, 0.0);
       m_magicMotion.withSlot(0);
     }
     if (slot == 1) {
-      m_leadingMotor.getConfigurator().apply(m_configs.Slot1, 0.0);
+      m_leadingMotor.getConfigurator().apply(m_config.Slot1, 0.0);
       m_magicMotion.withSlot(1);
     }
     if (slot == 2) {
-      m_leadingMotor.getConfigurator().apply(m_configs.Slot2, 0.0);
+      m_leadingMotor.getConfigurator().apply(m_config.Slot2, 0.0);
       m_magicMotion.withSlot(2);
     }
   }
 
   @Override
   public void setMagic(double velocity, double acceleration, double jerk) {
-    var magic =
-        m_configs.MotionMagic.withMotionMagicCruiseVelocity(velocity)
-            .withMotionMagicAcceleration(acceleration)
-            .withMotionMagicJerk(jerk);
-    m_leadingMotor.getConfigurator().apply(magic, 0.0);
+    m_leadingMotor
+        .getConfigurator()
+        .apply(
+            m_config.MotionMagic.withMotionMagicCruiseVelocity(velocity)
+                .withMotionMagicAcceleration(acceleration)
+                .withMotionMagicJerk(jerk),
+            0.0);
   }
 
   @Override

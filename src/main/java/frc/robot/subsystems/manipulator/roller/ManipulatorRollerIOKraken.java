@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -45,11 +46,15 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(ManipulatorConstants.kRollerGearRatio);
 
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
+
     m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withFeedback(feedbackConfig)
+            .withMotorOutput(motorOutput);
 
     m_motor.getConfigurator().apply(m_config);
-    m_motor.setNeutralMode(NeutralModeValue.Brake);
 
     m_motorVelocity = m_motor.getVelocity();
     m_motorVoltage = m_motor.getMotorVoltage();
@@ -65,6 +70,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
         m_motorStatorCurrent,
         m_motorVoltage,
         m_motorTemperature);
+
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
   }
 

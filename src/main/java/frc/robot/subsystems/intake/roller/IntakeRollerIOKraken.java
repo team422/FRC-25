@@ -4,6 +4,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -47,11 +48,15 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kRollerGearRatio);
 
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Coast);
+
     m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withFeedback(feedbackConfig)
+            .withMotorOutput(motorOutput);
 
     m_motor.getConfigurator().apply(m_config);
-    m_motor.setNeutralMode(NeutralModeValue.Coast);
 
     m_motorVelocity = m_motor.getVelocity();
     m_motorAcceleration = m_motor.getAcceleration();
@@ -71,6 +76,7 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
         m_motorCurrent,
         m_motorStatorCurrent,
         m_motorTemperature);
+
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
   }
 

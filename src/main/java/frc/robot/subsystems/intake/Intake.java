@@ -1,7 +1,7 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.IntakeConstants;
@@ -53,7 +53,7 @@ public class Intake extends SubsystemBase {
 
   @Override
   public void periodic() {
-    double start = Timer.getFPGATimestamp();
+    double start = HALUtil.getFPGATime();
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -79,7 +79,7 @@ public class Intake extends SubsystemBase {
     Logger.processInputs("Intake/Roller", m_rollerInputs);
     Logger.processInputs("Intake/Pivot", m_pivotInputs);
     Logger.recordOutput("Intake/State", m_profiles.getCurrentProfile());
-    Logger.recordOutput("PeriodicTime/Intake", Timer.getFPGATimestamp() - start);
+    Logger.recordOutput("PeriodicTime/Intake", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void stowPeriodic() {

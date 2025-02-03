@@ -227,7 +227,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     var config = new MotorOutputConfigs();
     config.Inverted = InvertedValue.CounterClockwise_Positive;
     config.NeutralMode = enable ? NeutralModeValue.Brake : NeutralModeValue.Coast;
-    m_driveTalon.getConfigurator().apply(config);
+    m_driveTalon.getConfigurator().apply(config, 0.0);
   }
 
   @Override
@@ -238,7 +238,7 @@ public class ModuleIOTalonFX implements ModuleIO {
             ? InvertedValue.Clockwise_Positive
             : InvertedValue.CounterClockwise_Positive;
     config.NeutralMode = enable ? NeutralModeValue.Brake : NeutralModeValue.Coast;
-    m_turnTalon.getConfigurator().apply(config);
+    m_turnTalon.getConfigurator().apply(config, 0.0);
   }
 
   @Override

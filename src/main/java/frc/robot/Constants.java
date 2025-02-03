@@ -381,6 +381,10 @@ public final class Constants {
         kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
+    // Indexer
+    public static final double kIndexerDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 30.0;
+    public static final double kIndexerDefaultStatorLimit = 120.0;
+
     // Manipulator
     public static final double kManipulatorWristDefaultSupplyLimit =
         kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
@@ -390,14 +394,14 @@ public final class Constants {
         kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
     public static final double kManipulatorRollerDefaultStatorLimit = 120.0;
 
-    // Indexer
-    public static final double kIndexerDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 30.0;
-    public static final double kIndexerDefaultStatorLimit = 120.0;
-
     // Elevator
     public static final double kElevatorDefaultSupplyLimit =
         kCurrentMode == Mode.PROTO ? 5.0 : 65.0;
     public static final double kElevatorDefaultStatorLimit = 95.0;
+
+    // Climb
+    public static final double kClimbDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kClimbDefaultStatorLimit = 120.0;
   }
 
   public static final class IndexerConstants {

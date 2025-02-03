@@ -1,6 +1,6 @@
 package frc.robot.subsystems.elevator;
 
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ElevatorConstants;
@@ -46,7 +46,8 @@ public class Elevator extends SubsystemBase {
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
-    // updateState(ElevatorState.kStow);
+    // to set the setpoint
+    updateState(ElevatorState.kStow);
 
     m_io.setMagic(
         ElevatorConstants.kMagicMotionCruiseVelocity.get(),
@@ -56,7 +57,7 @@ public class Elevator extends SubsystemBase {
 
   @Override
   public void periodic() {
-    double startingTime = Timer.getFPGATimestamp();
+    double start = HALUtil.getFPGATime();
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -96,7 +97,7 @@ public class Elevator extends SubsystemBase {
     Logger.processInputs("Elevator", m_inputs);
     Logger.recordOutput("Elevator/DesiredLocation", m_desiredLocation);
     Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());
-    Logger.recordOutput("PeriodicTime/Elevator", Timer.getFPGATimestamp() - startingTime);
+    Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void updateState(ElevatorState state) {

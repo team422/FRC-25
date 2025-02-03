@@ -1,7 +1,7 @@
 package frc.robot.subsystems.manipulator;
 
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.FieldConstants;
@@ -55,6 +55,8 @@ public class Manipulator extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double start = HALUtil.getFPGATime();
+
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
@@ -71,8 +73,6 @@ public class Manipulator extends SubsystemBase {
         ManipulatorConstants.kWristKS,
         ManipulatorConstants.kWristKG);
 
-    double start = Timer.getFPGATimestamp();
-
     m_rollerIO.updateInputs(m_rollerInputs);
     m_wristIO.updateInputs(m_wristInputs);
     m_coralDetectorIO.updateInputs(m_coralDetectorInputs);
@@ -83,7 +83,7 @@ public class Manipulator extends SubsystemBase {
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
     Logger.processInputs("Manipulator/CoralDetector", m_coralDetectorInputs);
     Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
-    Logger.recordOutput("PeriodicTime/Manipulator", Timer.getFPGATimestamp() - start);
+    Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void updateState(ManipulatorState state) {

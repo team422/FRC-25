@@ -1,6 +1,7 @@
 package frc.robot.subsystems.aprilTagVision;
 
 import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -63,6 +64,8 @@ public class AprilTagVision extends SubsystemBase {
 
   @Override
   public void periodic() {
+    double start = HALUtil.getFPGATime();
+
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
@@ -83,8 +86,6 @@ public class AprilTagVision extends SubsystemBase {
         AprilTagVisionConstants.cameraRoll,
         AprilTagVisionConstants.cameraPitch,
         AprilTagVisionConstants.cameraYaw);
-
-    double start = Timer.getFPGATimestamp();
 
     for (int i = 0; i < m_ios.length; i++) {
       m_ios[i].updateInputs(m_inputs[i]);
@@ -375,6 +376,6 @@ public class AprilTagVision extends SubsystemBase {
         .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
         .forEach(RobotState.getInstance()::addVisionObservation);
 
-    Logger.recordOutput("PeriodicTime/AprilTagVision", Timer.getFPGATimestamp() - start);
+    Logger.recordOutput("PeriodicTime/AprilTagVision", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 }
