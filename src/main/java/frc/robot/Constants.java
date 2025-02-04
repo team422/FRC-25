@@ -262,7 +262,8 @@ public final class Constants {
   }
 
   public static final class IntakeConstants {
-    public static final double kPivotGearRatio = (84.0 / 8.0) * (36.0 / 14.0);
+    // public static final double kPivotGearRatio = (84.0 / 8.0) * (36.0 / 14.0);
+    public static final double kPivotGearRatio = 1.0;
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
 
@@ -284,20 +285,20 @@ public final class Constants {
     public static final LoggedTunableNumber kPivotStowAngle =
         new LoggedTunableNumber("Pivot Stow Angle", 0.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
-        new LoggedTunableNumber("Pivot Intake Angle", 0.0);
+        new LoggedTunableNumber("Pivot Intake Angle", 150.0);
     public static final LoggedTunableNumber kPivotHoldAngle =
-        new LoggedTunableNumber("Pivot Hold Angle", 0.0);
+        new LoggedTunableNumber("Pivot Hold Angle", 75.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =
-        new LoggedTunableNumber("Pivot Outtake Angle", 0.0);
+        new LoggedTunableNumber("Pivot Outtake Angle", 150.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
-        new LoggedTunableNumber("Intake Roller Stow Voltage", 2.0);
+        new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Intake Roller Intake Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Intake Voltage", 2.0);
     public static final LoggedTunableNumber kRollerHoldVoltage =
-        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.5);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
-        new LoggedTunableNumber("Intake Roller Outtake Voltage", 0.0);
+        new LoggedTunableNumber("Intake Roller Outtake Voltage", -2.0);
 
     // Simulation constants
     public static final DCMotor kPivotSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -445,8 +446,8 @@ public final class Constants {
     public static final int kIntakeRoller = 0;
     public static final int kIntakePivot = 28;
 
-    public static final int kManipulatorRoller = 0;
-    public static final int kManipulatorWrist = 28;
+    public static final int kManipulatorRoller = 28;
+    public static final int kManipulatorWrist = 0;
 
     public static final int kIntakeAbsoluteEncoder = 9;
 
@@ -455,7 +456,7 @@ public final class Constants {
     public static final int kManipulatorAbsoluteEncoder = 9;
 
     public static final int kPhotoElectricOne = 0;
-    public static final int kPhotoElectricTwo = 1;
+    public static final int kPhotoElectricTwo = 3;
 
     public static final int kLed = 2;
 
@@ -469,10 +470,10 @@ public final class Constants {
   public static final class ProtoConstants {
     public static final boolean kRealDrive = false;
     public static final boolean kRealIntake = false;
-    public static final boolean kRealIndexer = true;
+    public static final boolean kRealIndexer = false;
     public static final boolean kRealManipulator = true;
     public static final boolean kRealClimb = false;
-    public static final boolean kRealElevator = true;
+    public static final boolean kRealElevator = false;
   }
 
   public class FieldConstants {

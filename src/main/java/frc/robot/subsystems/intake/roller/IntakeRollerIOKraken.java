@@ -31,9 +31,7 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
 
   private final TalonFXConfiguration m_config;
 
-  // TODO: re-enable when phoenix pro is purchased
-  // private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
-  private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
+  private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
 
   public IntakeRollerIOKraken(int port) {
     m_motor = new TalonFX(port, Ports.kMainCanivoreName);

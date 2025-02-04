@@ -7,10 +7,12 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -25,9 +27,8 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   private final TalonFXConfiguration m_config;
 
-  // TODO: re-enable when phoenix pro is purchased
-  // private MotionMagicTorqueCurrentFOC m_magicMotion = new MotionMagicTorqueCurrentFOC(0);
-  private MotionMagicVoltage m_magicMotion = new MotionMagicVoltage(0);
+  private MotionMagicTorqueCurrentFOC m_magicMotion = new MotionMagicTorqueCurrentFOC(0);
+  // private MotionMagicVoltage m_magicMotion = new MotionMagicVoltage(0).withEnableFOC(true);
 
   // Status Signals
   private StatusSignal<Angle> m_leadingPosition;
@@ -67,7 +68,10 @@ public class ElevatorIOKraken implements ElevatorIO {
 
     m_leadingMotor.getConfigurator().apply(m_config);
     m_followingMotor.getConfigurator().apply(m_config);
-    m_followingMotor.setControl(new Follower(leadPort, true));
+
+    m_leadingMotor.getConfigurator().setPosition(0.0);
+    m_followingMotor.getConfigurator().setPosition(0.0);
+    m_followingMotor.setControl(new Follower(leadPort, false));
 
     m_leadingPosition = m_leadingMotor.getPosition();
     m_followingPosition = m_followingMotor.getPosition();
@@ -152,8 +156,10 @@ public class ElevatorIOKraken implements ElevatorIO {
                   .withKS(kS)
                   .withKV(kV)
                   .withKA(kA)
-                  .withKG(kG),
+                  .withKG(kG)
+                  .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
               0.0);
+      m_followingMotor.getConfigurator().apply(m_config.Slot0, 0.0);
     } else if (slot == 1) {
       m_leadingMotor
           .getConfigurator()
@@ -217,7 +223,7 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   @Override
   public boolean atSetpoint() {
-    return (m_leadingPosition.getValueAsDouble() - m_desiredHeight)
+    return Math.abs(m_leadingPosition.getValueAsDouble() - m_desiredHeight)
         <= ElevatorConstants.kHeightTolerance;
   }
 

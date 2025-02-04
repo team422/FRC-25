@@ -31,9 +31,8 @@ public class IndexerIOKraken implements IndexerIO {
 
   private final TalonFXConfiguration m_config;
 
-  // TODO: re-enable when phoenix pro is purchased
-  // private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
-  private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
+  private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
+  // private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
 
   public IndexerIOKraken(int port) {
     m_motor = new TalonFX(port, Ports.kMainCanivoreName);
