@@ -36,6 +36,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.drive.DriveToPoint;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class Drive extends SubsystemBase {
   public enum DriveProfiles {
     kDefault,
     kAutoAlign,
-    kAmpLineup
+    kDriveToPoint,
   }
 
   private SubsystemProfiles<DriveProfiles> m_profiles;
@@ -69,6 +70,9 @@ public class Drive extends SubsystemBase {
           DriveConstants.kHeadingI.get(),
           DriveConstants.kHeadingD.get());
 
+  private DriveToPoint m_driveToPointCommand = new DriveToPoint(this, new Pose2d());
+  private Pose2d m_driveToPointTargetPose = new Pose2d();
+
   private Rotation2d m_rawGyroRotation = new Rotation2d();
   private SwerveModulePosition[] m_lastModulePositions = // For delta tracking
       new SwerveModulePosition[] {
@@ -80,8 +84,6 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator m_poseEstimator =
       new SwerveDrivePoseEstimator(
           DriveConstants.kDriveKinematics, m_rawGyroRotation, m_lastModulePositions, new Pose2d());
-
-  private int m_withinToleranceFrames = 0;
 
   public Drive(
       GyroIO gyroIO,
@@ -118,7 +120,7 @@ public class Drive extends SubsystemBase {
     Map<DriveProfiles, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(DriveProfiles.kDefault, this::defaultPeriodic);
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
-    periodicHash.put(DriveProfiles.kAmpLineup, this::ampLineupPeriodic);
+    periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, DriveProfiles.kDefault);
 
@@ -216,18 +218,11 @@ public class Drive extends SubsystemBase {
     defaultPeriodic();
   }
 
-  public void ampLineupPeriodic() {
-    m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
-    if (Math.abs(m_headingController.getError()) < Units.degreesToRadians(5)) {
-      m_withinToleranceFrames++;
-      if (m_withinToleranceFrames > 10) {
-        // if we reach the setpoint switch back to default
-        updateProfile(DriveProfiles.kDefault);
-        m_desiredChassisSpeeds.omegaRadiansPerSecond = 0;
-      }
-    } else {
-      m_withinToleranceFrames = 0;
+  public void driveToPointPeriodic() {
+    if (m_driveToPointCommand.isFinished()) {
+      updateProfile(DriveProfiles.kDefault);
     }
+
     defaultPeriodic();
   }
 
@@ -295,6 +290,15 @@ public class Drive extends SubsystemBase {
 
   public void setDesiredHeading(Rotation2d heading) {
     m_desiredHeading = heading;
+  }
+
+  public void setTargetPose(Pose2d pose) {
+    m_driveToPointTargetPose = pose;
+    m_driveToPointCommand.setTargetPose(pose);
+  }
+
+  public Pose2d getTargetPose() {
+    return m_driveToPointTargetPose;
   }
 
   /** Stops the drive. */
@@ -393,6 +397,12 @@ public class Drive extends SubsystemBase {
   }
 
   public void updateProfile(DriveProfiles newProfile) {
+    m_driveToPointCommand.cancel(); // cancel if it is already running
+
+    if (newProfile == DriveProfiles.kDriveToPoint) {
+      m_driveToPointCommand.schedule();
+    }
+
     m_profiles.setCurrentProfile(newProfile);
   }
 

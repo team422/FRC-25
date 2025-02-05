@@ -9,11 +9,27 @@ public interface DriverControls {
 
   public double getTurn();
 
-  public Trigger robotstateDefault();
+  public Trigger coralIntake();
 
-  public Trigger robotstateCoralIntake();
+  public Trigger coralOuttake();
 
-  public Trigger robotstateAlgaeIntake();
+  public Trigger setLocationL1();
 
-  public Trigger robotstateAlgaeOuttake();
+  public Trigger setLocationL2();
+
+  public Trigger setLocationL3();
+
+  public Trigger setLocationL4();
+
+  public Trigger autoscoreLeft();
+
+  public Trigger autoscoreRight();
+
+  public Trigger manualScore();
+
+  public Trigger climb();
+
+  public Trigger algaeIntakeOuttake();
+
+  public Trigger algaeDescore();
 }

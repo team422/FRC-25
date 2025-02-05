@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.ProtoConstants;
+import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
@@ -266,35 +267,66 @@ public class RobotContainer {
             m_driverControls::getForward,
             m_driverControls::getStrafe,
             m_driverControls::getTurn));
+        
+    m_driverControls.coralIntake().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().setDefaultAction();
+    }));
 
-    m_driverControls
-        .robotstateDefault()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
-                }));
+    m_driverControls.coralOuttake().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().manageCoralOuttakeRelease();
+    }));
 
-    m_driverControls
-        .robotstateCoralIntake()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
-                }));
+    m_driverControls.setLocationL1().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().setDesiredReefHeight(ReefHeight.L1);
+    }));
 
-    m_driverControls
-        .robotstateAlgaeIntake()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
-                }));
+    m_driverControls.setLocationL2().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().setDesiredReefHeight(ReefHeight.L2);
+    }));
+
+    m_driverControls.setLocationL3().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
+    }));
+
+    m_driverControls.setLocationL4().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
+    }));
+
+    m_driverControls.autoscoreLeft().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().setReefIndexLeft();
+      RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().setDefaultAction();
+    }));
+
+    m_driverControls.autoscoreRight().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().setReefIndexRight();
+      RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().setDefaultAction();
+    }));
+
+    m_driverControls.manualScore().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().setDefaultAction();
+    }));
+
+    m_driverControls.climb().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().updateRobotAction(RobotAction.kClimbing);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().setDefaultAction();
+    }));
+
+    m_driverControls.algaeIntakeOuttake().onTrue(Commands.runOnce(() -> {
+      RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
+    })).onFalse(Commands.runOnce(() -> {
+      RobotState.getInstance().setDefaultAction();
+    }));
   }
 
   /**

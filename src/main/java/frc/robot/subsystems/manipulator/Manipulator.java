@@ -4,7 +4,6 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.indexer.Indexer.IndexerState;
@@ -24,7 +23,8 @@ public class Manipulator extends SubsystemBase {
   private WristIO m_wristIO;
   private CoralDetectorIO m_coralDetectorIO;
 
-  private FieldConstants.ReefHeight m_desiredScoringLocation = FieldConstants.ReefHeight.L1;
+  private Rotation2d m_desiredWristAngle = new Rotation2d();
+  private boolean m_runRollerScoring = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -87,6 +87,10 @@ public class Manipulator extends SubsystemBase {
   }
 
   public void updateState(ManipulatorState state) {
+    // TODO: this makes sense but i have the feeling it will cause an issue during testing
+    // DON'T FORGET ABOUT THIS
+    m_runRollerScoring = false;
+
     m_profiles.setCurrentProfile(state);
   }
 
@@ -94,12 +98,12 @@ public class Manipulator extends SubsystemBase {
     return m_profiles.getCurrentProfile();
   }
 
-  public void setDesiredScoringLocation(FieldConstants.ReefHeight location) {
-    m_desiredScoringLocation = location;
+  public void setDesiredWristAngle(Rotation2d angle) {
+    m_desiredWristAngle = angle;
   }
 
-  public FieldConstants.ReefHeight getScoringLocation() {
-    return m_desiredScoringLocation;
+  public Rotation2d getDesiredWristAngle() {
+    return m_desiredWristAngle;
   }
 
   public void stowPeriodic() {
@@ -123,11 +127,16 @@ public class Manipulator extends SubsystemBase {
   public void scoringPeriodic() {
     // use the existing pitch of each level but add an offset (should be constant for all levels)
     // this may need to be changed if it differs in real life
-    var desiredAngle =
-        Rotation2d.fromDegrees(
-            m_desiredScoringLocation.pitch - ManipulatorConstants.kWristScoringOffset.get());
-    m_wristIO.setDesiredAngle(desiredAngle);
-    m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
+    m_wristIO.setDesiredAngle(m_desiredWristAngle);
+    if (m_runRollerScoring) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(0.0);
+    }
+  }
+
+  public void runRollerScoring() {
+    m_runRollerScoring = true;
   }
 
   public boolean atSetpoint() {

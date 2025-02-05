@@ -7,6 +7,7 @@
 
 package frc.lib.littletonUtils;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Twist2d;
 
 public class EqualsUtil {
@@ -24,6 +25,13 @@ public class EqualsUtil {
       return EqualsUtil.epsilonEquals(twist.dx, other.dx)
           && EqualsUtil.epsilonEquals(twist.dy, other.dy)
           && EqualsUtil.epsilonEquals(twist.dtheta, other.dtheta);
+    }
+
+    public static boolean epsilonEquals(Pose2d pose, Pose2d other) {
+      return EqualsUtil.epsilonEquals(pose.getTranslation().getX(), other.getTranslation().getX())
+          && EqualsUtil.epsilonEquals(pose.getTranslation().getY(), other.getTranslation().getY())
+          && EqualsUtil.epsilonEquals(
+              pose.getRotation().getRadians(), other.getRotation().getRadians());
     }
   }
 }

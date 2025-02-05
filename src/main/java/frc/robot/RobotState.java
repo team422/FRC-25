@@ -2,6 +2,9 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.Timer;
+import frc.lib.littletonUtils.EqualsUtil;
+import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
@@ -18,6 +21,8 @@ import frc.robot.subsystems.led.Led;
 import frc.robot.subsystems.led.Led.LedState;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.SetpointGenerator;
+import frc.robot.util.SetpointGenerator.RobotSetpoint;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,16 +43,22 @@ public class RobotState {
 
   public enum RobotAction {
     kTeleopDefault,
-    kCoralIntaking, // run indexer only when the manipulator and elevator are in the right position
+    kCoralIntaking,
+    kCoralOuttaking,
     kAlgaeIntakingOuttaking,
-    kAutoScore, // set the manipulator and elevator to the right position to score, use DriveToPoint
-    // to get to the right position
+    kAutoScore,
+    kManualScore,
     kClimbing,
 
     kAutoDefault,
   }
 
   private SubsystemProfiles<RobotAction> m_profiles;
+
+  private Timer m_timer = new Timer();
+
+  private ReefHeight m_desiredReefHeight = ReefHeight.L1;
+  private int m_desiredBranchIndex = 0;
 
   // Singleton logic
   private static RobotState m_instance;
@@ -106,16 +117,6 @@ public class RobotState {
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
   }
 
-  public void algaeIntakingOuttakingPeriodic() {
-    // we could be intaking or outtaking here
-    // if we're outtaking we don't want to go to hold
-    if (m_intake.getCurrentState() == IntakeState.kIntake) {
-      if (m_intake.hasGamePiece()) {
-        m_intake.updateState(IntakeState.kGamepieceHold);
-      }
-    }
-  }
-
   public void coralIntakingPeriodic() {
     // when we have a game piece don't runm
     if (m_manipulator.hasGamePiece()) {
@@ -129,8 +130,58 @@ public class RobotState {
     }
   }
 
+  public void coralOuttakingPeriodic() {
+    if (m_timer.hasElapsed(0.5)) {
+      // after we release the coral go back to stow
+      setDefaultAction();
+    }
+    if (!m_timer.isRunning() && !m_manipulator.hasGamePiece()) {
+      m_timer.restart();
+    }
+  }
+
+  public void algaeIntakingOuttakingPeriodic() {
+    // we could be intaking or outtaking here
+    // if we're outtaking we don't want to go to hold
+    if (m_intake.getCurrentState() == IntakeState.kIntake) {
+      if (m_intake.hasGamePiece()) {
+        m_intake.updateState(IntakeState.kGamepieceHold);
+      }
+    }
+  }
+
+  public void autoScorePeriodic() {
+    RobotSetpoint setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    // only set the setpoints if they're different so we don't reset the motion profile or drive pid
+    if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
+      m_elevator.setDesiredHeight(setpoint.elevatorHeight());
+    }
+    if (!EqualsUtil.epsilonEquals(
+        setpoint.manipulatorAngle().getRadians(),
+        m_manipulator.getDesiredWristAngle().getRadians())) {
+      m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+    }
+    if (!EqualsUtil.GeomExtensions.epsilonEquals(setpoint.drivePose(), m_drive.getTargetPose())) {
+      m_drive.setTargetPose(setpoint.drivePose());
+    }
+  }
+
+  public void manualScorePeriodic() {
+    RobotSetpoint setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    // only set the setpoints if they're different so we don't reset the motion profile
+    if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
+      m_elevator.setDesiredHeight(setpoint.elevatorHeight());
+    }
+    if (!EqualsUtil.epsilonEquals(
+        setpoint.manipulatorAngle().getRadians(),
+        m_manipulator.getDesiredWristAngle().getRadians())) {
+      m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+    }
+    // don't worry about drive in manual score
+  }
+
   public void climbingPeriodic() {
-    // TODO: implement later
+    // TODO: come back here, i don't think this needs anything but it feels like it should
   }
 
   public void updateRobotAction(RobotAction newAction) {
@@ -141,11 +192,21 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
+        m_manipulator.updateState(ManipulatorState.kStow);
         m_led.updateState(LedState.kEnabled);
         break;
 
+      case kManualScore:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kScoring);
+        m_manipulator.updateState(ManipulatorState.kScoring);
+        m_led.updateState(LedState.kAutoScore);
+        // this fallthrough is intentional
       case kAutoScore:
-        // TODO: implement later with setpoint generator
+        m_drive.updateProfile(DriveProfiles.kDriveToPoint);
         break;
 
       case kClimbing:
@@ -178,8 +239,17 @@ public class RobotState {
         m_manipulator.updateState(ManipulatorState.kStow);
         m_led.updateState(LedState.kEnabled);
         break;
+
+      case kCoralOuttaking:
+        // don't change any other states since we want everything to stay in place
+        m_manipulator.runRollerScoring();
+        break;
     }
     m_profiles.setCurrentProfile(newAction);
+
+    // stop the timer so a previous action doesn't affect the new one
+    m_timer.stop();
+    m_timer.reset();
   }
 
   public RobotAction getCurrentAction() {
@@ -203,6 +273,46 @@ public class RobotState {
 
   public void addVisionObservation(VisionObservation observation) {
     m_drive.addVisionObservation(observation);
+  }
+
+  public void setDesiredReefHeight(ReefHeight height) {
+    m_desiredReefHeight = height;
+  }
+
+  public void setDesiredBranchIndex(int index) {
+    m_desiredBranchIndex = index;
+  }
+
+  public void manageCoralOuttakeRelease() {
+    // if we successfully outtake the coral we want to go back to stow
+    // otherwise go back to autoscore/manual score
+    if (!m_manipulator.hasGamePiece()) {
+      setDefaultAction();
+    } else {
+      // i'm actually using revertToLastProfile
+      // i never thought this day would come
+      m_profiles.revertToLastProfile();
+    }
+  }
+
+  public void setReefIndexLeft() {
+    var currPose = getRobotPose();
+    var indices = SetpointGenerator.getPossibleIndices(currPose);
+    // indices are in order starting from the driver station and going clockwise
+    // so the second index is the one to the left
+    if (indices.getSecond() != -1) {
+      m_desiredBranchIndex = indices.getSecond();
+    }
+  }
+
+  public void setReefIndexRight() {
+    var currPose = getRobotPose();
+    var indices = SetpointGenerator.getPossibleIndices(currPose);
+    // indices are in order starting from the driver station and going clockwise
+    // so the first index is the one to the right
+    if (indices.getFirst() != -1) {
+      m_desiredBranchIndex = indices.getFirst();
+    }
   }
 
   public Pose2d getRobotPose() {

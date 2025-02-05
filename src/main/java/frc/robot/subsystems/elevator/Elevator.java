@@ -4,7 +4,6 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ElevatorConstants;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -14,7 +13,7 @@ public class Elevator extends SubsystemBase {
   public final ElevatorInputsAutoLogged m_inputs;
   private ElevatorIO m_io;
   private int m_currSlot;
-  private FieldConstants.ReefHeight m_desiredLocation = FieldConstants.ReefHeight.L1;
+  private double m_desiredHeight;
 
   public static enum ElevatorState {
     kStow,
@@ -95,7 +94,6 @@ public class Elevator extends SubsystemBase {
     m_profiles.getPeriodicFunction().run();
 
     Logger.processInputs("Elevator", m_inputs);
-    Logger.recordOutput("Elevator/DesiredLocation", m_desiredLocation);
     Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
@@ -111,8 +109,7 @@ public class Elevator extends SubsystemBase {
 
         break;
       case kScoring:
-        double desiredHeight = m_desiredLocation.height + ElevatorConstants.kElevatorOffset.get();
-        m_io.setDesiredHeight(desiredHeight);
+        m_io.setDesiredHeight(m_desiredHeight);
 
         break;
       case kStow:
@@ -126,16 +123,15 @@ public class Elevator extends SubsystemBase {
     return m_profiles.getCurrentProfile();
   }
 
-  public void setDesiredScoringLocation(FieldConstants.ReefHeight desired) {
-    m_desiredLocation = desired;
+  public void setDesiredHeight(double desired) {
+    m_desiredHeight = desired;
     if (m_profiles.getCurrentProfile() == ElevatorState.kScoring) {
-      double desiredHeight = m_desiredLocation.height + ElevatorConstants.kElevatorOffset.get();
-      m_io.setDesiredHeight(desiredHeight);
+      m_io.setDesiredHeight(m_desiredHeight);
     }
   }
 
-  public FieldConstants.ReefHeight getDesiredScoringLocation() {
-    return m_desiredLocation;
+  public double getDesiredHeight() {
+    return m_desiredHeight;
   }
 
   public void stowPeriodic() {}
