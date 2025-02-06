@@ -1,5 +1,7 @@
 package frc.robot.subsystems.intake.pivot;
 
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -8,9 +10,11 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -18,15 +22,18 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.util.CtreBaseRefreshManager;
 
 public class PivotIOKraken implements PivotIO {
   private TalonFX m_motor;
 
   private DutyCycleEncoder m_absoluteEncoder;
 
+  private StatusSignal<ConnectedMotorValue> m_connectedMotor;
   private StatusSignal<Angle> m_motorPosition;
   private StatusSignal<AngularVelocity> m_motorVelocity;
   private StatusSignal<Current> m_motorCurrent;
@@ -62,6 +69,7 @@ public class PivotIOKraken implements PivotIO {
 
     m_motor.getConfigurator().apply(m_config);
 
+    m_connectedMotor = m_motor.getConnectedMotor();
     m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
     m_motorCurrent = m_motor.getSupplyCurrent();
@@ -75,6 +83,7 @@ public class PivotIOKraken implements PivotIO {
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
         75.0,
+        m_connectedMotor,
         m_motorVelocity,
         m_motorVoltage,
         m_motorCurrent,
@@ -82,25 +91,39 @@ public class PivotIOKraken implements PivotIO {
         m_motorTemperature);
 
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
+
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_connectedMotor,
+              m_motorPosition,
+              m_motorVelocity,
+              m_motorCurrent,
+              m_motorStatorCurrent,
+              m_motorVoltage,
+              m_motorTemperature));
+    }
   }
 
   @Override
   public void updateInputs(PivotInputs inputs) {
-    inputs.motorIsConnected =
+    if (!Constants.kUseBaseRefreshManager) {
         BaseStatusSignal.refreshAll(
                 m_motorPosition,
                 m_motorVelocity,
                 m_motorVoltage,
                 m_motorCurrent,
                 m_motorStatorCurrent,
-                m_motorTemperature)
-            .isOK();
+                m_motorTemperature);
+    }
 
     // wait until the absolute encoder is actually giving a reading
     if (!m_relativeEncoderReset && m_absoluteEncoder.get() != 1) {
       m_relativeEncoderReset = true;
       resetRelativeEncoder();
     }
+
+    inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
     inputs.desiredAngleDeg = m_desiredAngle.getDegrees();

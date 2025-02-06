@@ -10,12 +10,14 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicTorqueCurrentFOC;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.Ports;
@@ -30,6 +32,8 @@ public class ElevatorIOKraken implements ElevatorIO {
   // private MotionMagicVoltage m_magicMotion = new MotionMagicVoltage(0).withEnableFOC(true);
 
   // Status Signals
+  private StatusSignal<ConnectedMotorValue> m_leadingConnectedMotor;
+  private StatusSignal<ConnectedMotorValue> m_followingConnectedMotor;
   private StatusSignal<Angle> m_leadingPosition;
   private StatusSignal<Angle> m_followingPosition;
   private StatusSignal<Voltage> m_leadingVoltage;
@@ -72,6 +76,8 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_followingMotor.getConfigurator().setPosition(0.0);
     m_followingMotor.setControl(new Follower(leadPort, false));
 
+    m_leadingConnectedMotor = m_leadingMotor.getConnectedMotor();
+    m_followingConnectedMotor = m_followingMotor.getConnectedMotor();
     m_leadingPosition = m_leadingMotor.getPosition();
     m_followingPosition = m_followingMotor.getPosition();
     m_leadingVoltage = m_leadingMotor.getMotorVoltage();
@@ -85,6 +91,8 @@ public class ElevatorIOKraken implements ElevatorIO {
     BaseStatusSignal.setUpdateFrequencyForAll(100, m_leadingPosition, m_followingPosition);
     BaseStatusSignal.setUpdateFrequencyForAll(
         75,
+        m_leadingConnectedMotor,
+        m_followingConnectedMotor,
         m_leadingVoltage,
         m_followingVoltage,
         m_leadingSupplyCurrent,
@@ -95,27 +103,42 @@ public class ElevatorIOKraken implements ElevatorIO {
         m_followingTemp);
 
     ParentDevice.optimizeBusUtilizationForAll(m_leadingMotor, m_followingMotor);
+
+    if (Constants.kUseBaseRefreshManager) {
+      BaseStatusSignal.refreshAll(
+          m_leadingConnectedMotor,
+          m_followingConnectedMotor,
+          m_leadingPosition,
+          m_followingPosition,
+          m_leadingVoltage,
+          m_followingVoltage,
+          m_leadingSupplyCurrent,
+          m_followingSupplyCurrent,
+          m_leadingStatorCurrent,
+          m_followingStatorCurrent,
+          m_leadingTemp,
+          m_followingTemp);
+    }
   }
 
   @Override
   public void updateInputs(ElevatorInputs inputs) {
-    inputs.isLeadingMotorConnected =
+    if (!Constants.kUseBaseRefreshManager) {
         BaseStatusSignal.refreshAll(
                 m_leadingPosition,
                 m_leadingVoltage,
                 m_leadingSupplyCurrent,
                 m_leadingStatorCurrent,
-                m_leadingTemp)
-            .isOK();
-
-    inputs.isFollowingMotorConnected =
-        BaseStatusSignal.refreshAll(
+                m_leadingTemp,
                 m_followingPosition,
                 m_followingVoltage,
                 m_followingSupplyCurrent,
                 m_followingStatorCurrent,
-                m_followingTemp)
-            .isOK();
+                m_followingTemp);
+    }
+
+    inputs.isLeadingMotorConnected = m_leadingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
+    inputs.isFollowingMotorConnected = m_followingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.atSetpoint = atSetpoint();
     inputs.desiredLocation = m_desiredHeight;

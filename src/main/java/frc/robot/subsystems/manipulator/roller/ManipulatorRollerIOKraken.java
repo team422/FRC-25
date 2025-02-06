@@ -9,18 +9,23 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 
 public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   private TalonFX m_motor;
 
+  private StatusSignal<ConnectedMotorValue> m_connectedMotor;
   private StatusSignal<AngularVelocity> m_motorVelocity;
   private StatusSignal<Current> m_motorCurrent;
   private StatusSignal<Current> m_motorStatorCurrent;
@@ -55,6 +60,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
 
     m_motor.getConfigurator().apply(m_config);
 
+    m_connectedMotor = m_motor.getConnectedMotor();
     m_motorVelocity = m_motor.getVelocity();
     m_motorVoltage = m_motor.getMotorVoltage();
     m_motorCurrent = m_motor.getSupplyCurrent();
@@ -64,6 +70,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
         75.0,
+        m_connectedMotor,
         m_motorVelocity,
         m_motorCurrent,
         m_motorStatorCurrent,
@@ -71,18 +78,31 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
         m_motorTemperature);
 
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
+
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_connectedMotor,
+              m_motorVelocity,
+              m_motorCurrent,
+              m_motorStatorCurrent,
+              m_motorVoltage,
+              m_motorTemperature));
+    }
   }
 
   @Override
   public void updateInputs(ManipulatorRollerInputs inputs) {
-    inputs.motorIsConnected =
-        BaseStatusSignal.refreshAll(
-                m_motorVelocity,
-                m_motorCurrent,
-                m_motorStatorCurrent,
-                m_motorVoltage,
-                m_motorTemperature)
-            .isOK();
+    if (!Constants.kUseBaseRefreshManager) {
+      BaseStatusSignal.refreshAll(
+              m_motorVelocity,
+              m_motorCurrent,
+              m_motorStatorCurrent,
+              m_motorVoltage,
+              m_motorTemperature);
+    }
+
+    inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
     inputs.current = m_motorCurrent.getValueAsDouble();

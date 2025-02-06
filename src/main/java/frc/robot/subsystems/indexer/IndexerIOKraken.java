@@ -1,5 +1,7 @@
 package frc.robot.subsystems.indexer;
 
+import java.util.List;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -9,19 +11,24 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IndexerConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.util.CtreBaseRefreshManager;
 
 public class IndexerIOKraken implements IndexerIO {
   private TalonFX m_motor;
 
+  private StatusSignal<ConnectedMotorValue> m_connectedMotor;
   private StatusSignal<Angle> m_motorPosition;
   private StatusSignal<AngularVelocity> m_motorVelocity;
   private StatusSignal<Current> m_motorCurrent;
@@ -57,6 +64,7 @@ public class IndexerIOKraken implements IndexerIO {
 
     m_motor.getConfigurator().apply(m_config);
 
+    m_connectedMotor = m_motor.getConnectedMotor();
     m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
     m_motorCurrent = m_motor.getSupplyCurrent();
@@ -67,6 +75,7 @@ public class IndexerIOKraken implements IndexerIO {
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
         75.0,
+        m_connectedMotor,
         m_motorPosition,
         m_motorVelocity,
         m_motorCurrent,
@@ -75,19 +84,34 @@ public class IndexerIOKraken implements IndexerIO {
         m_motorTemperature);
 
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
+
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_connectedMotor,
+              m_motorPosition,
+              m_motorVelocity,
+              m_motorCurrent,
+              m_motorStatorCurrent,
+              m_motorVoltage,
+              m_motorTemperature));
+    }
   }
 
   @Override
   public void updateInputs(IndexerInputs inputs) {
-    inputs.motorIsConnected =
+    if (!Constants.kUseBaseRefreshManager) {
         BaseStatusSignal.refreshAll(
+                m_connectedMotor,
                 m_motorPosition,
                 m_motorVelocity,
                 m_motorCurrent,
                 m_motorStatorCurrent,
                 m_motorVoltage,
-                m_motorTemperature)
-            .isOK();
+                m_motorTemperature);
+    }
+
+    inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.position = m_motorPosition.getValueAsDouble();
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();

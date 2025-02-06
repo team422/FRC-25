@@ -8,6 +8,9 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import java.util.Map;
 
 public class SetpointGenerator {
+  // this is a static class and may not be instantiated
+  private SetpointGenerator() {}
+
   public static record RobotSetpoint(
       Pose2d drivePose, Rotation2d manipulatorAngle, double elevatorHeight) {}
 

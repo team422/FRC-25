@@ -6,32 +6,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CtreBaseRefreshManager {
-  // create a singleton
-  private static CtreBaseRefreshManager instance = null;
-
-  // create a arraylist with all of the status signals
-  private static List<StatusSignal<?>> ctreBaseRefreshList = new ArrayList<>();
-  // make a regular list that is not an arraylist
-
-  public static CtreBaseRefreshManager getInstance() {
-    if (instance == null) {
-      instance = new CtreBaseRefreshManager();
-    }
-    return instance;
-  }
-
+  // this is a static class and may not be instantiated
   private CtreBaseRefreshManager() {}
 
-  public void updateAll() {
-    // use BaseSignal to update all of the signals
-    BaseStatusSignal.refreshAll(ctreBaseRefreshList.stream().toArray(StatusSignal[]::new));
+  private static List<StatusSignal<?>> m_signals = new ArrayList<>();
+
+  /**
+   * Updates all of the signals in the manager. This must be called BEFORE {@code
+   * CommandScheduler.getInstance().run()} in the robot periodic to work properly.
+   */
+  public static void updateAll() {
+    // convert to array for the varargs
+    BaseStatusSignal.refreshAll(m_signals.stream().toArray(StatusSignal[]::new));
   }
 
-  public void addSignals(List<StatusSignal<?>> signals) {
-    ctreBaseRefreshList.addAll(signals);
+  public static void addSignals(List<StatusSignal<?>> signals) {
+    m_signals.addAll(signals);
   }
 
-  public void addSignal(StatusSignal<?> signal) {
-    ctreBaseRefreshList.add(signal);
+  public static void addSignal(StatusSignal<?> signal) {
+    m_signals.add(signal);
   }
 }

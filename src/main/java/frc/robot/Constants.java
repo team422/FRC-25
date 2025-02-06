@@ -34,6 +34,9 @@ public final class Constants {
   public static final Mode kSimMode = Mode.SIM;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
+  // set to false to disable the base refresh manager
+  public static final boolean kUseBaseRefreshManager = true;
+
   public static enum Mode {
     /** Running on a real robot. */
     REAL,

@@ -23,6 +23,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -31,6 +32,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
@@ -55,12 +57,14 @@ public class ModuleIOTalonFX implements ModuleIO {
 
   private final Queue<Double> m_timestampQueue;
 
+  private final StatusSignal<ConnectedMotorValue> m_driveConnectedMotor;
   private final StatusSignal<Angle> m_drivePosition;
   private final Queue<Double> m_drivePositionQueue;
   private final StatusSignal<AngularVelocity> m_driveVelocity;
   private final StatusSignal<Voltage> m_driveAppliedVolts;
   private final StatusSignal<Current> m_driveCurrent;
 
+  private final StatusSignal<ConnectedMotorValue> m_turnConnectedMotor;
   private final StatusSignal<Angle> m_turnAbsolutePosition;
   private final StatusSignal<Angle> m_turnPosition;
   private final Queue<Double> m_turnPositionQueue;
@@ -134,6 +138,7 @@ public class ModuleIOTalonFX implements ModuleIO {
 
     m_timestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
 
+    m_driveConnectedMotor = m_driveTalon.getConnectedMotor();
     m_drivePosition = m_driveTalon.getPosition();
     m_drivePositionQueue =
         PhoenixOdometryThread.getInstance().registerSignal(m_driveTalon.getPosition());
@@ -141,6 +146,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     m_driveAppliedVolts = m_driveTalon.getMotorVoltage();
     m_driveCurrent = m_driveTalon.getSupplyCurrent();
 
+    m_turnConnectedMotor = m_turnTalon.getConnectedMotor();
     m_turnAbsolutePosition = m_cancoder.getAbsolutePosition();
     m_turnPosition = m_turnTalon.getPosition();
     m_turnPositionQueue =
@@ -153,6 +159,8 @@ public class ModuleIOTalonFX implements ModuleIO {
         DriveConstants.kOdometryFrequency, m_drivePosition, m_turnPosition);
     BaseStatusSignal.setUpdateFrequencyForAll(
         50.0,
+        m_driveConnectedMotor,
+        m_turnConnectedMotor,
         m_driveVelocity,
         m_driveAppliedVolts,
         m_driveCurrent,
@@ -166,16 +174,20 @@ public class ModuleIOTalonFX implements ModuleIO {
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
-    BaseStatusSignal.refreshAll(
-        m_drivePosition,
-        m_driveVelocity,
-        m_driveAppliedVolts,
-        m_driveCurrent,
-        m_turnAbsolutePosition,
-        m_turnPosition,
-        m_turnVelocity,
-        m_turnAppliedVolts,
-        m_turnCurrent);
+    if (!Constants.kUseBaseRefreshManager) {
+      BaseStatusSignal.refreshAll(
+          m_driveConnectedMotor,
+          m_drivePosition,
+          m_driveVelocity,
+          m_driveAppliedVolts,
+          m_driveCurrent,
+          m_turnConnectedMotor,
+          m_turnAbsolutePosition,
+          m_turnPosition,
+          m_turnVelocity,
+          m_turnAppliedVolts,
+          m_turnCurrent);
+    }
 
     inputs.drivePositionRad =
         Units.rotationsToRadians(m_drivePosition.getValueAsDouble())
@@ -185,6 +197,7 @@ public class ModuleIOTalonFX implements ModuleIO {
             / DriveConstants.kDriveGearRatio;
     inputs.driveAppliedVolts = m_driveAppliedVolts.getValueAsDouble();
     inputs.driveCurrentAmps = new double[] {m_driveCurrent.getValueAsDouble()};
+    inputs.driveMotorIsConnected = m_driveConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.turnAbsolutePosition =
         Rotation2d.fromRotations(m_turnAbsolutePosition.getValueAsDouble())
@@ -195,6 +208,7 @@ public class ModuleIOTalonFX implements ModuleIO {
         Units.rotationsToRadians(m_turnVelocity.getValueAsDouble()) / DriveConstants.kTurnGearRatio;
     inputs.turnAppliedVolts = m_turnAppliedVolts.getValueAsDouble();
     inputs.turnCurrentAmps = new double[] {m_turnCurrent.getValueAsDouble()};
+    inputs.turnMotorIsConnected = m_turnConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.odometryTimestamps =
         m_timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
