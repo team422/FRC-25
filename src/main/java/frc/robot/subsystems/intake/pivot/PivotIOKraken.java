@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake.pivot;
 
-import java.util.List;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -14,7 +12,6 @@ import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -27,6 +24,7 @@ import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 
 public class PivotIOKraken implements PivotIO {
   private TalonFX m_motor;
@@ -108,13 +106,13 @@ public class PivotIOKraken implements PivotIO {
   @Override
   public void updateInputs(PivotInputs inputs) {
     if (!Constants.kUseBaseRefreshManager) {
-        BaseStatusSignal.refreshAll(
-                m_motorPosition,
-                m_motorVelocity,
-                m_motorVoltage,
-                m_motorCurrent,
-                m_motorStatorCurrent,
-                m_motorTemperature);
+      BaseStatusSignal.refreshAll(
+          m_motorPosition,
+          m_motorVelocity,
+          m_motorVoltage,
+          m_motorCurrent,
+          m_motorStatorCurrent,
+          m_motorTemperature);
     }
 
     // wait until the absolute encoder is actually giving a reading

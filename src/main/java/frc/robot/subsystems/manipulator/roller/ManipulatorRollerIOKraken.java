@@ -95,11 +95,11 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   public void updateInputs(ManipulatorRollerInputs inputs) {
     if (!Constants.kUseBaseRefreshManager) {
       BaseStatusSignal.refreshAll(
-              m_motorVelocity,
-              m_motorCurrent,
-              m_motorStatorCurrent,
-              m_motorVoltage,
-              m_motorTemperature);
+          m_motorVelocity,
+          m_motorCurrent,
+          m_motorStatorCurrent,
+          m_motorVoltage,
+          m_motorTemperature);
     }
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;

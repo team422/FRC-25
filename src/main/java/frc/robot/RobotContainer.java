@@ -18,6 +18,7 @@ import frc.robot.subsystems.climb.ClimbIOKraken;
 import frc.robot.subsystems.climb.ClimbIOReplay;
 import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
@@ -333,11 +334,6 @@ public class RobotContainer {
                 () -> {
                   RobotState.getInstance().setReefIndexLeft();
                   RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
                 }));
 
     m_driverControls
@@ -347,11 +343,6 @@ public class RobotContainer {
                 () -> {
                   RobotState.getInstance().setReefIndexRight();
                   RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
                 }));
 
     m_driverControls
@@ -360,11 +351,6 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
                 }));
 
     m_driverControls
@@ -373,11 +359,6 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().updateRobotAction(RobotAction.kClimbing);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
                 }));
 
     m_driverControls
@@ -391,6 +372,16 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .cancelDriveToPoint()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  if (m_drive.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
+                    m_drive.updateProfile(DriveProfiles.kDefault);
+                  }
                 }));
   }
 

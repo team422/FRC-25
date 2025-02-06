@@ -124,21 +124,23 @@ public class ElevatorIOKraken implements ElevatorIO {
   @Override
   public void updateInputs(ElevatorInputs inputs) {
     if (!Constants.kUseBaseRefreshManager) {
-        BaseStatusSignal.refreshAll(
-                m_leadingPosition,
-                m_leadingVoltage,
-                m_leadingSupplyCurrent,
-                m_leadingStatorCurrent,
-                m_leadingTemp,
-                m_followingPosition,
-                m_followingVoltage,
-                m_followingSupplyCurrent,
-                m_followingStatorCurrent,
-                m_followingTemp);
+      BaseStatusSignal.refreshAll(
+          m_leadingPosition,
+          m_leadingVoltage,
+          m_leadingSupplyCurrent,
+          m_leadingStatorCurrent,
+          m_leadingTemp,
+          m_followingPosition,
+          m_followingVoltage,
+          m_followingSupplyCurrent,
+          m_followingStatorCurrent,
+          m_followingTemp);
     }
 
-    inputs.isLeadingMotorConnected = m_leadingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
-    inputs.isFollowingMotorConnected = m_followingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
+    inputs.isLeadingMotorConnected =
+        m_leadingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
+    inputs.isFollowingMotorConnected =
+        m_followingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.atSetpoint = atSetpoint();
     inputs.desiredLocation = m_desiredHeight;

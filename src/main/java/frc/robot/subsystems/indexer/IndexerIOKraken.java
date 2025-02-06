@@ -1,7 +1,5 @@
 package frc.robot.subsystems.indexer;
 
-import java.util.List;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -13,7 +11,6 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -24,6 +21,7 @@ import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IndexerConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 
 public class IndexerIOKraken implements IndexerIO {
   private TalonFX m_motor;
@@ -101,14 +99,14 @@ public class IndexerIOKraken implements IndexerIO {
   @Override
   public void updateInputs(IndexerInputs inputs) {
     if (!Constants.kUseBaseRefreshManager) {
-        BaseStatusSignal.refreshAll(
-                m_connectedMotor,
-                m_motorPosition,
-                m_motorVelocity,
-                m_motorCurrent,
-                m_motorStatorCurrent,
-                m_motorVoltage,
-                m_motorTemperature);
+      BaseStatusSignal.refreshAll(
+          m_connectedMotor,
+          m_motorPosition,
+          m_motorVelocity,
+          m_motorCurrent,
+          m_motorStatorCurrent,
+          m_motorVoltage,
+          m_motorTemperature);
     }
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;

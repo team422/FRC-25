@@ -17,6 +17,9 @@ public class CtreBaseRefreshManager {
    */
   public static void updateAll() {
     // convert to array for the varargs
+    if (m_signals.isEmpty()) {
+      return;
+    }
     BaseStatusSignal.refreshAll(m_signals.stream().toArray(StatusSignal[]::new));
   }
 

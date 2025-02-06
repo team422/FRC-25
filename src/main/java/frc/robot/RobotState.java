@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.EqualsUtil;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
@@ -49,6 +50,7 @@ public class RobotState {
     kAutoScore,
     kManualScore,
     kClimbing,
+    kDriveToProcessor,
 
     kAutoDefault,
   }
@@ -87,6 +89,10 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeIntakingOuttaking, this::algaeIntakingOuttakingPeriodic);
     periodicHash.put(RobotAction.kCoralIntaking, this::coralIntakingPeriodic);
     periodicHash.put(RobotAction.kClimbing, this::climbingPeriodic);
+    periodicHash.put(RobotAction.kAutoScore, this::autoScorePeriodic);
+    periodicHash.put(RobotAction.kManualScore, this::manualScorePeriodic);
+    periodicHash.put(RobotAction.kDriveToProcessor, this::driveToProcessorPeriodic);
+    periodicHash.put(RobotAction.kCoralOuttaking, this::coralOuttakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -180,6 +186,13 @@ public class RobotState {
     // don't worry about drive in manual score
   }
 
+  public void driveToProcessorPeriodic() {
+    Pose2d processorPose = FieldConstants.Processor.kCenterFace;
+    if (!EqualsUtil.GeomExtensions.epsilonEquals(processorPose, m_drive.getTargetPose())) {
+      m_drive.setTargetPose(processorPose);
+    }
+  }
+
   public void climbingPeriodic() {
     // TODO: come back here, i don't think this needs anything but it feels like it should
   }
@@ -207,6 +220,16 @@ public class RobotState {
         // this fallthrough is intentional
       case kAutoScore:
         m_drive.updateProfile(DriveProfiles.kDriveToPoint);
+        break;
+
+      case kDriveToProcessor:
+        m_drive.updateProfile(DriveProfiles.kDriveToPoint);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kStow);
+        m_manipulator.updateState(ManipulatorState.kStow);
+        m_led.updateState(LedState.kEnabled);
         break;
 
       case kClimbing:

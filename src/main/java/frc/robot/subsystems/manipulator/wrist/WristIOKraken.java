@@ -1,7 +1,5 @@
 package frc.robot.subsystems.manipulator.wrist;
 
-import java.util.List;
-
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -14,8 +12,6 @@ import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
-import frc.robot.Constants;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -23,10 +19,12 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -94,14 +92,15 @@ public class WristIOKraken implements WristIO {
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
 
     if (Constants.kUseBaseRefreshManager) {
-      CtreBaseRefreshManager.addSignals(List.of(
-          m_connectedMotor,
-          m_motorPosition,
-          m_motorVelocity,
-          m_motorVoltage,
-          m_motorCurrent,
-          m_motorStatorCurrent,
-          m_motorTemperature));
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_connectedMotor,
+              m_motorPosition,
+              m_motorVelocity,
+              m_motorVoltage,
+              m_motorCurrent,
+              m_motorStatorCurrent,
+              m_motorTemperature));
     }
   }
 
