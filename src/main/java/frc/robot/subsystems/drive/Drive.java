@@ -23,7 +23,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
@@ -35,6 +34,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.lib.littletonUtils.SwerveSetpointGenerator;
+import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.drive.DriveToPoint;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
@@ -85,6 +86,17 @@ public class Drive extends SubsystemBase {
       new SwerveDrivePoseEstimator(
           DriveConstants.kDriveKinematics, m_rawGyroRotation, m_lastModulePositions, new Pose2d());
 
+  private SwerveSetpoint m_currSetpoint =
+      new SwerveSetpoint(
+          new ChassisSpeeds(),
+          new SwerveModuleState[] {
+            new SwerveModuleState(),
+            new SwerveModuleState(),
+            new SwerveModuleState(),
+            new SwerveModuleState()
+          });
+  private SwerveSetpointGenerator m_swerveSetpointGenerator;
+
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -125,6 +137,10 @@ public class Drive extends SubsystemBase {
     m_profiles = new SubsystemProfiles<>(periodicHash, DriveProfiles.kDefault);
 
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    m_swerveSetpointGenerator =
+        new SwerveSetpointGenerator(
+            DriveConstants.kDriveKinematics, DriveConstants.kModuleTranslations);
   }
 
   public void periodic() {
@@ -262,18 +278,20 @@ public class Drive extends SubsystemBase {
 
     SwerveModuleState[] setpointStates =
         DriveConstants.kDriveKinematics.toSwerveModuleStates(discreteSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.kMaxLinearSpeed);
 
-    // Send setpoints to modules
-    SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
+    m_currSetpoint =
+        m_swerveSetpointGenerator.generateSetpoint(
+            DriveConstants.kModuleLimitsFree, m_currSetpoint, discreteSpeeds, 0.02);
+    SwerveModuleState[] setpointStatesOptimized = m_currSetpoint.moduleStates();
+
     for (int i = 0; i < 4; i++) {
-      // The module returns the optimized state, useful for logging
-      optimizedSetpointStates[i] = m_modules[i].runSetpoint(setpointStates[i]);
+      m_modules[i].runSetpoint(setpointStates[i]);
     }
 
     // Log setpoint states
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-    Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
+    Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStatesOptimized);
+    Logger.recordOutput("Drive/ChassisSpeedsSetpoint", m_currSetpoint.chassisSpeeds());
   }
 
   public void setDesiredChassisSpeeds(ChassisSpeeds speeds) {
@@ -418,5 +436,34 @@ public class Drive extends SubsystemBase {
 
   public DriveProfiles getCurrentProfile() {
     return m_profiles.getCurrentProfile();
+  }
+
+  /** Runs the drive in a straight line with the specified drive output. */
+  public void runCharacterization(double output) {
+    for (int i = 0; i < 4; i++) {
+      m_modules[i].runCharacterization(output);
+    }
+  }
+
+  /** Returns the average velocity of the modules in rotations/sec (Phoenix native units). */
+  public double getFFCharacterizationVelocity() {
+    double output = 0.0;
+    for (int i = 0; i < 4; i++) {
+      output += m_modules[i].getCharacterizationVelocity() / 4.0;
+    }
+    return output;
+  }
+
+  /** Returns the position of each module in radians. */
+  public double[] getWheelRadiusCharacterizationPositions() {
+    double[] values = new double[4];
+    for (int i = 0; i < 4; i++) {
+      values[i] = m_modules[i].getWheelRadiusCharacterizationPosition();
+    }
+    return values;
+  }
+
+  public Rotation2d getGyroRotation() {
+    return m_rawGyroRotation;
   }
 }

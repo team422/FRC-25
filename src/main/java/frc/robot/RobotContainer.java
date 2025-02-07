@@ -2,7 +2,6 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
@@ -248,10 +247,9 @@ public class RobotContainer {
     m_autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
     m_autoChooser.addOption("Do Nothing", Commands.none());
     m_autoChooser.addOption(
-        "Drive Quasistatic Characterization",
-        m_drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        "Drive Feedforward Characterization", DriveCommands.feedforwardCharacterization(m_drive));
     m_autoChooser.addOption(
-        "Drive Dynamic Characterization", m_drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(m_drive));
   }
 
   /** Configure the controllers. */
@@ -267,7 +265,8 @@ public class RobotContainer {
             m_drive,
             m_driverControls::getForward,
             m_driverControls::getStrafe,
-            m_driverControls::getTurn));
+            m_driverControls::getTurn,
+            false));
 
     m_driverControls
         .coralIntake()

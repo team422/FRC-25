@@ -1,15 +1,17 @@
 package frc.robot.subsystems.drive;
 
+import edu.wpi.first.math.geometry.Rotation2d;
+
 public class ModuleIOReplay implements ModuleIO {
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {}
 
   @Override
-  public void setDriveVoltage(double volts) {}
+  public void setDriveVelocity(double velocity, double feedforward) {}
 
   @Override
-  public void setTurnVoltage(double volts) {}
+  public void setTurnPosition(Rotation2d position) {}
 
   @Override
   public void setDriveBrakeMode(boolean enable) {}
@@ -19,4 +21,16 @@ public class ModuleIOReplay implements ModuleIO {
 
   @Override
   public void setCurrentLimits(double supplyLimit) {}
+
+  @Override
+  public void setDriveRawOutput(double output) {}
+
+  @Override
+  public void setTurnRawOutput(double output) {}
+
+  @Override
+  public void setDrivePID(double kP, double kI, double kD) {}
+
+  @Override
+  public void setTurnPID(double kP, double kI, double kD) {}
 }

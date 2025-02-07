@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.lib.littletonUtils.SwerveSetpointGenerator.ModuleLimits;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,9 @@ public final class Constants {
     public static final SwerveDriveKinematics kDriveKinematics =
         new SwerveDriveKinematics(kModuleTranslations);
 
+    public static final ModuleLimits kModuleLimitsFree =
+        new ModuleLimits(kMaxLinearSpeed, kMaxAngularSpeed, Units.degreesToRadians(1080.0));
+
     public static final double kWheelRadius = Units.inchesToMeters(2.0);
     public static final double kOdometryFrequency = 250.0;
 
@@ -119,6 +123,9 @@ public final class Constants {
     public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.05);
     public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.4);
     public static final double kClimbTolerance = 0.5; // degrees
+
+    public static final LoggedTunableNumber kStowFeedforward =
+        new LoggedTunableNumber("Climb Stow Feedforward", 0.0);
 
     public static final LoggedTunableNumber kClimbStowPosRad =
         new LoggedTunableNumber("Climb Stow Rad", 0.0); // degrees
