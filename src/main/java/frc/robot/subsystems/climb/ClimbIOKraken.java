@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -93,14 +94,22 @@ public class ClimbIOKraken implements ClimbIO {
   }
 
   @Override
-  public void setPID(double kP, double kI, double kD) {
-    m_motor.getConfigurator().apply(m_config.Slot0.withKP(kP).withKI(kI).withKD(kD), 0.0);
+  public void setPID(int slot, double kP, double kI, double kD) {
+    var slotConfigs = new SlotConfigs().withKP(kP).withKI(kI).withKD(kD);
+    slotConfigs.SlotNumber = slot;
+    m_motor.getConfigurator().apply(slotConfigs, 0.0);
   }
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {
+  public void setSlot(int slot) {
+    m_positionVoltage = m_positionVoltage.withSlot(slot);
+  }
+
+  @Override
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {
     m_desiredAngle = angle;
-    m_motor.setControl(m_positionVoltage.withPosition(angle.getDegrees()));
+    m_motor.setControl(
+        m_positionVoltage.withPosition(angle.getDegrees()).withFeedForward(feedforward));
   }
 
   @Override

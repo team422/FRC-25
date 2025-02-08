@@ -127,9 +127,9 @@ public final class Constants {
     public static final LoggedTunableNumber kStowFeedforward =
         new LoggedTunableNumber("Climb Stow Feedforward", 0.0);
 
-    public static final LoggedTunableNumber kClimbStowPosRad =
-        new LoggedTunableNumber("Climb Stow Rad", 0.0); // degrees
-    public static final LoggedTunableNumber kClimbDeployPosRad =
+    public static final LoggedTunableNumber kClimbStowPos =
+        new LoggedTunableNumber("Climb Stow Rad", 15.0); // degrees
+    public static final LoggedTunableNumber kClimbDeployPos =
         new LoggedTunableNumber("Climb Deploy Rad", 240); // degrees
 
     public static final double kClimbReduction = (5 / 1) * (4 / 1) * (68 / 18);
@@ -481,9 +481,9 @@ public final class Constants {
     public static final boolean kRealDrive = false;
     public static final boolean kRealIntake = false;
     public static final boolean kRealIndexer = false;
-    public static final boolean kRealManipulator = true;
+    public static final boolean kRealManipulator = false;
     public static final boolean kRealClimb = false;
-    public static final boolean kRealElevator = false;
+    public static final boolean kRealElevator = true;
   }
 
   public class FieldConstants {

@@ -22,12 +22,17 @@ public class Climb extends SubsystemBase {
 
   private SubsystemProfiles<ClimbState> m_profiles;
 
+  private int m_currSlot = 0;
+
   public Climb(ClimbIO io) {
     m_io = io;
     m_inputs = new ClimbInputsAutoLogged();
 
     m_io.setPID(
-        ClimbConstants.kClimbP.get(), ClimbConstants.kClimbI.get(), ClimbConstants.kClimbD.get());
+        m_currSlot,
+        ClimbConstants.kClimbP.get(),
+        ClimbConstants.kClimbI.get(),
+        ClimbConstants.kClimbD.get());
 
     // Create a map of periodic functions for each state, then make a SubsystemProfiles object
     Map<ClimbState, Runnable> periodicHash = new HashMap<>();
@@ -46,6 +51,7 @@ public class Climb extends SubsystemBase {
         hashCode(),
         () -> {
           m_io.setPID(
+              m_currSlot,
               ClimbConstants.kClimbP.get(),
               ClimbConstants.kClimbI.get(),
               ClimbConstants.kClimbD.get());
@@ -74,11 +80,15 @@ public class Climb extends SubsystemBase {
   }
 
   public void stowPeriodic() {
-    m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbStowPosRad.get()));
+    m_io.setSlot(0);
+    m_io.setDesiredAngle(
+        Rotation2d.fromDegrees(ClimbConstants.kClimbStowPos.get()),
+        ClimbConstants.kStowFeedforward.get());
   }
 
   public void deployPeriodic() {
-    m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbDeployPosRad.get()));
+    m_io.setSlot(1);
+    m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbDeployPos.get()), 0.0);
   }
 
   public void zeroEncoder() {
