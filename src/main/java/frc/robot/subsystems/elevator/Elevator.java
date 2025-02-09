@@ -134,6 +134,10 @@ public class Elevator extends SubsystemBase {
     return m_desiredHeight;
   }
 
+  public double getCurrHeight() {
+    return m_io.getCurrHeight();
+  }
+
   public void stowPeriodic() {}
 
   public void scoringPeriodic() {}

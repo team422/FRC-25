@@ -1,6 +1,11 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
@@ -120,6 +125,10 @@ public class RobotState {
 
   public void updateRobotState() {
     m_profiles.getPeriodicFunction().run();
+
+    if (Constants.kUseComponents) {
+      updateComponent();
+    }
 
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
   }
@@ -362,6 +371,57 @@ public class RobotState {
 
   public ChassisSpeeds getRobotSpeeds() {
     return m_drive.getChassisSpeeds();
+  }
+
+  public void updateComponent() {
+    Pose3d intakePose =
+        new Pose3d( // Algae Intake
+            new Translation3d(-0.31, 0, 0.19),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(-150 + m_intake.getRotation().getDegrees()),
+                Degrees.of(180)));
+    Pose3d elevatorStage2Pose =
+        new Pose3d(
+            new Translation3d(
+                Meters.zero(),
+                Meters.zero(),
+                Meters.of(Math.max(0, m_elevator.getCurrHeight() - Units.inchesToMeters(45)))),
+            new Rotation3d());
+    Pose3d elevatorStage3Pose =
+        new Pose3d(
+            new Translation3d(
+                Meters.zero(),
+                Meters.zero(),
+                Meters.of(Math.max(0, m_elevator.getCurrHeight() - Units.inchesToMeters(18)))),
+            new Rotation3d());
+    Pose3d carriagePose =
+        new Pose3d(
+            new Translation3d(Meters.zero(), Meters.zero(), Meters.of(m_elevator.getCurrHeight())),
+            new Rotation3d());
+    Pose3d manipulatorPose =
+        new Pose3d( // Manipulator
+            new Translation3d(
+                Meters.of(0.285), Meters.zero(), Meters.of(0.203 + m_elevator.getCurrHeight())),
+            // new Translation3d(-0.31, 0, 0.19),
+            new Rotation3d(
+                Degrees.of(0),
+                Degrees.of(-90 + m_manipulator.getCurrAngle().getDegrees()),
+                Degrees.of(0)));
+    Pose3d climbPose =
+        new Pose3d( // static for now
+            new Translation3d(0, -0.336, 0.405),
+            new Rotation3d(Degrees.of(-90 + 0), Degrees.of(0), Degrees.of(0)));
+    Logger.recordOutput(
+        "FieldSimulation/FinalComponentPoses",
+        new Pose3d[] {
+          intakePose,
+          elevatorStage2Pose,
+          elevatorStage3Pose,
+          carriagePose,
+          manipulatorPose,
+          climbPose,
+        });
   }
 
   public DriveProfiles getDriveProfile() {

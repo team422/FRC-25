@@ -146,4 +146,8 @@ public class Manipulator extends SubsystemBase {
   public boolean hasGamePiece() {
     return m_coralDetectorIO.hasGamePiece();
   }
+
+  public Rotation2d getCurrAngle() {
+    return m_wristIO.getCurrAngle();
+  }
 }
