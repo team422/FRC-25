@@ -611,8 +611,8 @@ public final class Constants {
                         Units.degreesToRadians(level.pitch),
                         poseDirection.getRotation().getRadians())));
           }
-          kBranchPositions.add((face * 2) + 1, fillRight);
-          kBranchPositions.add((face * 2) + 2, fillLeft);
+          kBranchPositions.add(fillRight);
+          kBranchPositions.add(fillLeft);
         }
       }
     }

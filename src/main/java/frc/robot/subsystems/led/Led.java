@@ -39,6 +39,11 @@ public class Led extends SubsystemBase {
       // exit early so we don't have to update
       return;
     }
+    if (m_state == LedState.kAlert && state != LedState.kOff) {
+      // don't allow the alert state to be overridden (an alert needs to be cleared with code
+      // restart)
+      return;
+    }
     m_state = state;
     updateLEDState();
   }

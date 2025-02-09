@@ -1,7 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants.ReefHeight;
@@ -50,10 +48,6 @@ import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOSim;
 import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
 import frc.robot.subsystems.manipulator.wrist.WristIOReplay;
 import frc.robot.subsystems.manipulator.wrist.WristIOSim;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.stream.Collectors;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -90,29 +84,6 @@ public class RobotContainer {
 
   /** Configure the subsystems. */
   private void configureSubsystems() {
-    try {
-      // var field = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
-      String resourcePath = AprilTagFields.k2025Reefscape.m_resourceFile;
-      InputStream stream = AprilTagFieldLayout.class.getResourceAsStream(resourcePath);
-      // String s = AprilTagFields.k2025Reefscape.m_resourceFile;
-      // CONVERT STREAM TO STRING
-      String s =
-          new BufferedReader(new InputStreamReader(stream))
-              .lines()
-              .collect(Collectors.joining("\n"));
-      System.out.println(s);
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    // // convert to string array lines
-    // try {
-    //   System.out.println(Files.readAllLines(Path.of(s)));
-    // } catch (Exception e) {
-    //   e.printStackTrace();
-    // }
-
     switch (Constants.kCurrentMode) {
       case REAL:
         m_drive =
@@ -402,10 +373,11 @@ public class RobotContainer {
                   RobotState.getInstance().setDefaultAction();
                 }));
 
+    // runs continuously because we want to cancel even if the sticks are still being moved
     m_driverControls
         .cancelDriveToPoint()
-        .onTrue(
-            Commands.runOnce(
+        .whileTrue(
+            Commands.run(
                 () -> {
                   if (m_drive.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
                     m_drive.updateProfile(DriveProfiles.kDefault);

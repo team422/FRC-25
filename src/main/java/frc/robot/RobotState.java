@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.robot.Constants.FieldConstants;
@@ -159,16 +160,25 @@ public class RobotState {
   public void autoScorePeriodic() {
     RobotSetpoint setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
-    if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
-      m_elevator.setDesiredHeight(setpoint.elevatorHeight());
-    }
-    if (!EqualsUtil.epsilonEquals(
-        setpoint.manipulatorAngle().getRadians(),
-        m_manipulator.getDesiredWristAngle().getRadians())) {
-      m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
-    }
     if (!EqualsUtil.GeomExtensions.epsilonEquals(setpoint.drivePose(), m_drive.getTargetPose())) {
       m_drive.setTargetPose(setpoint.drivePose());
+    }
+
+    // we don't want to deploy elevator or manipulator until we're close to the setpoint
+    if (Math.abs(
+            m_drive
+                .getTargetPose()
+                .getTranslation()
+                .getDistance(setpoint.drivePose().getTranslation()))
+        < Units.inchesToMeters(6)) {
+      if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
+        m_elevator.setDesiredHeight(setpoint.elevatorHeight());
+      }
+      if (!EqualsUtil.epsilonEquals(
+          setpoint.manipulatorAngle().getRadians(),
+          m_manipulator.getDesiredWristAngle().getRadians())) {
+        m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+      }
     }
   }
 
@@ -217,9 +227,17 @@ public class RobotState {
         m_elevator.updateState(ElevatorState.kScoring);
         m_manipulator.updateState(ManipulatorState.kScoring);
         m_led.updateState(LedState.kAutoScore);
-        // this fallthrough is intentional
+        // guys don't use fallthrough it's not worth it
+        break;
+
       case kAutoScore:
         m_drive.updateProfile(DriveProfiles.kDriveToPoint);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kScoring);
+        m_manipulator.updateState(ManipulatorState.kScoring);
+        m_led.updateState(LedState.kAutoScore);
         break;
 
       case kDriveToProcessor:
