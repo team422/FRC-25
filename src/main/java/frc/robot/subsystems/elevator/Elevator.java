@@ -1,9 +1,11 @@
 package frc.robot.subsystems.elevator;
 
 import edu.wpi.first.hal.HALUtil;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.FullTuningConstants;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,7 @@ public class Elevator extends SubsystemBase {
     kScoring,
     kIntaking,
     kKnocking,
+    kFullTuning,
   }
 
   private SubsystemProfiles<ElevatorState> m_profiles;
@@ -29,19 +32,20 @@ public class Elevator extends SubsystemBase {
     m_inputs = new ElevatorInputsAutoLogged();
     m_io.setPIDFF(
         0,
-        ElevatorConstants.kP.getAsDouble(),
+        ElevatorConstants.kP0.getAsDouble(),
         ElevatorConstants.kI.getAsDouble(),
         ElevatorConstants.kD.getAsDouble(),
         ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV.getAsDouble(),
+        ElevatorConstants.kKV0.getAsDouble(),
         ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG.getAsDouble());
+        ElevatorConstants.kKG0.getAsDouble());
 
     Map<ElevatorState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(ElevatorState.kStow, this::stowPeriodic);
     periodicHash.put(ElevatorState.kScoring, this::scoringPeriodic);
     periodicHash.put(ElevatorState.kIntaking, this::intakingPeriodic);
     periodicHash.put(ElevatorState.kKnocking, this::knockingPeriodic);
+    periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
@@ -58,39 +62,80 @@ public class Elevator extends SubsystemBase {
   public void periodic() {
     double start = HALUtil.getFPGATime();
 
+    if (FullTuningConstants.kFullTuningMode) {
+      updateState(ElevatorState.kFullTuning);
+    }
+
     LoggedTunableNumber.ifChanged(
         hashCode(),
-        () ->
-            m_io.setPIDFF(
-                m_currSlot,
-                ElevatorConstants.kP.getAsDouble(),
-                ElevatorConstants.kI.getAsDouble(),
-                ElevatorConstants.kD.getAsDouble(),
-                ElevatorConstants.kKS.getAsDouble(),
-                ElevatorConstants.kKV.getAsDouble(),
-                ElevatorConstants.kKA.getAsDouble(),
-                ElevatorConstants.kKG.getAsDouble()),
-        ElevatorConstants.kP,
+        () -> {
+          m_io.setPIDFF(
+              0,
+              ElevatorConstants.kP0.getAsDouble(),
+              ElevatorConstants.kI.getAsDouble(),
+              ElevatorConstants.kD.getAsDouble(),
+              ElevatorConstants.kKS.getAsDouble(),
+              ElevatorConstants.kKV0.getAsDouble(),
+              ElevatorConstants.kKA.getAsDouble(),
+              ElevatorConstants.kKG0.getAsDouble());
+
+          m_io.setPIDFF(
+              1,
+              ElevatorConstants.kP1.getAsDouble(),
+              ElevatorConstants.kI.getAsDouble(),
+              ElevatorConstants.kD.getAsDouble(),
+              ElevatorConstants.kKS.getAsDouble(),
+              ElevatorConstants.kKV1.getAsDouble(),
+              ElevatorConstants.kKA.getAsDouble(),
+              ElevatorConstants.kKG1.getAsDouble());
+
+          m_io.setPIDFF(
+              2,
+              ElevatorConstants.kP2.getAsDouble(),
+              ElevatorConstants.kI.getAsDouble(),
+              ElevatorConstants.kD.getAsDouble(),
+              ElevatorConstants.kKS.getAsDouble(),
+              ElevatorConstants.kKV2.getAsDouble(),
+              ElevatorConstants.kKA.getAsDouble(),
+              ElevatorConstants.kKG2.getAsDouble());
+        },
+        ElevatorConstants.kP0,
+        ElevatorConstants.kP1,
+        ElevatorConstants.kP2,
         ElevatorConstants.kI,
         ElevatorConstants.kD,
         ElevatorConstants.kKS,
-        ElevatorConstants.kKV,
+        ElevatorConstants.kKV0,
+        ElevatorConstants.kKV1,
+        ElevatorConstants.kKV2,
         ElevatorConstants.kKA,
-        ElevatorConstants.kKG);
+        ElevatorConstants.kKG0,
+        ElevatorConstants.kKG1,
+        ElevatorConstants.kKG2);
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
           m_io.setMagic(
-              ElevatorConstants.kMagicMotionCruiseVelocity.get(),
-              ElevatorConstants.kMagicMotionAcceleration.get(),
-              ElevatorConstants.kMagicMotionJerk.get());
+              Units.inchesToMeters(ElevatorConstants.kMagicMotionCruiseVelocity.get()),
+              Units.inchesToMeters(ElevatorConstants.kMagicMotionAcceleration.get()),
+              Units.inchesToMeters(ElevatorConstants.kMagicMotionJerk.get()));
         },
         ElevatorConstants.kMagicMotionCruiseVelocity,
         ElevatorConstants.kMagicMotionAcceleration,
         ElevatorConstants.kMagicMotionJerk);
 
     m_io.updateInputs(m_inputs);
+
+    double currHeight = m_io.getCurrHeight();
+    if (currHeight < Units.inchesToMeters(18)) {
+      m_io.setSlot(0);
+    } else if (currHeight < Units.inchesToMeters(45)) {
+      m_io.setSlot(1);
+    } else {
+      m_io.setSlot(2);
+    }
+
     m_profiles.getPeriodicFunction().run();
 
     Logger.processInputs("Elevator", m_inputs);
@@ -99,6 +144,11 @@ public class Elevator extends SubsystemBase {
   }
 
   public void updateState(ElevatorState state) {
+    if (m_profiles.getCurrentProfile() == ElevatorState.kFullTuning) {
+      // if we are in full tuning mode we don't want to change the state
+      return;
+    }
+
     m_profiles.setCurrentProfile(state);
     switch (state) {
       case kIntaking:
@@ -114,6 +164,10 @@ public class Elevator extends SubsystemBase {
         break;
       case kStow:
         m_io.setDesiredHeight(ElevatorConstants.kStowHeight);
+
+        break;
+      case kFullTuning:
+        m_io.setDesiredHeight(Units.inchesToMeters(FullTuningConstants.kElevatorSetpoint.get()));
 
         break;
     }
@@ -145,6 +199,15 @@ public class Elevator extends SubsystemBase {
   public void intakingPeriodic() {}
 
   public void knockingPeriodic() {}
+
+  public void fullTuningPeriodic() {
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_io.setDesiredHeight(Units.inchesToMeters(FullTuningConstants.kElevatorSetpoint.get()));
+        },
+        FullTuningConstants.kElevatorSetpoint);
+  }
 
   public boolean atSetpoint() {
     return m_io.atSetpoint();

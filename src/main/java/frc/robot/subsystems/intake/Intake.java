@@ -26,6 +26,7 @@ public class Intake extends SubsystemBase {
     kIntake,
     kGamepieceHold,
     kOuttake,
+    kFullTuning,
   }
 
   private SubsystemProfiles<IntakeState> m_profiles;
@@ -39,11 +40,17 @@ public class Intake extends SubsystemBase {
     periodicHash.put(IntakeState.kIntake, this::intakePeriodic);
     periodicHash.put(IntakeState.kGamepieceHold, this::gamepieceHoldPeriodic);
     periodicHash.put(IntakeState.kOuttake, this::outtakePeriodic);
+    periodicHash.put(IntakeState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IntakeState.kStow);
   }
 
   public void updateState(IntakeState state) {
+    if (m_profiles.getCurrentProfile() == IntakeState.kFullTuning) {
+      // if we are in full tuning mode we don't want to change the state
+      return;
+    }
+
     m_profiles.setCurrentProfile(state);
   }
 
@@ -100,6 +107,10 @@ public class Intake extends SubsystemBase {
   public void outtakePeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerOuttakeVoltage.get());
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()));
+  }
+
+  public void fullTuningPeriodic() {
+    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
   }
 
   public void manageStowOrHold() {

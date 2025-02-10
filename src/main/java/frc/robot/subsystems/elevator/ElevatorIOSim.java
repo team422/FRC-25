@@ -12,6 +12,10 @@ import frc.robot.Constants.ElevatorConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class ElevatorIOSim implements ElevatorIO {
+  // HELLO
+  // every time it says meters, it means inches
+  // all the methods are called meters for the sim but the radius is in inches
+
   private ElevatorSim m_sim;
   private PIDController m_controller;
   private ElevatorFeedforward m_feedforward;
@@ -31,7 +35,7 @@ public class ElevatorIOSim implements ElevatorIO {
         LinearSystemId.createElevatorSystem(
             ElevatorConstants.kSimGearbox,
             ElevatorConstants.kSimMOI,
-            ElevatorConstants.kRadius,
+            ElevatorConstants.kDiameter / 2,
             ElevatorConstants.kSimGearing);
     m_sim =
         new ElevatorSim(
@@ -42,10 +46,9 @@ public class ElevatorIOSim implements ElevatorIO {
             false,
             ElevatorConstants.kMinHeight);
 
-    // ask kent if he wants normal or profiled
     m_controller =
         new PIDController(
-            ElevatorConstants.kP.getAsDouble(),
+            ElevatorConstants.kP0.getAsDouble(),
             ElevatorConstants.kI.getAsDouble(),
             ElevatorConstants.kD.getAsDouble());
     m_controller.setTolerance(ElevatorConstants.kHeightTolerance);
@@ -53,8 +56,8 @@ public class ElevatorIOSim implements ElevatorIO {
     m_feedforward =
         new ElevatorFeedforward(
             ElevatorConstants.kKS.getAsDouble(),
-            ElevatorConstants.kKG.getAsDouble(),
-            ElevatorConstants.kKV.getAsDouble(),
+            ElevatorConstants.kKG0.getAsDouble(),
+            ElevatorConstants.kKV0.getAsDouble(),
             ElevatorConstants.kKA.getAsDouble());
     m_trap = new TrapezoidProfile(constraints);
   }
@@ -79,8 +82,8 @@ public class ElevatorIOSim implements ElevatorIO {
   }
 
   @Override
-  public void setDesiredHeight(double meters) {
-    m_desiredHeight = meters;
+  public void setDesiredHeight(double inches) {
+    m_desiredHeight = inches;
     m_startingState = new State(m_sim.getPositionMeters(), m_sim.getVelocityMetersPerSecond());
     m_timer.restart();
   }

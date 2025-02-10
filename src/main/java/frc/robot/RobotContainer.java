@@ -268,31 +268,31 @@ public class RobotContainer {
             m_driverControls::getTurn,
             false));
 
-    m_driverControls
-        .coralIntake()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
-                }));
+    // m_driverControls
+    //     .coralIntake()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+    //             }))
+    //     .onFalse(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().setDefaultAction();
+    //             }));
 
-    m_driverControls
-        .coralOuttake()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().manageCoralOuttakeRelease();
-                }));
+    // m_driverControls
+    //     .coralOuttake()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
+    //             }))
+    //     .onFalse(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().manageCoralOuttakeRelease();
+    //             }));
 
     m_driverControls
         .setLocationL1()

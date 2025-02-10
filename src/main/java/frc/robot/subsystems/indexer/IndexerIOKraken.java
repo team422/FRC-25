@@ -99,14 +99,16 @@ public class IndexerIOKraken implements IndexerIO {
   @Override
   public void updateInputs(IndexerInputs inputs) {
     if (!Constants.kUseBaseRefreshManager) {
-      BaseStatusSignal.refreshAll(
-          m_connectedMotor,
-          m_motorPosition,
-          m_motorVelocity,
-          m_motorCurrent,
-          m_motorStatorCurrent,
-          m_motorVoltage,
-          m_motorTemperature);
+      System.out.println(
+          BaseStatusSignal.refreshAll(
+                  m_connectedMotor,
+                  m_motorPosition,
+                  m_motorVelocity,
+                  m_motorCurrent,
+                  m_motorStatorCurrent,
+                  m_motorVoltage,
+                  m_motorTemperature)
+              .isOK());
     }
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;

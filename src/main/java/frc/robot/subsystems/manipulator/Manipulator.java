@@ -4,6 +4,7 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.indexer.Indexer.IndexerState;
@@ -36,6 +37,7 @@ public class Manipulator extends SubsystemBase {
     kStow,
     kIntaking,
     kScoring,
+    kFullTuning,
   }
 
   private SubsystemProfiles<ManipulatorState> m_profiles;
@@ -50,6 +52,7 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kStow, this::stowPeriodic);
     periodicHash.put(ManipulatorState.kIntaking, this::intakingPeriodic);
     periodicHash.put(ManipulatorState.kScoring, this::scoringPeriodic);
+    periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
   }
 
@@ -77,6 +80,10 @@ public class Manipulator extends SubsystemBase {
     m_wristIO.updateInputs(m_wristInputs);
     m_coralDetectorIO.updateInputs(m_coralDetectorInputs);
 
+    if (FullTuningConstants.kFullTuningMode) {
+      updateState(ManipulatorState.kFullTuning);
+    }
+
     m_profiles.getPeriodicFunction().run();
 
     Logger.processInputs("Manipulator/Roller", m_rollerInputs);
@@ -87,6 +94,10 @@ public class Manipulator extends SubsystemBase {
   }
 
   public void updateState(ManipulatorState state) {
+    if (m_profiles.getCurrentProfile() == ManipulatorState.kFullTuning) {
+      // if we are in full tuning mode we don't want to change the state
+      return;
+    }
     // TODO: this makes sense but i have the feeling it will cause an issue during testing
     // DON'T FORGET ABOUT THIS
     m_runRollerScoring = false;
@@ -133,6 +144,11 @@ public class Manipulator extends SubsystemBase {
     } else {
       m_rollerIO.setVoltage(0.0);
     }
+  }
+
+  public void fullTuningPeriodic() {
+    m_wristIO.setDesiredAngle(
+        Rotation2d.fromDegrees(FullTuningConstants.kManipulatorWristSetpoint.get()));
   }
 
   public void runRollerScoring() {

@@ -18,6 +18,7 @@ public class Led extends SubsystemBase {
     kHasGamepiece,
     kAutoScore,
     kAlert,
+    kFullTuning,
     kOff
   }
 
@@ -69,6 +70,9 @@ public class Led extends SubsystemBase {
         break;
       case kAlert:
         pattern = LEDPattern.solid(LedConstants.kAlert);
+        break;
+      case kFullTuning:
+        pattern = LEDPattern.solid(LedConstants.kFullTuning);
         break;
       case kOff:
       default:

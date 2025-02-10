@@ -13,6 +13,8 @@ public interface ElevatorIO {
     public double followingPosition;
     public double leadingVelocity;
     public double followingVelocity;
+    public double leadingAcceleration;
+    public double followingAcceleration;
     public double leadingVoltage;
     public double followingVoltage;
     public double leadingSupplyCurrent;
@@ -25,7 +27,7 @@ public interface ElevatorIO {
 
   public void updateInputs(ElevatorInputs inputs);
 
-  public void setDesiredHeight(double metersHeight);
+  public void setDesiredHeight(double inchesHeight);
 
   public void setPIDFF(
       int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG);

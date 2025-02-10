@@ -153,24 +153,33 @@ public final class Constants {
   public static final class LedConstants {
     public static final int kStripLength = 60;
 
-    public static final Color kOff = Color.kRed;
-    public static final Color kAutoscore = Color.kGreen;
-    public static final Color kHasGampiece = Color.kDarkMagenta;
+    public static final Color kOff = Color.kBlack;
+    public static final Color kAutoscore = Color.kOrange;
+    public static final Color kHasGampiece = Color.kGreen;
     public static final Color kEnabled = Color.kYellow;
-    public static final Color kDisabled = Color.kRed;
-    public static final Color kAlert = Color.kGold;
+    public static final Color kDisabled = Color.kMagenta;
+    public static final Color kAlert = Color.kRed;
+    public static final Color kFullTuning = Color.kWhite;
   }
 
   public static final class ElevatorConstants {
     public static final double kTopSpeed = 1;
     public static final double kTopAcceleration = 5;
-    public static final LoggedTunableNumber kP = new LoggedTunableNumber("Elevator P", 1.0);
+    public static final LoggedTunableNumber kP0 = new LoggedTunableNumber("Elevator P0", 1.0);
     public static final LoggedTunableNumber kI = new LoggedTunableNumber("Elevator I", 0.0);
     public static final LoggedTunableNumber kD = new LoggedTunableNumber("Elevator D", 0.0);
     public static final LoggedTunableNumber kKS = new LoggedTunableNumber("Elevator kS", 0.0);
-    public static final LoggedTunableNumber kKG = new LoggedTunableNumber("Elevator kG", 0.0);
-    public static final LoggedTunableNumber kKV = new LoggedTunableNumber("Elevator kV", 0.2);
+    public static final LoggedTunableNumber kKG0 = new LoggedTunableNumber("Elevator kG0", 0.0);
+    public static final LoggedTunableNumber kKV0 = new LoggedTunableNumber("Elevator kV0", 0.2);
     public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
+
+    public static final LoggedTunableNumber kP1 = new LoggedTunableNumber("Elevator P1", 1.0);
+    public static final LoggedTunableNumber kKV1 = new LoggedTunableNumber("Elevator kV1", 0.2);
+    public static final LoggedTunableNumber kKG1 = new LoggedTunableNumber("Elevator kG1", 0.0);
+
+    public static final LoggedTunableNumber kP2 = new LoggedTunableNumber("Elevator P2", 1.0);
+    public static final LoggedTunableNumber kKV2 = new LoggedTunableNumber("Elevator kV2", 0.2);
+    public static final LoggedTunableNumber kKG2 = new LoggedTunableNumber("Elevator kG2", 0.0);
 
     public static final LoggedTunableNumber kMagicMotionCruiseVelocity =
         new LoggedTunableNumber("Elevator MagicMotion cruise velocity", 5.0);
@@ -183,9 +192,11 @@ public final class Constants {
     public static final double kIntakingHeight = 0.5;
     public static final double kKnockingHeight = 2;
 
-    public static final double kRadius = Units.inchesToMeters(2.256);
-    public static final double kGearRatio = 54 / 12;
-    public static final double kSensorToMechanismRatio = 2 * kRadius * Math.PI * kGearRatio;
+    public static final double kDiameter = 2.256; // inches
+    public static final double kGearRatio = 54.0 / 12.0;
+    // public static final double kSensorToMechanismRatio = kDiameter * Math.PI / kGearRatio;
+    public static final double kSensorToMechanismRatio = (kGearRatio / (kDiameter * Math.PI));
+    // public static final double kSensorToMechanismRatio = 1.0;
     public static final LoggedTunableNumber kElevatorOffset =
         new LoggedTunableNumber("Elevator/Offset", Units.inchesToMeters(0));
 
@@ -196,6 +207,17 @@ public final class Constants {
     public static final double kMinHeight = 0;
     public static final double kMaxHeight = 2;
     public static final double kHeightTolerance = .10;
+  }
+
+  public static final class FullTuningConstants {
+    public static final boolean kFullTuningMode = true;
+
+    public static final LoggedTunableNumber kElevatorSetpoint =
+        new LoggedTunableNumber("Elevator Full Tuning Setpoint", 0.0);
+    public static final LoggedTunableNumber kIntakePivotSetpoint =
+        new LoggedTunableNumber("Intake Pivot Full Tuning Setpoint", 0.0);
+    public static final LoggedTunableNumber kManipulatorWristSetpoint =
+        new LoggedTunableNumber("Manipulator Wrist Full Tuning Setpoint", 0.0);
   }
 
   public static final class AprilTagVisionConstants {
@@ -408,8 +430,7 @@ public final class Constants {
     public static final double kManipulatorRollerDefaultStatorLimit = 120.0;
 
     // Elevator
-    public static final double kElevatorDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 65.0;
+    public static final double kElevatorDefaultSupplyLimit = 65.0;
     public static final double kElevatorDefaultStatorLimit = 95.0;
 
     // Climb
@@ -463,7 +484,7 @@ public final class Constants {
 
     public static final int kIntakeAbsoluteEncoder = 9;
 
-    public static final int kIndexerMotor = 31;
+    public static final int kIndexerMotor = 1;
 
     public static final int kManipulatorAbsoluteEncoder = 9;
 
@@ -473,7 +494,7 @@ public final class Constants {
     public static final int kLed = 2;
 
     public static final int kElevatorLead = 7;
-    public static final int kElevatorFollowing = 9;
+    public static final int kElevatorFollowing = 0;
 
     public static final String kMainCanivoreName = "Drivetrain";
   }
