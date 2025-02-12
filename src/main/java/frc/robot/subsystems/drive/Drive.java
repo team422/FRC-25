@@ -215,6 +215,28 @@ public class Drive extends SubsystemBase {
       m_poseEstimator.updateWithTime(sampleTimestamps[i], m_rawGyroRotation, modulePositions);
     }
 
+    // lets look for slip
+    boolean slip = false;
+    for (int i = 0; i < m_modules.length; i++) {
+      double accel = m_modules[i].getDriveAcceleration();
+      double current = m_modules[i].getDriveCurrent();
+      if (current > 1) {
+        Logger.recordOutput("ModuleOutputs/Module" + i + "/AmpsPerRotation", accel / current);
+      } else {
+        Logger.recordOutput("ModuleOutputs/Module" + i + "/AmpsPerRotation", 0.0);
+      }
+      if (Math.abs(accel * m_modules[i].getDriveVelocity())
+          > DriveConstants.kSlipThreshold.get()) {
+        slip = true;
+      }
+      Logger.recordOutput("ModuleOutputs/Module" + i + "/curAccelRate", accel);
+      Logger.recordOutput(
+          "ModuleOutputs/Module" + i + "/curAccelRateTimesSpeed",
+          Math.abs(accel * m_modules[i].getDriveVelocity()));
+    }
+
+    Logger.recordOutput("Drive/Slip", slip);
+
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
@@ -449,7 +471,7 @@ public class Drive extends SubsystemBase {
   public double getFFCharacterizationVelocity() {
     double output = 0.0;
     for (int i = 0; i < 4; i++) {
-      output += m_modules[i].getCharacterizationVelocity() / 4.0;
+      output += m_modules[i].getDriveVelocity() / 4.0;
     }
     return output;
   }

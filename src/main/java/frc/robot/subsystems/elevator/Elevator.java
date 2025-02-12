@@ -14,7 +14,6 @@ import org.littletonrobotics.junction.Logger;
 public class Elevator extends SubsystemBase {
   public final ElevatorInputsAutoLogged m_inputs;
   private ElevatorIO m_io;
-  private int m_currSlot;
   private double m_desiredHeight;
 
   public static enum ElevatorState {

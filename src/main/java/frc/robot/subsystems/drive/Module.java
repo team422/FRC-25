@@ -135,7 +135,7 @@ public class Module {
   }
 
   /** Returns the drive velocity in radians/sec. */
-  public double getCharacterizationVelocity() {
+  public double getDriveVelocity() {
     return m_inputs.driveVelocityRadPerSec;
   }
 
@@ -146,5 +146,13 @@ public class Module {
 
   public void setCurrentLimits(double supplyLimit) {
     m_io.setCurrentLimits(supplyLimit);
+  }
+
+  public double getDriveAcceleration() {
+    return m_inputs.driveAccelerationRadPerSecSq;
+  }
+
+  public double getDriveCurrent() {
+    return m_inputs.driveCurrentAmps;
   }
 }

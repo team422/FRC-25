@@ -117,6 +117,10 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Heading I", 0.0);
     public static final LoggedTunableNumber kDriveToPointHeadingD =
         new LoggedTunableNumber("DriveToPoint Heading D", 0.0);
+
+    // radians per second squared to be considered slipping
+    public static final LoggedTunableNumber kSlipThreshold =
+    new LoggedTunableNumber("Slip Threshold", 150000);
   }
 
   public static final class ClimbConstants {
@@ -229,9 +233,11 @@ public final class Constants {
     public static final double kTargetLogTimeSecs = 0.1;
     public static final double kFieldBorderMargin = 0.5;
     // z margin is much smaller because the camera should be perfectly level with the tag
-    public static final double kZMargin = Units.inchesToMeters(1);
+    public static final double kZMargin = 0.75;
 
     public static final double kErrorStandardDeviationThreshold = 0.2; // acceptable error
+
+    public static final double kGyroAccurary = 3.0; // higher numbers means the less we trust the vision/gyro sensor fusion
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.005);

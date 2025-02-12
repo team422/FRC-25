@@ -68,6 +68,8 @@ public class RobotState {
   private ReefHeight m_desiredReefHeight = ReefHeight.L1;
   private int m_desiredBranchIndex = 0;
 
+  private int m_numVisionGyroObservations = 0;
+
   // Singleton logic
   private static RobotState m_instance;
 
@@ -422,6 +424,14 @@ public class RobotState {
           manipulatorPose,
           climbPose,
         });
+  }
+
+  public int getNumVisionGyroObservations() {
+    return m_numVisionGyroObservations;
+  }
+
+  public void incrementNumVisionGyroObservations() {
+    m_numVisionGyroObservations++;
   }
 
   public DriveProfiles getDriveProfile() {

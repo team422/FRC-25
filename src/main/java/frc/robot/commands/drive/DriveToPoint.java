@@ -35,7 +35,7 @@ public class DriveToPoint extends Command {
           new TrapezoidProfile.Constraints(
               DriveConstants.kMaxAngularSpeed, DriveConstants.kMaxAngularAcceleration));
 
-  private double m_ffMinRadius = 0.2, m_ffMaxRadius = 0.8;
+  private double m_ffMinRadius = 0.35, m_ffMaxRadius = 0.8;
 
   public DriveToPoint(Drive drive, Pose2d targetPose) {
     m_drive = drive;
