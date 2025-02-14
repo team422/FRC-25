@@ -42,7 +42,7 @@ public class AprilTagVision extends SubsystemBase {
   private Map<Integer, Double> m_lastFrameTimes;
   private Map<Integer, Double> m_lastTagDetectionTimes;
 
-  private Alert[] m_Alerts;
+  private Alert[] m_noReadingsAlerts;
 
   public AprilTagVision(AprilTagVisionIO... ios) {
     m_ios = ios;
@@ -66,9 +66,9 @@ public class AprilTagVision extends SubsystemBase {
               m_lastTagDetectionTimes.put(tag.ID, 0.0);
             });
 
-    m_Alerts = new Alert[m_ios.length];
-    for (int i = 0; i < m_Alerts.length; i++) {
-      m_Alerts[i] =
+    m_noReadingsAlerts = new Alert[m_ios.length];
+    for (int i = 0; i < m_noReadingsAlerts.length; i++) {
+      m_noReadingsAlerts[i] =
           new Alert(String.format("April Tag Vision %d: No Readings", i), AlertType.kError);
     }
   }
@@ -411,11 +411,11 @@ public class AprilTagVision extends SubsystemBase {
         .forEach(RobotState.getInstance()::addVisionObservation);
 
     if (Constants.kUseAlerts) {
-      for (int i = 0; i < m_Alerts.length; i++) {
+      for (int i = 0; i < m_noReadingsAlerts.length; i++) {
         double lastTime = m_lastFrameTimes.get(i);
         double elapsed = Timer.getFPGATimestamp() - lastTime;
         if (elapsed > AprilTagVisionConstants.kDisconnectTimeout) {
-          m_Alerts[i].set(true);
+          m_noReadingsAlerts[i].set(true);
           RobotState.getInstance().triggerAlert();
         }
       }
