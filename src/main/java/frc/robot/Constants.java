@@ -54,6 +54,9 @@ public final class Constants {
 
   public static final boolean kUseComponents = true;
 
+  // set to false to disable alerts
+  public static final boolean kUseAlerts = true && kCurrentMode != Mode.SIM;
+
   public static final class DriveConstants {
     public static final double kMaxLinearSpeed = 6.0; // meters per second
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
@@ -120,7 +123,7 @@ public final class Constants {
 
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =
-    new LoggedTunableNumber("Slip Threshold", 150000);
+        new LoggedTunableNumber("Slip Threshold", 150000);
   }
 
   public static final class ClimbConstants {
@@ -237,7 +240,11 @@ public final class Constants {
 
     public static final double kErrorStandardDeviationThreshold = 0.2; // acceptable error
 
-    public static final double kGyroAccurary = 3.0; // higher numbers means the less we trust the vision/gyro sensor fusion
+    public static final double kGyroAccurary =
+        3.0; // higher numbers means the less we trust the vision/gyro sensor fusion
+
+    // how long (sec) before we are considered disconnected
+    public static final double kDisconnectTimeout = 20.0;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.005);

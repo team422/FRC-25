@@ -2,8 +2,11 @@ package frc.robot.subsystems.manipulator;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.robot.Constants;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.RobotState;
@@ -23,6 +26,11 @@ public class Manipulator extends SubsystemBase {
   private ManipulatorRollerIO m_rollerIO;
   private WristIO m_wristIO;
   private CoralDetectorIO m_coralDetectorIO;
+
+  private Alert m_wristMotorDisconnectedAlert =
+      new Alert("Manipulator Wrist Motor Disconnected", AlertType.kError);
+  private Alert m_rollerMotorDisconnectedAlert =
+      new Alert("Manipulator Roller Motor Disconnected", AlertType.kError);
 
   private Rotation2d m_desiredWristAngle = new Rotation2d();
   private boolean m_runRollerScoring = false;
@@ -90,6 +98,17 @@ public class Manipulator extends SubsystemBase {
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
     Logger.processInputs("Manipulator/CoralDetector", m_coralDetectorInputs);
     Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
+
+    if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
+      m_rollerMotorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    if (Constants.kUseAlerts && !m_wristInputs.motorIsConnected) {
+      m_wristMotorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
     Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 

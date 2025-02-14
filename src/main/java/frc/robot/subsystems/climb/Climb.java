@@ -2,18 +2,23 @@ package frc.robot.subsystems.climb;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.robot.Constants;
 import frc.robot.Constants.ClimbConstants;
+import frc.robot.RobotState;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
 public class Climb extends SubsystemBase {
-
   private ClimbIO m_io;
   private final ClimbInputsAutoLogged m_inputs;
+
+  private Alert m_motorDisconnectedAlert = new Alert("Climb Motor Disconnected", AlertType.kError);
 
   public static enum ClimbState {
     kStow,
@@ -67,6 +72,11 @@ public class Climb extends SubsystemBase {
     // log inputs and profile
     Logger.processInputs("Climb", m_inputs);
     Logger.recordOutput("Climb/State", m_profiles.getCurrentProfile());
+
+    if (Constants.kUseAlerts && !m_inputs.motorIsConnected) {
+      m_motorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
 
     Logger.recordOutput("PeriodicTime/Climb", (HALUtil.getFPGATime() - start) / 1000.0);
   }

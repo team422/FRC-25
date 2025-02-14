@@ -1,6 +1,7 @@
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -61,6 +62,8 @@ public class RobotState {
     kAutoDefault,
   }
 
+  private LedState currentLedState = LedState.kOff;
+
   private SubsystemProfiles<RobotAction> m_profiles;
 
   private Timer m_timer = new Timer();
@@ -107,6 +110,10 @@ public class RobotState {
 
   public static RobotState getInstance() {
     return m_instance;
+  }
+
+  public void triggerAlert() {
+    currentLedState = LedState.kAlert;
   }
 
   public static RobotState startInstance(

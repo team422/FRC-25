@@ -14,9 +14,12 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
@@ -39,6 +42,8 @@ public class AprilTagVision extends SubsystemBase {
   private Map<Integer, Double> m_lastFrameTimes;
   private Map<Integer, Double> m_lastTagDetectionTimes;
 
+  private Alert[] m_noReadingsAlerts;
+
   public AprilTagVision(AprilTagVisionIO... ios) {
     m_ios = ios;
     m_inputs = new AprilTagVisionInputs[m_ios.length];
@@ -60,6 +65,12 @@ public class AprilTagVision extends SubsystemBase {
             (AprilTag tag) -> {
               m_lastTagDetectionTimes.put(tag.ID, 0.0);
             });
+
+    m_noReadingsAlerts = new Alert[m_ios.length];
+    for (int i = 0; i < m_noReadingsAlerts.length; i++) {
+      m_noReadingsAlerts[i] =
+          new Alert(String.format("April Tag Vision %d: No Readings", i), AlertType.kError);
+    }
   }
 
   @Override
@@ -195,7 +206,8 @@ public class AprilTagVision extends SubsystemBase {
             // Check for ambiguity
             if (error1 < error2 * AprilTagVisionConstants.kAmbiguityThreshold
                 || error2 < error1 * AprilTagVisionConstants.kAmbiguityThreshold) {
-              // since the cameras have some roll, the false reprojection will be up in the air or in the ground
+              // since the cameras have some roll, the false reprojection will be up in the air or
+              // in the ground
               // so we can just choose the one that is closer to the floor
               double height1 = Math.abs(robotPose3d1.getZ());
               double height2 = Math.abs(robotPose3d2.getZ());
@@ -298,7 +310,8 @@ public class AprilTagVision extends SubsystemBase {
                 // but if the error is above the threshold, we make the standard deviation larger
                 // i had to use desmos for this
                 // may be added back later but this was causing me some issues
-                // * Math.pow(error + 1 - AprilTagVisionConstants.kErrorStandardDeviationThreshold, 4)
+                // * Math.pow(error + 1 - AprilTagVisionConstants.kErrorStandardDeviationThreshold,
+                // 4)
 
                 // back to normal math
                 * Math.pow(averageDistance, 2.0)
@@ -322,7 +335,8 @@ public class AprilTagVision extends SubsystemBase {
           double angleDifference = Math.abs(visionRotation.minus(gyroRotation).getDegrees());
           // if we are more than 1 degree off, reduce accuracy
           // now we don't just wanna 100% trust it if it has the same rotation
-          gyroAccuracyFactor = Math.max(0.3, angleDifference * AprilTagVisionConstants.kGyroAccurary);
+          gyroAccuracyFactor =
+              Math.max(0.3, angleDifference * AprilTagVisionConstants.kGyroAccurary);
           // if it is 2 degrees off, we are increasing our standard deviation by 2
           xyStandardDeviation *= gyroAccuracyFactor;
           // this should not change our theta standard deviation as our gyroscope will not correct
@@ -395,6 +409,17 @@ public class AprilTagVision extends SubsystemBase {
     allVisionObservations.stream()
         .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
         .forEach(RobotState.getInstance()::addVisionObservation);
+
+    if (Constants.kUseAlerts) {
+      for (int i = 0; i < m_noReadingsAlerts.length; i++) {
+        double lastTime = m_lastFrameTimes.get(i);
+        double elapsed = Timer.getFPGATimestamp() - lastTime;
+        if (elapsed > AprilTagVisionConstants.kDisconnectTimeout) {
+          m_noReadingsAlerts[i].set(true);
+          RobotState.getInstance().triggerAlert();
+        }
+      }
+    }
 
     Logger.recordOutput("PeriodicTime/AprilTagVision", (HALUtil.getFPGATime() - start) / 1000.0);
   }

@@ -28,6 +28,8 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,7 +38,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.SwerveSetpointGenerator;
 import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.RobotState;
 import frc.robot.commands.drive.DriveToPoint;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.util.SubsystemProfiles;
@@ -53,6 +57,8 @@ public class Drive extends SubsystemBase {
   public final GyroIOInputsAutoLogged m_gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] m_modules = new Module[4]; // FL, FR, BL, BR
   private final SysIdRoutine m_sysId;
+
+  private Alert m_gyroDisconnectedAlert = new Alert("Gyro Disconnected", AlertType.kError);
 
   public enum DriveProfiles {
     kDefault,
@@ -225,8 +231,7 @@ public class Drive extends SubsystemBase {
       } else {
         Logger.recordOutput("ModuleOutputs/Module" + i + "/AmpsPerRotation", 0.0);
       }
-      if (Math.abs(accel * m_modules[i].getDriveVelocity())
-          > DriveConstants.kSlipThreshold.get()) {
+      if (Math.abs(accel * m_modules[i].getDriveVelocity()) > DriveConstants.kSlipThreshold.get()) {
         slip = true;
       }
       Logger.recordOutput("ModuleOutputs/Module" + i + "/curAccelRate", accel);
@@ -238,6 +243,11 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/Slip", slip);
 
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
+
+    if (Constants.kUseAlerts && !m_gyroInputs.connected) {
+      m_gyroDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
   }

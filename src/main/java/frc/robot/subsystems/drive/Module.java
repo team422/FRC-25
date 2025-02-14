@@ -17,8 +17,12 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.RobotState;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
@@ -29,6 +33,10 @@ public class Module {
   private final SimpleMotorFeedforward m_driveFeedforward;
   private Rotation2d m_turnRelativeOffset = null; // Relative + Offset = Absolute
   private SwerveModulePosition[] m_odometryPositions = new SwerveModulePosition[] {};
+
+  private Alert m_driveDisconnectedAlert;
+  private Alert m_turnDisconnectedAlert;
+  private Alert m_canCoderDisconnectedAlert;
 
   public Module(ModuleIO io, int index) {
     this.m_io = io;
@@ -46,6 +54,13 @@ public class Module {
     m_io.setTurnPID(10.0, 0.0, 0.0);
 
     setBrakeMode(true);
+
+    m_driveDisconnectedAlert =
+        new Alert(String.format("Drive %d Disconnect", m_index), AlertType.kError);
+    m_turnDisconnectedAlert =
+        new Alert(String.format("Turn %d Disconnect", m_index), AlertType.kError);
+    m_canCoderDisconnectedAlert =
+        new Alert(String.format("Cancoder %d Disconnect", m_index), AlertType.kError);
   }
 
   /**
@@ -67,6 +82,21 @@ public class Module {
           m_inputs.odometryTurnPositions[i].plus(
               m_turnRelativeOffset != null ? m_turnRelativeOffset : new Rotation2d());
       m_odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
+    }
+
+    if (Constants.kUseAlerts && !m_inputs.driveMotorIsConnected) {
+      m_driveDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    if (Constants.kUseAlerts && !m_inputs.turnMotorIsConnected) {
+      m_turnDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    if (Constants.kUseAlerts && !m_inputs.turnEncoderIsConnected) {
+      m_canCoderDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
     }
   }
 
