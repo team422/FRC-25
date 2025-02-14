@@ -18,6 +18,7 @@ public class Led extends SubsystemBase {
     kHasGamepiece,
     kAutoScore,
     kAlert,
+    kFullTuning,
     kOff
   }
 
@@ -34,13 +35,22 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
   }
 
-  public void setState(LedState state) {
+  public void updateState(LedState state) {
     if (m_state == state) {
       // exit early so we don't have to update
       return;
     }
+    if (m_state == LedState.kAlert && state != LedState.kOff) {
+      // don't allow the alert state to be overridden (an alert needs to be cleared with code
+      // restart)
+      return;
+    }
     m_state = state;
     updateLEDState();
+  }
+
+  public LedState getCurrentState() {
+    return m_state;
   }
 
   private void updateLEDState() {
@@ -60,6 +70,9 @@ public class Led extends SubsystemBase {
         break;
       case kAlert:
         pattern = LEDPattern.solid(LedConstants.kAlert);
+        break;
+      case kFullTuning:
+        pattern = LEDPattern.solid(LedConstants.kFullTuning);
         break;
       case kOff:
       default:

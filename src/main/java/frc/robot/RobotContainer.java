@@ -2,9 +2,11 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.Constants.ProtoConstants;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsXbox;
@@ -15,6 +17,7 @@ import frc.robot.subsystems.climb.ClimbIOKraken;
 import frc.robot.subsystems.climb.ClimbIOReplay;
 import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
@@ -111,6 +114,71 @@ public class RobotContainer {
 
         break;
 
+      case PROTO:
+        if (ProtoConstants.kRealDrive) {
+          m_drive =
+              new Drive(
+                  new GyroIOPigeon2(),
+                  new ModuleIOTalonFX(0),
+                  new ModuleIOTalonFX(1),
+                  new ModuleIOTalonFX(2),
+                  new ModuleIOTalonFX(3));
+        } else {
+          m_drive =
+              new Drive(
+                  new GyroIOPigeon2(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim());
+        }
+
+        if (ProtoConstants.kRealIntake) {
+          m_intake =
+              new Intake(
+                  new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                  new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        } else {
+          m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
+        }
+
+        if (ProtoConstants.kRealIndexer) {
+          m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+        } else {
+          m_indexer = new Indexer(new IndexerIOSim());
+        }
+
+        if (ProtoConstants.kRealManipulator) {
+          m_manipulator =
+              new Manipulator(
+                  new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
+                  new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
+                  new CoralDetectorIOPhotoelectric(
+                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+        } else {
+          m_manipulator =
+              new Manipulator(
+                  new ManipulatorRollerIOSim(),
+                  new WristIOSim(),
+                  new CoralDetectorIOPhotoelectric(
+                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+        }
+
+        if (ProtoConstants.kRealClimb) {
+          m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
+        } else {
+          m_climb = new Climb(new ClimbIOSim());
+        }
+
+        if (ProtoConstants.kRealElevator) {
+          m_elevator =
+              new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+        } else {
+          m_elevator = new Elevator(new ElevatorIOSim());
+        }
+
+        break;
+
       case SIM:
         m_drive =
             new Drive(
@@ -179,10 +247,9 @@ public class RobotContainer {
     m_autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
     m_autoChooser.addOption("Do Nothing", Commands.none());
     m_autoChooser.addOption(
-        "Drive Quasistatic Characterization",
-        m_drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        "Drive Feedforward Characterization", DriveCommands.feedforwardCharacterization(m_drive));
     m_autoChooser.addOption(
-        "Drive Dynamic Characterization", m_drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(m_drive));
   }
 
   /** Configure the controllers. */
@@ -198,7 +265,124 @@ public class RobotContainer {
             m_drive,
             m_driverControls::getForward,
             m_driverControls::getStrafe,
-            m_driverControls::getTurn));
+            m_driverControls::getTurn,
+            false));
+
+    // m_driverControls
+    //     .coralIntake()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+    //             }))
+    //     .onFalse(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().setDefaultAction();
+    //             }));
+
+    // m_driverControls
+    //     .coralOuttake()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
+    //             }))
+    //     .onFalse(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().manageCoralOuttakeRelease();
+    //             }));
+
+    m_driverControls
+        .setLocationL1()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDesiredReefHeight(ReefHeight.L1);
+                }));
+
+    m_driverControls
+        .setLocationL2()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDesiredReefHeight(ReefHeight.L2);
+                }));
+
+    m_driverControls
+        .setLocationL3()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
+                }));
+
+    m_driverControls
+        .setLocationL4()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
+                }));
+
+    m_driverControls
+        .autoscoreLeft()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexLeft();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                }));
+
+    m_driverControls
+        .autoscoreRight()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexRight();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                }));
+
+    m_driverControls
+        .manualScore()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
+                }));
+
+    m_driverControls
+        .climb()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kClimbing);
+                }));
+
+    m_driverControls
+        .algaeIntakeOuttake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
+
+    // runs continuously because we want to cancel even if the sticks are still being moved
+    m_driverControls
+        .cancelDriveToPoint()
+        .whileTrue(
+            Commands.run(
+                () -> {
+                  if (m_drive.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
+                    m_drive.updateProfile(DriveProfiles.kDefault);
+                  }
+                }));
   }
 
   /**

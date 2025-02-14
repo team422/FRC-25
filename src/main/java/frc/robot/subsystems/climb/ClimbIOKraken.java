@@ -4,9 +4,11 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -15,11 +17,12 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.ClimbConstants;
+import frc.robot.Constants.CurrentLimitConstants;
 
 public class ClimbIOKraken implements ClimbIO {
   private TalonFX m_motor;
 
-  private Slot0Configs m_Slot0Config = new Slot0Configs();
+  private final TalonFXConfiguration m_config;
   private PositionVoltage m_positionVoltage = new PositionVoltage(0).withSlot(0);
 
   private Rotation2d m_desiredAngle = Rotation2d.fromDegrees(0);
@@ -37,38 +40,37 @@ public class ClimbIOKraken implements ClimbIO {
     var currentLimitConfigs =
         new CurrentLimitsConfigs()
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(80)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kClimbDefaultSupplyLimit)
             .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(120);
+            .withStatorCurrentLimit(CurrentLimitConstants.kClimbDefaultStatorLimit);
 
     var feedbackConfigs =
         new FeedbackConfigs().withSensorToMechanismRatio(ClimbConstants.kClimbReduction);
 
-    var config =
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
+
+    m_config =
         new TalonFXConfiguration()
             .withCurrentLimits(currentLimitConfigs)
-            .withFeedback(feedbackConfigs);
+            .withFeedback(feedbackConfigs)
+            .withMotorOutput(motorOutput);
 
-    // init StatusSignals (100hz)
+    m_motor.getConfigurator().apply(m_config);
+
     m_motorPosition = m_motor.getPosition();
+    m_motorTemperature = m_motor.getDeviceTemp();
     m_motorVoltage = m_motor.getMotorVoltage();
     m_motorCurrent = m_motor.getSupplyCurrent();
     m_motorStatorCurrent = m_motor.getStatorCurrent();
 
+    // higher frequency for position
+    BaseStatusSignal.setUpdateFrequencyForAll(100, m_motorPosition);
+
+    // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
-        100, m_motorPosition, m_motorVoltage, m_motorCurrent, m_motorStatorCurrent);
+        75, m_motorTemperature, m_motorVoltage, m_motorCurrent, m_motorStatorCurrent);
 
-    // init 75hz signals (temp)
-    m_motorTemperature = m_motor.getDeviceTemp();
-
-    BaseStatusSignal.setUpdateFrequencyForAll(75, m_motorTemperature);
-
-    // optimize signal use
-
-    m_motor.optimizeBusUtilization(0, 1.0);
-
-    m_motor.getConfigurator().apply(config);
-    m_motor.setNeutralMode(NeutralModeValue.Brake);
+    ParentDevice.optimizeBusUtilizationForAll(m_motor);
   }
 
   @Override
@@ -92,23 +94,27 @@ public class ClimbIOKraken implements ClimbIO {
   }
 
   @Override
-  public void setPID(double kP, double kI, double kD) {
-    m_Slot0Config.kP = kP;
-    m_Slot0Config.kI = kI;
-    m_Slot0Config.kD = kD;
-
-    m_motor.getConfigurator().apply(m_Slot0Config);
+  public void setPID(int slot, double kP, double kI, double kD) {
+    var slotConfigs = new SlotConfigs().withKP(kP).withKI(kI).withKD(kD);
+    slotConfigs.SlotNumber = slot;
+    m_motor.getConfigurator().apply(slotConfigs, 0.0);
   }
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {
+  public void setSlot(int slot) {
+    m_positionVoltage = m_positionVoltage.withSlot(slot);
+  }
+
+  @Override
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {
     m_desiredAngle = angle;
-    m_motor.setControl(m_positionVoltage.withPosition(angle.getDegrees()));
+    m_motor.setControl(
+        m_positionVoltage.withPosition(angle.getDegrees()).withFeedForward(feedforward));
   }
 
   @Override
   public void zeroEncoder() {
-    m_motor.setPosition(0);
+    m_motor.setPosition(0, 0.0);
   }
 
   public Rotation2d getCurrPosition() {

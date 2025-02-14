@@ -39,16 +39,21 @@ public class ClimbIOSim implements ClimbIO {
     inputs.desiredPositionDegrees = m_controller.getSetpoint();
     inputs.voltage = m_voltage;
     inputs.current = m_sim.getCurrentDrawAmps();
-    inputs.motorIsConnected = true;
   }
 
   @Override
-  public void setPID(double kP, double kI, double kD) {
+  public void setPID(int slot, double kP, double kI, double kD) {
     m_controller.setPID(kP, kI, kD);
   }
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {
+  public void setSlot(int slot) {
+    // Not used in simulation
+  }
+
+  @Override
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {
+    // feedforward is not used in simulation
     m_controller.setSetpoint(angle.getDegrees());
   }
 

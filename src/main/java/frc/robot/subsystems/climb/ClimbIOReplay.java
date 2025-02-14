@@ -8,10 +8,13 @@ public class ClimbIOReplay implements ClimbIO {
   public void updateInputs(ClimbInputs inputs) {}
 
   @Override
-  public void setPID(double kP, double kI, double kD) {}
+  public void setPID(int slot, double kP, double kI, double kD) {}
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {}
+  public void setSlot(int slot) {}
+
+  @Override
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {}
 
   @Override
   public void zeroEncoder() {}

@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.CtreBaseRefreshManager;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -41,6 +42,7 @@ public class Robot extends LoggedRobot {
     // Set up data receivers & replay source
     switch (Constants.kCurrentMode) {
       case REAL:
+      case PROTO:
         // Running on a real robot, log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
@@ -70,6 +72,10 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically during all modes. */
   @Override
   public void robotPeriodic() {
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.updateAll();
+    }
+
     RobotState.getInstance().updateRobotState();
 
     CommandScheduler.getInstance().run();

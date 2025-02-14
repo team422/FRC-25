@@ -1,11 +1,16 @@
 package frc.robot.subsystems.manipulator;
 
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
-import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants;
+import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.RobotState;
+import frc.robot.subsystems.indexer.Indexer.IndexerState;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIO;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorInputsAutoLogged;
 import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIO;
@@ -22,7 +27,13 @@ public class Manipulator extends SubsystemBase {
   private WristIO m_wristIO;
   private CoralDetectorIO m_coralDetectorIO;
 
-  private FieldConstants.ReefHeight m_desiredScoringLocation = FieldConstants.ReefHeight.L1;
+  private Alert m_wristMotorDisconnectedAlert =
+      new Alert("Manipulator Wrist Motor Disconnected", AlertType.kError);
+  private Alert m_rollerMotorDisconnectedAlert =
+      new Alert("Manipulator Roller Motor Disconnected", AlertType.kError);
+
+  private Rotation2d m_desiredWristAngle = new Rotation2d();
+  private boolean m_runRollerScoring = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -34,6 +45,7 @@ public class Manipulator extends SubsystemBase {
     kStow,
     kIntaking,
     kScoring,
+    kFullTuning,
   }
 
   private SubsystemProfiles<ManipulatorState> m_profiles;
@@ -48,11 +60,14 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kStow, this::stowPeriodic);
     periodicHash.put(ManipulatorState.kIntaking, this::intakingPeriodic);
     periodicHash.put(ManipulatorState.kScoring, this::scoringPeriodic);
+    periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
   }
 
   @Override
   public void periodic() {
+    double start = HALUtil.getFPGATime();
+
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
@@ -69,11 +84,13 @@ public class Manipulator extends SubsystemBase {
         ManipulatorConstants.kWristKS,
         ManipulatorConstants.kWristKG);
 
-    double start = Timer.getFPGATimestamp();
-
     m_rollerIO.updateInputs(m_rollerInputs);
     m_wristIO.updateInputs(m_wristInputs);
     m_coralDetectorIO.updateInputs(m_coralDetectorInputs);
+
+    if (FullTuningConstants.kFullTuningMode) {
+      updateState(ManipulatorState.kFullTuning);
+    }
 
     m_profiles.getPeriodicFunction().run();
 
@@ -81,23 +98,42 @@ public class Manipulator extends SubsystemBase {
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
     Logger.processInputs("Manipulator/CoralDetector", m_coralDetectorInputs);
     Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
-    Logger.recordOutput("PeriodicTime/Manipulator", Timer.getFPGATimestamp() - start);
+
+    if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
+      m_rollerMotorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    if (Constants.kUseAlerts && !m_wristInputs.motorIsConnected) {
+      m_wristMotorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void updateState(ManipulatorState state) {
+    if (m_profiles.getCurrentProfile() == ManipulatorState.kFullTuning) {
+      // if we are in full tuning mode we don't want to change the state
+      return;
+    }
+    // TODO: this makes sense but i have the feeling it will cause an issue during testing
+    // DON'T FORGET ABOUT THIS
+    m_runRollerScoring = false;
+
     m_profiles.setCurrentProfile(state);
   }
 
-  public ManipulatorState getState() {
+  public ManipulatorState getCurrentState() {
     return m_profiles.getCurrentProfile();
   }
 
-  public void setDesiredScoringLocation(FieldConstants.ReefHeight location) {
-    m_desiredScoringLocation = location;
+  public void setDesiredWristAngle(Rotation2d angle) {
+    m_desiredWristAngle = angle;
   }
 
-  public FieldConstants.ReefHeight getScoringLocation() {
-    return m_desiredScoringLocation;
+  public Rotation2d getDesiredWristAngle() {
+    return m_desiredWristAngle;
   }
 
   public void stowPeriodic() {
@@ -107,7 +143,11 @@ public class Manipulator extends SubsystemBase {
 
   public void intakingPeriodic() {
     m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
-    if (m_coralDetectorIO.hasGamePiece()) {
+    // if we have a game piece stop
+    // if the indexer isn't running then the elevator and manipulator aren't both in position yet
+    // so we don't want to intake yet
+    if (m_coralDetectorIO.hasGamePiece()
+        || RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
       m_rollerIO.setVoltage(0.0);
     } else {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
@@ -117,10 +157,32 @@ public class Manipulator extends SubsystemBase {
   public void scoringPeriodic() {
     // use the existing pitch of each level but add an offset (should be constant for all levels)
     // this may need to be changed if it differs in real life
-    var desiredAngle =
-        Rotation2d.fromDegrees(
-            m_desiredScoringLocation.pitch - ManipulatorConstants.kWristScoringOffset.get());
-    m_wristIO.setDesiredAngle(desiredAngle);
-    m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
+    m_wristIO.setDesiredAngle(m_desiredWristAngle);
+    if (m_runRollerScoring) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(0.0);
+    }
+  }
+
+  public void fullTuningPeriodic() {
+    m_wristIO.setDesiredAngle(
+        Rotation2d.fromDegrees(FullTuningConstants.kManipulatorWristSetpoint.get()));
+  }
+
+  public void runRollerScoring() {
+    m_runRollerScoring = true;
+  }
+
+  public boolean atSetpoint() {
+    return m_wristIO.atSetpoint();
+  }
+
+  public boolean hasGamePiece() {
+    return m_coralDetectorIO.hasGamePiece();
+  }
+
+  public Rotation2d getCurrAngle() {
+    return m_wristIO.getCurrAngle();
   }
 }

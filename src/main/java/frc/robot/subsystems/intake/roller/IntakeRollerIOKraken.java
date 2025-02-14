@@ -4,22 +4,29 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.Ports;
+import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 
 public class IntakeRollerIOKraken implements IntakeRollerIO {
   private TalonFX m_motor;
 
+  private StatusSignal<ConnectedMotorValue> m_connectedMotor;
   private StatusSignal<AngularVelocity> m_motorVelocity;
   private StatusSignal<AngularAcceleration> m_motorAcceleration;
   private StatusSignal<Current> m_motorCurrent;
@@ -32,7 +39,7 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
   private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
 
   public IntakeRollerIOKraken(int port) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
 
     var currentLimits =
         new CurrentLimitsConfigs()
@@ -44,12 +51,17 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kRollerGearRatio);
 
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Coast);
+
     m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withFeedback(feedbackConfig);
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withFeedback(feedbackConfig)
+            .withMotorOutput(motorOutput);
 
     m_motor.getConfigurator().apply(m_config);
-    m_motor.setNeutralMode(NeutralModeValue.Coast);
 
+    m_connectedMotor = m_motor.getConnectedMotor();
     m_motorVelocity = m_motor.getVelocity();
     m_motorAcceleration = m_motor.getAcceleration();
     m_motorVoltage = m_motor.getMotorVoltage();
@@ -63,25 +75,41 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
         75.0,
+        m_connectedMotor,
         m_motorVelocity,
         m_motorVoltage,
         m_motorCurrent,
         m_motorStatorCurrent,
         m_motorTemperature);
+
     ParentDevice.optimizeBusUtilizationForAll(m_motor);
+
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_connectedMotor,
+              m_motorVelocity,
+              m_motorAcceleration,
+              m_motorVoltage,
+              m_motorCurrent,
+              m_motorStatorCurrent,
+              m_motorTemperature));
+    }
   }
 
   @Override
   public void updateInputs(IntakeRollerInputs inputs) {
-    inputs.motorIsConnected =
-        BaseStatusSignal.refreshAll(
-                m_motorVelocity,
-                m_motorAcceleration,
-                m_motorVoltage,
-                m_motorCurrent,
-                m_motorStatorCurrent,
-                m_motorTemperature)
-            .isOK();
+    if (!Constants.kUseBaseRefreshManager) {
+      BaseStatusSignal.refreshAll(
+          m_motorVelocity,
+          m_motorAcceleration,
+          m_motorVoltage,
+          m_motorCurrent,
+          m_motorStatorCurrent,
+          m_motorTemperature);
+    }
+
+    inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
     inputs.accelerationRPSSq = m_motorAcceleration.getValueAsDouble();

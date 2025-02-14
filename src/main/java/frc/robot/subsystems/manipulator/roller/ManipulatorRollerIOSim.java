@@ -25,6 +25,11 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
 
     inputs.current = m_sim.getCurrentDrawAmps();
     inputs.voltage = m_voltage;
+
+    // these don't matter in sim
+    inputs.statorCurrent = 0.0;
+    inputs.temperature = 0.0;
+    inputs.motorIsConnected = false;
   }
 
   @Override
