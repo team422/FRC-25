@@ -2,10 +2,14 @@ package frc.robot.subsystems.elevator;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.robot.Constants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FullTuningConstants;
+import frc.robot.RobotState;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +19,11 @@ public class Elevator extends SubsystemBase {
   public final ElevatorInputsAutoLogged m_inputs;
   private ElevatorIO m_io;
   private double m_desiredHeight;
+
+  private Alert m_leadingMotorDisconnectedAlert =
+      new Alert("Elevator Leading Motor Disconnected", AlertType.kError);
+  private Alert m_followingMotorDisconnectedAlert =
+      new Alert("Elevator Following Motor Disconnected", AlertType.kError);
 
   public static enum ElevatorState {
     kStow,
@@ -139,6 +148,17 @@ public class Elevator extends SubsystemBase {
 
     Logger.processInputs("Elevator", m_inputs);
     Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());
+
+    if (Constants.kUseAlerts && !m_inputs.isLeadingMotorConnected) {
+      m_leadingMotorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    if (Constants.kUseAlerts && !m_inputs.isFollowingMotorConnected) {
+      m_followingMotorDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
