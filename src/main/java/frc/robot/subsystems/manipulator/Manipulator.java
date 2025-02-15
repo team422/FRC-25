@@ -168,6 +168,7 @@ public class Manipulator extends SubsystemBase {
   public void fullTuningPeriodic() {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(FullTuningConstants.kManipulatorWristSetpoint.get()));
+    m_rollerIO.setVoltage(FullTuningConstants.kManipulatorRollerVoltage.get());
   }
 
   public void runRollerScoring() {

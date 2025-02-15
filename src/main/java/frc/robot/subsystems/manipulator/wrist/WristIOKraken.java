@@ -3,6 +3,7 @@ package frc.robot.subsystems.manipulator.wrist;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -63,8 +64,16 @@ public class WristIOKraken implements WristIO {
 
     var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
 
+    var feedback =
+        new FeedbackConfigs().withSensorToMechanismRatio(ManipulatorConstants.kWristGearRatio);
+
     m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withMotorOutput(motorOutput);
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withMotorOutput(motorOutput)
+            .withFeedback(feedback);
+
+    resetRelativeEncoder();
 
     m_motor.getConfigurator().apply(m_config);
 
@@ -176,12 +185,11 @@ public class WristIOKraken implements WristIO {
   private void resetRelativeEncoder() {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
-    double offset =
-        ManipulatorConstants.kWristOffset.getRotations()
-            + m_absoluteEncoder.get()
-            - getCurrAngle().getRotations();
-    m_config.Feedback.withFeedbackRotorOffset(offset)
-        .withSensorToMechanismRatio(ManipulatorConstants.kWristGearRatio);
-    m_motor.getConfigurator().apply(m_config.Feedback, 0.0);
+    double absoluteEncoderAngle = m_absoluteEncoder.get();
+    double startAngle =
+        ManipulatorConstants.kWristOffset.getRotations() + absoluteEncoderAngle != -1
+            ? absoluteEncoderAngle
+            : 0.0;
+    m_motor.getConfigurator().setPosition(startAngle);
   }
 }

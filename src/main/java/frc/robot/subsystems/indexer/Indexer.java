@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.IndexerConstants;
 import frc.robot.RobotState;
 import frc.robot.util.SubsystemProfiles;
@@ -22,6 +23,7 @@ public class Indexer extends SubsystemBase {
   public static enum IndexerState {
     kIdle,
     kIndexing,
+    kFullTuning,
   }
 
   private SubsystemProfiles<IndexerState> m_profiles;
@@ -32,11 +34,16 @@ public class Indexer extends SubsystemBase {
     Map<IndexerState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(IndexerState.kIdle, this::idlePeriodic);
     periodicHash.put(IndexerState.kIndexing, this::indexingPeriodic);
+    periodicHash.put(IndexerState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IndexerState.kIdle);
   }
 
   public void updateState(IndexerState state) {
+    if (m_profiles.getCurrentProfile() == IndexerState.kFullTuning) {
+      return;
+    }
+
     m_profiles.setCurrentProfile(state);
   }
 
@@ -47,6 +54,10 @@ public class Indexer extends SubsystemBase {
   @Override
   public void periodic() {
     double start = HALUtil.getFPGATime();
+
+    if (FullTuningConstants.kFullTuningMode) {
+      updateState(IndexerState.kFullTuning);
+    }
 
     m_io.updateInputs(m_inputs);
 
@@ -69,5 +80,9 @@ public class Indexer extends SubsystemBase {
 
   public void indexingPeriodic() {
     m_io.setVoltage(IndexerConstants.kIndexerIndexingVoltage.get());
+  }
+
+  public void fullTuningPeriodic() {
+    m_io.setVoltage(FullTuningConstants.kIndexerVoltage.get());
   }
 }

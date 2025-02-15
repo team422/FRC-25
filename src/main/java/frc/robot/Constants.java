@@ -220,11 +220,15 @@ public final class Constants {
     public static final boolean kFullTuningMode = true;
 
     public static final LoggedTunableNumber kElevatorSetpoint =
-        new LoggedTunableNumber("Elevator Full Tuning Setpoint", 0.0);
+        new LoggedTunableNumber("Full Tuning Elevator Setpoint", 0.0);
     public static final LoggedTunableNumber kIntakePivotSetpoint =
-        new LoggedTunableNumber("Intake Pivot Full Tuning Setpoint", 0.0);
+        new LoggedTunableNumber("Full Tuning Intake Pivot Setpoint", 0.0);
     public static final LoggedTunableNumber kManipulatorWristSetpoint =
-        new LoggedTunableNumber("Manipulator Wrist Full Tuning Setpoint", 0.0);
+        new LoggedTunableNumber("Full Tuning Manipulator Wrist Setpoint", 0.0);
+    public static final LoggedTunableNumber kManipulatorRollerVoltage =
+        new LoggedTunableNumber("Full Tuning Manipulator Roller Voltage", 0.0);
+    public static final LoggedTunableNumber kIndexerVoltage =
+        new LoggedTunableNumber("Full Tuning Indexer Voltage", 0.0);
   }
 
   public static final class AprilTagVisionConstants {
@@ -430,16 +434,14 @@ public final class Constants {
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
     // Indexer
-    public static final double kIndexerDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 30.0;
+    public static final double kIndexerDefaultSupplyLimit = 30.0;
     public static final double kIndexerDefaultStatorLimit = 120.0;
 
     // Manipulator
-    public static final double kManipulatorWristDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kManipulatorWristDefaultSupplyLimit = 80.0;
     public static final double kManipulatorWristDefaultStatorLimit = 120.0;
 
-    public static final double kManipulatorRollerDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kManipulatorRollerDefaultSupplyLimit = 80.0;
     public static final double kManipulatorRollerDefaultStatorLimit = 120.0;
 
     // Elevator
@@ -492,12 +494,12 @@ public final class Constants {
     public static final int kIntakeRoller = 0;
     public static final int kIntakePivot = 28;
 
-    public static final int kManipulatorRoller = 28;
-    public static final int kManipulatorWrist = 0;
+    public static final int kManipulatorRoller = 29;
+    public static final int kManipulatorWrist = 30;
 
     public static final int kIntakeAbsoluteEncoder = 9;
 
-    public static final int kIndexerMotor = 1;
+    public static final int kIndexerMotor = 25;
 
     public static final int kManipulatorAbsoluteEncoder = 9;
 
@@ -506,18 +508,18 @@ public final class Constants {
 
     public static final int kLed = 2;
 
-    public static final int kElevatorLead = 7;
-    public static final int kElevatorFollowing = 0;
+    public static final int kElevatorLead = 23;
+    public static final int kElevatorFollowing = 24;
 
-    public static final String kMainCanivoreName = "Drivetrain";
+    public static final String kMainCanivoreName = "Main";
   }
 
   /** Whether or not subsystems are enabled on the proto board */
   public static final class ProtoConstants {
     public static final boolean kRealDrive = false;
     public static final boolean kRealIntake = false;
-    public static final boolean kRealIndexer = false;
-    public static final boolean kRealManipulator = false;
+    public static final boolean kRealIndexer = true;
+    public static final boolean kRealManipulator = true;
     public static final boolean kRealClimb = false;
     public static final boolean kRealElevator = true;
   }

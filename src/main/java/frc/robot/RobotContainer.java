@@ -9,7 +9,7 @@ import frc.robot.Constants.ProtoConstants;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
-import frc.robot.oi.DriverControlsXbox;
+import frc.robot.oi.DriverControlsPS5;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.climb.Climb;
@@ -17,7 +17,6 @@ import frc.robot.subsystems.climb.ClimbIOKraken;
 import frc.robot.subsystems.climb.ClimbIOReplay;
 import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
@@ -254,8 +253,8 @@ public class RobotContainer {
 
   /** Configure the controllers. */
   private void configureControllers() {
-    m_driverControls = new DriverControlsXbox(0);
-    // m_driverControls = new DriverControlsPS5(0);
+    // m_driverControls = new DriverControlsXbox(0);
+    m_driverControls = new DriverControlsPS5(0);
   }
 
   /** Configure the button bindings. */
@@ -268,31 +267,31 @@ public class RobotContainer {
             m_driverControls::getTurn,
             false));
 
-    // m_driverControls
-    //     .coralIntake()
-    //     .onTrue(
-    //         Commands.runOnce(
-    //             () -> {
-    //               RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
-    //             }))
-    //     .onFalse(
-    //         Commands.runOnce(
-    //             () -> {
-    //               RobotState.getInstance().setDefaultAction();
-    //             }));
+    m_driverControls
+        .coralIntake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
 
-    // m_driverControls
-    //     .coralOuttake()
-    //     .onTrue(
-    //         Commands.runOnce(
-    //             () -> {
-    //               RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
-    //             }))
-    //     .onFalse(
-    //         Commands.runOnce(
-    //             () -> {
-    //               RobotState.getInstance().manageCoralOuttakeRelease();
-    //             }));
+    m_driverControls
+        .coralOuttake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().manageCoralOuttakeRelease();
+                }));
 
     m_driverControls
         .setLocationL1()
@@ -331,8 +330,15 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().setReefIndexLeft();
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                  // if we are in autoscore and we are on a left branch (autoscore left already
+                  // pressed), then cancel
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 1) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else {
+                    RobotState.getInstance().setReefIndexLeft();
+                    RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                  }
                 }));
 
     m_driverControls
@@ -340,8 +346,15 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().setReefIndexRight();
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                  // if we are in autoscore and we are on a right branch (autoscore right already
+                  // pressed), then cancel
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 0) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else {
+                    RobotState.getInstance().setReefIndexRight();
+                    RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                  }
                 }));
 
     m_driverControls
@@ -349,7 +362,12 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
+                  // this is much simpler, we can just check if we are in manual score and cancel
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
+                  }
                 }));
 
     m_driverControls
@@ -371,17 +389,6 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setDefaultAction();
-                }));
-
-    // runs continuously because we want to cancel even if the sticks are still being moved
-    m_driverControls
-        .cancelDriveToPoint()
-        .whileTrue(
-            Commands.run(
-                () -> {
-                  if (m_drive.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
-                    m_drive.updateProfile(DriveProfiles.kDefault);
-                  }
                 }));
   }
 

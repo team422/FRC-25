@@ -342,6 +342,14 @@ public class RobotState {
     m_desiredBranchIndex = index;
   }
 
+  public ReefHeight getDesiredReefHeight() {
+    return m_desiredReefHeight;
+  }
+
+  public int getDesiredBranchIndex() {
+    return m_desiredBranchIndex;
+  }
+
   public void manageCoralOuttakeRelease() {
     // if we successfully outtake the coral we want to go back to stow
     // otherwise go back to autoscore/manual score
