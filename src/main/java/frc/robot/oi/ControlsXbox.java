@@ -2,25 +2,20 @@ package frc.robot.oi;
 
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 
-public class DriverControlsPS5 implements DriverControls {
+public class ControlsXbox implements Controls {
   private CommandPS5Controller m_controller;
 
-  public DriverControlsPS5(int port) {
+  public ControlsXbox(int port) {
     m_controller = new CommandPS5Controller(port);
   }
 
   @Override
-  public double getForward() {
+  public double getMovement() {
     return m_controller.getLeftY();
   }
 
   @Override
-  public double getStrafe() {
-    return m_controller.getLeftX();
-  }
-
-  @Override
-  public double getTurn() {
+  public double getRotation() {
     return m_controller.getRightX();
   }
 }
