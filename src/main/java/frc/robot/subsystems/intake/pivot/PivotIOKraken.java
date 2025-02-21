@@ -186,11 +186,24 @@ public class PivotIOKraken implements PivotIO {
   private void resetRelativeEncoder() {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
-    double absoluteEncoderAngle = m_absoluteEncoder.get();
-    double startAngle =
-        IntakeConstants.kPivotOffset
-            .plus(Rotation2d.fromRotations(absoluteEncoderAngle))
-            .getRotations();
+
+    double startAngle = getAbsoluteFinal().getRotations();
+
     m_motor.getConfigurator().setPosition(startAngle);
+  }
+
+  private Rotation2d getAbsoluteWrapAround() {
+    double rawValue = m_absoluteEncoder.get();
+    rawValue += IntakeConstants.kWristOffset.getRotations();
+    // fix wrap around after offset applied
+    rawValue %= 1.0;
+    if (rawValue < 0) {
+      rawValue += 1.0;
+    }
+    return Rotation2d.fromRotations(rawValue);
+  }
+
+  private Rotation2d getAbsoluteFinal() {
+    return getAbsoluteWrapAround().div(IntakeConstants.kPivotAbsoluteEncoderGearRatio);
   }
 }

@@ -15,6 +15,8 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import java.util.Queue;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -27,9 +29,9 @@ import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.configs.TorqueCurrentConfigs;
-import com.ctre.phoenix6.controls.PositionTorqueCurrentFOC;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
@@ -46,7 +48,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
-import java.util.Queue;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -88,9 +89,9 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final boolean m_isCancoderInverted = false;
   private final Rotation2d m_absoluteEncoderOffset;
 
-  private final VelocityTorqueCurrentFOC m_driveControl = new VelocityTorqueCurrentFOC(0.0);
-  private final PositionTorqueCurrentFOC m_turnControl = new PositionTorqueCurrentFOC(0.0);
-  private final TorqueCurrentFOC m_rawControl = new TorqueCurrentFOC(0.0);
+  private final VelocityVoltage m_driveControl = new VelocityVoltage(0.0).withEnableFOC(true);
+  private final PositionVoltage m_turnControl = new PositionVoltage(0.0).withEnableFOC(true);
+  private final VoltageOut m_rawControl = new VoltageOut(0.0).withEnableFOC(true);
 
   private final TalonFXConfiguration m_driveConfig;
   private final TalonFXConfiguration m_turnConfig;

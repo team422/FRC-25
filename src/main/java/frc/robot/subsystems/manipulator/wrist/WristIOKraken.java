@@ -11,10 +11,10 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -27,7 +27,6 @@ import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
 import java.util.List;
-import org.littletonrobotics.junction.Logger;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -64,7 +63,10 @@ public class WristIOKraken implements WristIO {
             .withStatorCurrentLimitEnable(true)
             .withStatorCurrentLimit(CurrentLimitConstants.kManipulatorWristDefaultStatorLimit);
 
-    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
+    var motorOutput =
+        new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake)
+            .withInverted(InvertedValue.Clockwise_Positive);
 
     var feedback =
         new FeedbackConfigs().withSensorToMechanismRatio(ManipulatorConstants.kWristGearRatio);
@@ -133,11 +135,6 @@ public class WristIOKraken implements WristIO {
       resetRelativeEncoder();
     }
 
-    Logger.recordOutput(
-        "ManipulatorIO/AbsoluteRaw", Units.rotationsToDegrees(m_absoluteEncoder.get()));
-    Logger.recordOutput("ManipulatorIO/AbsoluteWithOffset", getAbsoluteDirect().getDegrees());
-    Logger.recordOutput("ManipulatorIO/AbsoluteWrapAround", getAbsoluteWrapAround().getDegrees());
-
     inputs.currAngleDeg = getCurrAngle().getDegrees();
     inputs.desiredAngleDeg = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
@@ -191,18 +188,23 @@ public class WristIOKraken implements WristIO {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
 
-    double startAngle = getAbsoluteWrapAround().getRotations();
+    double startAngle = getAbsoluteFinal().getRotations();
+
     m_motor.getConfigurator().setPosition(startAngle);
   }
 
-  private Rotation2d getAbsoluteDirect() {
-    return Rotation2d.fromRotations(m_absoluteEncoder.get())
-        .plus(ManipulatorConstants.kWristOffset);
+  private Rotation2d getAbsoluteWrapAround() {
+    double rawValue = m_absoluteEncoder.get();
+    rawValue += ManipulatorConstants.kWristOffset.getRotations();
+    // fix wrap around after offset applied
+    rawValue %= 1.0;
+    if (rawValue < 0) {
+      rawValue += 1.0;
+    }
+    return Rotation2d.fromRotations(rawValue);
   }
 
-  private Rotation2d getAbsoluteWrapAround() {
-    return getAbsoluteDirect()
-        .plus(Rotation2d.fromDegrees(-360))
-        .times(ManipulatorConstants.kWristAbsoluteEncoderGearRatio);
+  private Rotation2d getAbsoluteFinal() {
+    return getAbsoluteWrapAround().div(ManipulatorConstants.kWristAbsoluteEncoderGearRatio);
   }
 }

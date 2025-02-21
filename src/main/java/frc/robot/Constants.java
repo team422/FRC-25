@@ -321,15 +321,16 @@ public final class Constants {
 
   public static final class IntakeConstants {
     public static final double kPivotGearRatio = (84.0 / 8.0) * (36.0 / 14.0);
+    public static final double kPivotAbsoluteEncoderGearRatio = 36.0 / 14.0;
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
 
     public static final double kPivotTolerance = 2.0; // degrees
 
     // the offset needs to be so that it starts at 90 degrees (top)
-    public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
-    // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
+    // public static final Rotation2d kPivotOffset =
+    //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
+    public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
 
     public static final double kRollerCurrentGamepieceThreshold =
         0.5; // amps to be considered holding a gamepiece, temp value
@@ -380,7 +381,7 @@ public final class Constants {
   public static final class ManipulatorConstants {
     public static final double kWristGearRatio = (66.0 / 10.0) * (32.0 / 14.0);
     // public static final double kWristGearRatio = 1.0;
-    public static final double kWristAbsoluteEncoderGearRatio = 1.0;
+    public static final double kWristAbsoluteEncoderGearRatio = 32.0 / 14.0;
     public static final double kRollerGearRatio = (58.0 / 16.0);
     public static final double kRollerRadius = Units.inchesToMeters(3);
 
@@ -389,7 +390,7 @@ public final class Constants {
     // the offset needs to be so that it starts at 180 degrees (all the way out)
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
-    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
+    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(-78.65);
 
     public static final double kRollerPositionTolerance = 10.0; // degrees
 
