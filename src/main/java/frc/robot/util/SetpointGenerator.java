@@ -41,6 +41,9 @@ public class SetpointGenerator {
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
   private static final double kDriveYOffset = Units.inchesToMeters(6.469);
 
+  // we are considered "close" to a field element (processor, barge) if we're within this distance
+  private static final double kDistanceThreshold = Units.inchesToMeters(24.0);
+
   /**
    * Generates a setpoint for the robot to score on the reef.
    *
@@ -109,5 +112,19 @@ public class SetpointGenerator {
       }
     }
     return new Pair<>(rightIndex, leftIndex);
+  }
+
+  public static boolean isNearProcessor(Pose2d drivePose) {
+    // no need for abs because of distance formula
+    return drivePose
+            .getTranslation()
+            .getDistance(FieldConstants.Processor.kCenterFace.getTranslation())
+        < kDistanceThreshold;
+  }
+
+  public static boolean isNearBarge(Pose2d drivePose) {
+    // for the barge we only care about the x coordinate
+    return Math.abs(drivePose.getTranslation().getX() - FieldConstants.Barge.kMiddleCage.getX())
+        < kDistanceThreshold;
   }
 }

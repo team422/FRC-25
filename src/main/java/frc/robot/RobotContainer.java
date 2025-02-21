@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
@@ -249,6 +250,10 @@ public class RobotContainer {
         "Drive Feedforward Characterization", DriveCommands.feedforwardCharacterization(m_drive));
     m_autoChooser.addOption(
         "Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(m_drive));
+
+    m_autoChooser.addOption(
+        "Drive SysId Quasistatic", m_drive.sysIdQuasistatic(Direction.kForward));
+    m_autoChooser.addOption("Drive SysId Dynamic", m_drive.sysIdDynamic(Direction.kForward));
   }
 
   /** Configure the controllers. */
@@ -285,7 +290,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralOuttaking);
+                  RobotState.getInstance().manageCoralOuttakePressed();
                 }))
         .onFalse(
             Commands.runOnce(
@@ -337,7 +342,7 @@ public class RobotContainer {
                     RobotState.getInstance().setDefaultAction();
                   } else {
                     RobotState.getInstance().setReefIndexLeft();
-                    RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                    RobotState.getInstance().manageAutoScoreButton();
                   }
                 }));
 
@@ -353,7 +358,7 @@ public class RobotContainer {
                     RobotState.getInstance().setDefaultAction();
                   } else {
                     RobotState.getInstance().setReefIndexRight();
-                    RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+                    RobotState.getInstance().manageAutoScoreButton();
                   }
                 }));
 
@@ -384,6 +389,19 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .algaeDescore()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().algaeDescore();
                 }))
         .onFalse(
             Commands.runOnce(

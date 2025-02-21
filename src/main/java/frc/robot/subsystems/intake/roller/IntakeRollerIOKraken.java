@@ -39,7 +39,7 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
   private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
 
   public IntakeRollerIOKraken(int port) {
-    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
+    m_motor = new TalonFX(port, Ports.kDriveCanivoreName);
 
     var currentLimits =
         new CurrentLimitsConfigs()

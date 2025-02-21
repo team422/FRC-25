@@ -29,7 +29,9 @@ public class Elevator extends SubsystemBase {
     kStow,
     kScoring,
     kIntaking,
-    kKnocking,
+    kAlgaeDescoringInitial,
+    kAlgaeDescoringFinal,
+    kBargeScore,
     kFullTuning,
   }
 
@@ -52,7 +54,9 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kStow, this::stowPeriodic);
     periodicHash.put(ElevatorState.kScoring, this::scoringPeriodic);
     periodicHash.put(ElevatorState.kIntaking, this::intakingPeriodic);
-    periodicHash.put(ElevatorState.kKnocking, this::knockingPeriodic);
+    periodicHash.put(ElevatorState.kAlgaeDescoringInitial, this::algaeDescoringInitialPeriodic);
+    periodicHash.put(ElevatorState.kAlgaeDescoringFinal, this::algaeDescoringFinalPeriodic);
+    periodicHash.put(ElevatorState.kBargeScore, this::bargeScorePeriodic);
     periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
@@ -136,12 +140,15 @@ public class Elevator extends SubsystemBase {
     m_io.updateInputs(m_inputs);
 
     double currHeight = m_io.getCurrHeight();
-    if (currHeight < Units.inchesToMeters(18)) {
+    if (currHeight < 18) {
       m_io.setSlot(0);
-    } else if (currHeight < Units.inchesToMeters(45)) {
+      m_io.setDesiredHeight(m_inputs.desiredLocation);
+    } else if (currHeight < 45) {
       m_io.setSlot(1);
+      m_io.setDesiredHeight(m_inputs.desiredLocation);
     } else {
       m_io.setSlot(2);
+      m_io.setDesiredHeight(m_inputs.desiredLocation);
     }
 
     m_profiles.getPeriodicFunction().run();
@@ -169,27 +176,6 @@ public class Elevator extends SubsystemBase {
     }
 
     m_profiles.setCurrentProfile(state);
-    switch (state) {
-      case kIntaking:
-        m_io.setDesiredHeight(ElevatorConstants.kIntakingHeight);
-        break;
-      case kKnocking:
-        m_io.setDesiredHeight(ElevatorConstants.kKnockingHeight);
-
-        break;
-      case kScoring:
-        m_io.setDesiredHeight(m_desiredHeight);
-
-        break;
-      case kStow:
-        m_io.setDesiredHeight(ElevatorConstants.kStowHeight);
-
-        break;
-      case kFullTuning:
-        m_io.setDesiredHeight(Units.inchesToMeters(FullTuningConstants.kElevatorSetpoint.get()));
-
-        break;
-    }
   }
 
   public ElevatorState getCurrentState() {
@@ -211,21 +197,32 @@ public class Elevator extends SubsystemBase {
     return m_io.getCurrHeight();
   }
 
-  public void stowPeriodic() {}
+  public void stowPeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+  }
 
-  public void scoringPeriodic() {}
+  public void scoringPeriodic() {
+    m_io.setDesiredHeight(m_desiredHeight);
+  }
 
-  public void intakingPeriodic() {}
+  public void intakingPeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kIntakingHeight.get());
+  }
 
-  public void knockingPeriodic() {}
+  public void algaeDescoringInitialPeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringIntialHeight.get());
+  }
+
+  public void algaeDescoringFinalPeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringFinalHeight.get());
+  }
+
+  public void bargeScorePeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kBargeScoreHeight.get());
+  }
 
   public void fullTuningPeriodic() {
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          m_io.setDesiredHeight(Units.inchesToMeters(FullTuningConstants.kElevatorSetpoint.get()));
-        },
-        FullTuningConstants.kElevatorSetpoint);
+    m_io.setDesiredHeight(FullTuningConstants.kElevatorSetpoint.get());
   }
 
   public boolean atSetpoint() {

@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -26,6 +27,7 @@ import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
 import java.util.List;
+import org.littletonrobotics.junction.Logger;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -72,8 +74,6 @@ public class WristIOKraken implements WristIO {
             .withCurrentLimits(currentLimits)
             .withMotorOutput(motorOutput)
             .withFeedback(feedback);
-
-    resetRelativeEncoder();
 
     m_motor.getConfigurator().apply(m_config);
 
@@ -133,6 +133,11 @@ public class WristIOKraken implements WristIO {
       resetRelativeEncoder();
     }
 
+    Logger.recordOutput(
+        "ManipulatorIO/AbsoluteRaw", Units.rotationsToDegrees(m_absoluteEncoder.get()));
+    Logger.recordOutput("ManipulatorIO/AbsoluteWithOffset", getAbsoluteDirect().getDegrees());
+    Logger.recordOutput("ManipulatorIO/AbsoluteWrapAround", getAbsoluteWrapAround().getDegrees());
+
     inputs.currAngleDeg = getCurrAngle().getDegrees();
     inputs.desiredAngleDeg = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
@@ -185,11 +190,19 @@ public class WristIOKraken implements WristIO {
   private void resetRelativeEncoder() {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
-    double absoluteEncoderAngle = m_absoluteEncoder.get();
-    double startAngle =
-        ManipulatorConstants.kWristOffset.getRotations() + absoluteEncoderAngle != -1
-            ? absoluteEncoderAngle
-            : 0.0;
+
+    double startAngle = getAbsoluteWrapAround().getRotations();
     m_motor.getConfigurator().setPosition(startAngle);
+  }
+
+  private Rotation2d getAbsoluteDirect() {
+    return Rotation2d.fromRotations(m_absoluteEncoder.get())
+        .plus(ManipulatorConstants.kWristOffset);
+  }
+
+  private Rotation2d getAbsoluteWrapAround() {
+    return getAbsoluteDirect()
+        .plus(Rotation2d.fromDegrees(-360))
+        .times(ManipulatorConstants.kWristAbsoluteEncoderGearRatio);
   }
 }

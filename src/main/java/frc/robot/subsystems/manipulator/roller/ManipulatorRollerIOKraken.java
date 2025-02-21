@@ -1,16 +1,20 @@
 package frc.robot.subsystems.manipulator.roller;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -26,6 +30,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   private TalonFX m_motor;
 
   private StatusSignal<ConnectedMotorValue> m_connectedMotor;
+  private StatusSignal<Angle> m_motorPosition;
   private StatusSignal<AngularVelocity> m_motorVelocity;
   private StatusSignal<Current> m_motorCurrent;
   private StatusSignal<Current> m_motorStatorCurrent;
@@ -36,6 +41,11 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
 
   private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
   // private final VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
+  private final PositionVoltage m_positionVoltage =
+      new PositionVoltage(0.0).withSlot(0).withEnableFOC(true);
+
+  private boolean m_positionControl = false;
+  private Angle m_desiredPosition = Degrees.of(0.0);
 
   public ManipulatorRollerIOKraken(int port) {
     m_motor = new TalonFX(port, Ports.kMainCanivoreName);
@@ -61,11 +71,15 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     m_motor.getConfigurator().apply(m_config);
 
     m_connectedMotor = m_motor.getConnectedMotor();
+    m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
     m_motorVoltage = m_motor.getMotorVoltage();
     m_motorCurrent = m_motor.getSupplyCurrent();
     m_motorStatorCurrent = m_motor.getStatorCurrent();
     m_motorTemperature = m_motor.getDeviceTemp();
+
+    // this is important for our logic so we need to update it more frequently
+    BaseStatusSignal.setUpdateFrequencyForAll(100.0, m_motorPosition);
 
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
@@ -83,6 +97,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
       CtreBaseRefreshManager.addSignals(
           List.of(
               m_connectedMotor,
+              m_motorPosition,
               m_motorVelocity,
               m_motorCurrent,
               m_motorStatorCurrent,
@@ -95,6 +110,8 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   public void updateInputs(ManipulatorRollerInputs inputs) {
     if (!Constants.kUseBaseRefreshManager) {
       BaseStatusSignal.refreshAll(
+          m_connectedMotor,
+          m_motorPosition,
           m_motorVelocity,
           m_motorCurrent,
           m_motorStatorCurrent,
@@ -104,6 +121,9 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
+    inputs.positionDegrees = m_motorPosition.getValue().in(Degrees);
+    inputs.positionControl = m_positionControl;
+    inputs.desiredPositionDegrees = m_desiredPosition.in(Degrees);
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
     inputs.current = m_motorCurrent.getValueAsDouble();
     inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
@@ -114,6 +134,25 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   @Override
   public void setVoltage(double voltage) {
     m_motor.setControl(m_voltageOut.withOutput(voltage));
+    m_positionControl = false;
+    m_desiredPosition = Degrees.of(0.0);
+  }
+
+  @Override
+  public void setDesiredPosition(Angle position) {
+    m_motor.setControl(m_positionVoltage.withPosition(position));
+    m_positionControl = true;
+    m_desiredPosition = position;
+  }
+
+  @Override
+  public Angle getPosition() {
+    return m_motorPosition.getValue();
+  }
+
+  @Override
+  public void setPositionPID(double kP, double kI, double kD) {
+    m_motor.getConfigurator().apply(m_config.Slot0.withKP(kP).withKI(kI).withKD(kD), 0.0);
   }
 
   @Override

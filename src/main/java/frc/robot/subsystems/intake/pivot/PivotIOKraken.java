@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake.pivot;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
@@ -10,6 +11,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -49,7 +51,7 @@ public class PivotIOKraken implements PivotIO {
   private Rotation2d m_desiredAngle = new Rotation2d();
 
   public PivotIOKraken(int port, int absoluteEncoderPort) {
-    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
+    m_motor = new TalonFX(port, Ports.kDriveCanivoreName);
 
     m_absoluteEncoder = new DutyCycleEncoder(absoluteEncoderPort);
 
@@ -60,10 +62,19 @@ public class PivotIOKraken implements PivotIO {
             .withStatorCurrentLimitEnable(true)
             .withStatorCurrentLimit(CurrentLimitConstants.kIntakePivotDefaultStatorLimit);
 
-    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
+    var motorOutput =
+        new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake)
+            .withInverted(InvertedValue.Clockwise_Positive);
+
+    var feedback =
+        new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio);
 
     m_config =
-        new TalonFXConfiguration().withCurrentLimits(currentLimits).withMotorOutput(motorOutput);
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withMotorOutput(motorOutput)
+            .withFeedback(feedback);
 
     m_motor.getConfigurator().apply(m_config);
 
@@ -175,15 +186,11 @@ public class PivotIOKraken implements PivotIO {
   private void resetRelativeEncoder() {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
-    double offset =
-        IntakeConstants.kPivotOffset.getRotations()
-            + m_absoluteEncoder.get()
-            - getCurrAngle().getRotations();
-    m_motor
-        .getConfigurator()
-        .apply(
-            m_config.Feedback.withFeedbackRotorOffset(offset)
-                .withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio),
-            0.0);
+    double absoluteEncoderAngle = m_absoluteEncoder.get();
+    double startAngle =
+        IntakeConstants.kPivotOffset
+            .plus(Rotation2d.fromRotations(absoluteEncoderAngle))
+            .getRotations();
+    m_motor.getConfigurator().setPosition(startAngle);
   }
 }

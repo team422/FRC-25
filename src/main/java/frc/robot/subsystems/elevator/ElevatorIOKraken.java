@@ -23,6 +23,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.Ports;
+import org.littletonrobotics.junction.Logger;
 
 public class ElevatorIOKraken implements ElevatorIO {
   private TalonFX m_leadingMotor;
@@ -179,6 +180,7 @@ public class ElevatorIOKraken implements ElevatorIO {
   @Override
   public void setPIDFF(
       int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG) {
+    Logger.recordOutput("set ks ", kS);
     var slotConfigs =
         new SlotConfigs()
             .withKP(kP)

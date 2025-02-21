@@ -81,6 +81,8 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final StatusSignal<AngularVelocity> m_turnVelocity;
   private final StatusSignal<Voltage> m_turnAppliedVolts;
   private final StatusSignal<Current> m_turnCurrent;
+  private final StatusSignal<Voltage>
+      m_cancoderSupplyVoltage; // for checking if cancoder is connected
 
   private final boolean m_isTurnMotorInverted = true;
   private final boolean m_isCancoderInverted = false;
@@ -218,6 +220,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     m_turnVelocity = m_turnTalon.getVelocity();
     m_turnAppliedVolts = m_turnTalon.getMotorVoltage();
     m_turnCurrent = m_turnTalon.getSupplyCurrent();
+    m_cancoderSupplyVoltage = m_cancoder.getSupplyVoltage();
 
     BaseStatusSignal.setUpdateFrequencyForAll(
         DriveConstants.kOdometryFrequency, m_drivePosition, m_turnPosition);
@@ -231,7 +234,8 @@ public class ModuleIOTalonFX implements ModuleIO {
         m_turnAbsolutePosition,
         m_turnVelocity,
         m_turnAppliedVolts,
-        m_turnCurrent);
+        m_turnCurrent,
+        m_cancoderSupplyVoltage);
     m_driveTalon.optimizeBusUtilization();
     m_turnTalon.optimizeBusUtilization();
   }
@@ -250,7 +254,8 @@ public class ModuleIOTalonFX implements ModuleIO {
           m_turnPosition,
           m_turnVelocity,
           m_turnAppliedVolts,
-          m_turnCurrent);
+          m_turnCurrent,
+          m_cancoderSupplyVoltage);
     }
 
     inputs.drivePositionRad =
@@ -273,6 +278,11 @@ public class ModuleIOTalonFX implements ModuleIO {
     inputs.turnAppliedVolts = m_turnAppliedVolts.getValueAsDouble();
     inputs.turnCurrentAmps = m_turnCurrent.getValueAsDouble();
     inputs.turnMotorIsConnected = m_turnConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
+
+    // this is a hack because the cancoder doesn't have a connected motor (obviously)
+    // so basically if we're in sim, the supply voltage is EXACTLY zero
+    // if we connected it'll be something else
+    inputs.turnEncoderIsConnected = m_cancoderSupplyVoltage.getValueAsDouble() != 0.0;
 
     inputs.odometryTimestamps =
         m_timestampQueue.stream().mapToDouble((Double value) -> value).toArray();

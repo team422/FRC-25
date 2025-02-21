@@ -1,7 +1,10 @@
 package frc.robot.subsystems.manipulator;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -34,6 +37,7 @@ public class Manipulator extends SubsystemBase {
 
   private Rotation2d m_desiredWristAngle = new Rotation2d();
   private boolean m_runRollerScoring = false;
+  private boolean m_runRollerAlgaeDescoring = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -44,7 +48,9 @@ public class Manipulator extends SubsystemBase {
   public static enum ManipulatorState {
     kStow,
     kIntaking,
+    kIndexing,
     kScoring,
+    kAlgaeDescoring,
     kFullTuning,
   }
 
@@ -59,7 +65,9 @@ public class Manipulator extends SubsystemBase {
     Map<ManipulatorState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(ManipulatorState.kStow, this::stowPeriodic);
     periodicHash.put(ManipulatorState.kIntaking, this::intakingPeriodic);
+    periodicHash.put(ManipulatorState.kIndexing, this::indexingPeriodic);
     periodicHash.put(ManipulatorState.kScoring, this::scoringPeriodic);
+    periodicHash.put(ManipulatorState.kAlgaeDescoring, this::algaeDescoringPeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
   }
@@ -120,6 +128,15 @@ public class Manipulator extends SubsystemBase {
     // TODO: this makes sense but i have the feeling it will cause an issue during testing
     // DON'T FORGET ABOUT THIS
     m_runRollerScoring = false;
+    m_runRollerAlgaeDescoring = true;
+
+    if (state == ManipulatorState.kIndexing) {
+      // set it some amount forward
+      Angle currPosition = m_rollerIO.getPosition();
+      currPosition =
+          currPosition.plus(Degrees.of(ManipulatorConstants.kRollerIndexingPosition.get()));
+      m_rollerIO.setDesiredPosition(currPosition);
+    }
 
     m_profiles.setCurrentProfile(state);
   }
@@ -148,18 +165,32 @@ public class Manipulator extends SubsystemBase {
     // so we don't want to intake yet
     if (m_coralDetectorIO.hasGamePiece()
         || RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
-      m_rollerIO.setVoltage(0.0);
+      updateState(ManipulatorState.kIndexing);
     } else {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
     }
   }
 
+  public void indexingPeriodic() {
+    m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
+    // TODO: implement with desired position
+  }
+
   public void scoringPeriodic() {
-    // use the existing pitch of each level but add an offset (should be constant for all levels)
-    // this may need to be changed if it differs in real life
     m_wristIO.setDesiredAngle(m_desiredWristAngle);
     if (m_runRollerScoring) {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(0.0);
+    }
+  }
+
+  public void algaeDescoringPeriodic() {
+    m_wristIO.setDesiredAngle(
+        Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeDescoringAngle.get()));
+
+    if (m_runRollerAlgaeDescoring) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeDescoringVoltage.get());
     } else {
       m_rollerIO.setVoltage(0.0);
     }
@@ -173,6 +204,18 @@ public class Manipulator extends SubsystemBase {
 
   public void runRollerScoring() {
     m_runRollerScoring = true;
+  }
+
+  public void stopRollerScoring() {
+    m_runRollerScoring = false;
+  }
+
+  public void runRollerAlgaeDescoring() {
+    m_runRollerAlgaeDescoring = true;
+  }
+
+  public void stopRollerAlgaeDescoring() {
+    m_runRollerAlgaeDescoring = false;
   }
 
   public boolean atSetpoint() {

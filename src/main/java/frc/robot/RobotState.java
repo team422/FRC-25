@@ -1,6 +1,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -33,6 +34,7 @@ import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SetpointGenerator.RobotSetpoint;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
@@ -58,6 +60,14 @@ public class RobotState {
     kManualScore,
     kClimbing,
     kDriveToProcessor,
+    kBargeScore,
+    kBargeOuttaking,
+
+    // algae descore sequence
+    kAlgaeDescoringInitial,
+    kAlgaeDescoringDeployManipulator,
+    kAlgaeDescoringMoveUp,
+    kAlgaeDescoringFinal,
 
     kAutoDefault,
   }
@@ -72,6 +82,13 @@ public class RobotState {
   private int m_desiredBranchIndex = 0;
 
   private int m_numVisionGyroObservations = 0;
+
+  private final List<RobotAction> kAlgaeDescoreSequence =
+      List.of(
+          RobotAction.kAlgaeDescoringInitial,
+          RobotAction.kAlgaeDescoringDeployManipulator,
+          RobotAction.kAlgaeDescoringMoveUp,
+          RobotAction.kAlgaeDescoringFinal);
 
   // Singleton logic
   private static RobotState m_instance;
@@ -103,7 +120,12 @@ public class RobotState {
     periodicHash.put(RobotAction.kAutoScore, this::autoScorePeriodic);
     periodicHash.put(RobotAction.kManualScore, this::manualScorePeriodic);
     periodicHash.put(RobotAction.kDriveToProcessor, this::driveToProcessorPeriodic);
+    periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kCoralOuttaking, this::coralOuttakingPeriodic);
+    periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
+    periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
+    periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
+    periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -225,6 +247,20 @@ public class RobotState {
     // TODO: come back here, i don't think this needs anything but it feels like it should
   }
 
+  public void bargeScorePeriodic() {
+    // TODO: when we trust the vision more we will add full auto score (rollers decide when to go)
+  }
+
+  public void algaeDescoringPeriodic() {
+    // each step in the sequence is identical in terms of whether to advance to the next step
+    int index = kAlgaeDescoreSequence.indexOf(m_profiles.getCurrentProfile());
+    if (m_elevator.atSetpoint()
+        && m_manipulator.atSetpoint()
+        && index < kAlgaeDescoreSequence.size() - 1) {
+      m_profiles.setCurrentProfile(kAlgaeDescoreSequence.get(index + 1));
+    }
+  }
+
   public void updateRobotAction(RobotAction newAction) {
     switch (newAction) {
       case kAlgaeIntakingOuttaking:
@@ -303,6 +339,64 @@ public class RobotState {
         // don't change any other states since we want everything to stay in place
         m_manipulator.runRollerScoring();
         break;
+
+      case kBargeOuttaking:
+        // don't change any other states since we want everything to stay in place
+        // name is kinda confusing but we would still be in the algae descore sequence on the
+        // manipulator
+        m_manipulator.runRollerAlgaeDescoring();
+        break;
+
+      case kBargeScore:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kStow);
+        m_manipulator.updateState(ManipulatorState.kStow);
+        m_led.updateState(LedState.kEnabled);
+        break;
+
+      case kAlgaeDescoringInitial:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kAlgaeDescoringInitial);
+        m_manipulator.updateState(ManipulatorState.kStow);
+        m_led.updateState(LedState.kEnabled);
+        break;
+
+      case kAlgaeDescoringDeployManipulator:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kAlgaeDescoringInitial);
+        m_manipulator.updateState(ManipulatorState.kAlgaeDescoring);
+        m_led.updateState(LedState.kEnabled);
+        break;
+
+      case kAlgaeDescoringMoveUp:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kAlgaeDescoringFinal);
+        m_manipulator.updateState(ManipulatorState.kAlgaeDescoring);
+        m_led.updateState(LedState.kEnabled);
+        break;
+
+      case kAlgaeDescoringFinal:
+        m_drive.updateProfile(DriveProfiles.kDefault);
+        m_intake.manageStowOrHold();
+        m_indexer.updateState(IndexerState.kIdle);
+        m_climb.updateState(ClimbState.kStow);
+        m_elevator.updateState(ElevatorState.kStow);
+        m_manipulator.updateState(ManipulatorState.kAlgaeDescoring);
+        m_manipulator.stopRollerAlgaeDescoring();
+        m_led.updateState(LedState.kEnabled);
+        break;
     }
     m_profiles.setCurrentProfile(newAction);
 
@@ -320,6 +414,33 @@ public class RobotState {
       updateRobotAction(RobotAction.kAutoDefault);
     } else {
       updateRobotAction(RobotAction.kTeleopDefault);
+    }
+  }
+
+  public void algaeDescore() {
+    updateRobotAction(RobotAction.kAlgaeDescoringInitial);
+  }
+
+  public void manageAutoScoreButton() {
+    // one button will go to different locations on the field based on the current location
+    // if we're at the processor then kDriveToProcessor
+    // if we're near the barge then kBargeScore
+    // and if we're near the reef then kAutoScore
+    if (SetpointGenerator.isNearProcessor(m_drive.getPose())) {
+      updateRobotAction(RobotAction.kDriveToProcessor);
+    } else if (SetpointGenerator.isNearBarge(m_drive.getPose())) {
+      updateRobotAction(RobotAction.kBargeScore);
+    } else {
+      updateRobotAction(RobotAction.kAutoScore);
+    }
+  }
+
+  public void manageCoralOuttakePressed() {
+    // this button will score coral but also score algae if we're at the barge
+    if (m_profiles.getCurrentProfile() == RobotAction.kBargeScore) {
+      updateRobotAction(RobotAction.kBargeOuttaking);
+    } else {
+      updateRobotAction(RobotAction.kCoralOuttaking);
     }
   }
 
@@ -403,18 +524,18 @@ public class RobotState {
             new Translation3d(
                 Meters.zero(),
                 Meters.zero(),
-                Meters.of(Math.max(0, m_elevator.getCurrHeight() - Units.inchesToMeters(45)))),
+                Inches.of(Math.max(0, m_elevator.getCurrHeight() - 45))),
             new Rotation3d());
     Pose3d elevatorStage3Pose =
         new Pose3d(
             new Translation3d(
                 Meters.zero(),
                 Meters.zero(),
-                Meters.of(Math.max(0, m_elevator.getCurrHeight() - Units.inchesToMeters(18)))),
+                Inches.of(Math.max(0, m_elevator.getCurrHeight() - 18))),
             new Rotation3d());
     Pose3d carriagePose =
         new Pose3d(
-            new Translation3d(Meters.zero(), Meters.zero(), Meters.of(m_elevator.getCurrHeight())),
+            new Translation3d(Meters.zero(), Meters.zero(), Inches.of(m_elevator.getCurrHeight())),
             new Rotation3d());
     Pose3d manipulatorPose =
         new Pose3d( // Manipulator
