@@ -41,6 +41,10 @@ public final class Constants {
     REPLAY
   }
 
+  public static final class RollerConstants {
+    public static final double kRollerSpeed = 0.5;
+  }
+
   public static final class DriveConstants {
     public static final double kMaxLinearSpeed = 3.0; // meters per second
     public static final double kMaxLinearAcceleration = 2.5; // meters per second squared
