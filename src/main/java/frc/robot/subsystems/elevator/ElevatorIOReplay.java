@@ -33,4 +33,12 @@ public class ElevatorIOReplay implements ElevatorIO {
 
   @Override
   public void zeroElevator() {}
+
+  @Override
+  public double getVelocity() {
+    return 0.0;
+  }
+
+  @Override
+  public void setVoltage(double voltage) {}
 }

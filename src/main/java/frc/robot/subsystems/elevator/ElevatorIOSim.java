@@ -24,6 +24,7 @@ public class ElevatorIOSim implements ElevatorIO {
   private double m_desiredHeight;
   private State m_startingState = new State();
   private Timer m_timer = new Timer();
+  private boolean m_positionControl = true;
 
   public ElevatorIOSim() {
     Constraints constraints =
@@ -64,13 +65,15 @@ public class ElevatorIOSim implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorInputs inputs) {
-    State desired = m_trap.calculate(m_timer.get(), m_startingState, new State(m_desiredHeight, 0));
-    m_voltage =
-        m_controller.calculate(m_sim.getPositionMeters(), desired.position)
-            + m_feedforward.calculate(desired.velocity);
-
-    Logger.recordOutput("Elevator/DesiredPosition", desired.position);
-    Logger.recordOutput("Elevator/DesiredVelocity", desired.velocity);
+    if (m_positionControl) {
+      State desired =
+          m_trap.calculate(m_timer.get(), m_startingState, new State(m_desiredHeight, 0));
+      m_voltage =
+          m_controller.calculate(m_sim.getPositionMeters(), desired.position)
+              + m_feedforward.calculate(desired.velocity);
+      Logger.recordOutput("Elevator/DesiredPosition", desired.position);
+      Logger.recordOutput("Elevator/DesiredVelocity", desired.velocity);
+    }
     m_sim.setInputVoltage(m_voltage);
     m_sim.update(.02);
 
@@ -79,6 +82,7 @@ public class ElevatorIOSim implements ElevatorIO {
     inputs.leadingPosition = m_sim.getPositionMeters();
     inputs.desiredLocation = m_desiredHeight;
     inputs.leadingVoltage = m_voltage;
+    inputs.positionControl = m_positionControl;
   }
 
   @Override
@@ -86,6 +90,7 @@ public class ElevatorIOSim implements ElevatorIO {
     m_desiredHeight = inches;
     m_startingState = new State(m_sim.getPositionMeters(), m_sim.getVelocityMetersPerSecond());
     m_timer.restart();
+    m_positionControl = true;
   }
 
   @Override
@@ -119,5 +124,16 @@ public class ElevatorIOSim implements ElevatorIO {
   @Override
   public void zeroElevator() {
     // not needed for sim
+  }
+
+  @Override
+  public double getVelocity() {
+    return m_sim.getVelocityMetersPerSecond();
+  }
+
+  @Override
+  public void setVoltage(double voltage) {
+    m_voltage = voltage;
+    m_positionControl = false;
   }
 }

@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
@@ -35,6 +36,7 @@ public class ElevatorIOKraken implements ElevatorIO {
   // private PositionTorqueCurrentFOC m_positionControl = new PositionTorqueCurrentFOC(0.0);
   private PositionVoltage m_positionControl = new PositionVoltage(0.0);
   // private MotionMagicVoltage m_magicMotion = new MotionMagicVoltage(0).withEnableFOC(true);
+  private VoltageOut m_voltageOut = new VoltageOut(0);
 
   // Status Signals
   private StatusSignal<ConnectedMotorValue> m_leadingConnectedMotor;
@@ -55,6 +57,8 @@ public class ElevatorIOKraken implements ElevatorIO {
   private StatusSignal<Temperature> m_followingTemp;
 
   private double m_desiredHeight;
+
+  private boolean m_b001;
 
   public ElevatorIOKraken(int leadPort, int followerPort) {
     m_leadingMotor = new TalonFX(leadPort, Ports.kMainCanivoreName);
@@ -165,6 +169,7 @@ public class ElevatorIOKraken implements ElevatorIO {
     inputs.followingStatorCurrent = m_followingStatorCurrent.getValueAsDouble();
     inputs.leadingTemp = m_leadingTemp.getValueAsDouble();
     inputs.followingTemp = m_followingTemp.getValueAsDouble();
+    inputs.positionControl = m_b001;
   }
 
   @Override
@@ -175,6 +180,7 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_leadingMotor.setControl(m_positionControl.withPosition(inches));
     // m_leadingMotor.setControl(new MotionMagicVoltage(meters).withSlot(0));
     // m_leadingMotor.setControl(new VoltageOut(3));
+    m_b001 = true;
   }
 
   @Override
@@ -232,5 +238,16 @@ public class ElevatorIOKraken implements ElevatorIO {
   public void zeroElevator() {
     m_leadingMotor.getConfigurator().setPosition(0.0, 0.0);
     m_followingMotor.getConfigurator().setPosition(0.0, 0.0);
+  }
+
+  @Override
+  public double getVelocity() {
+    return m_leadingVelocity.getValueAsDouble();
+  }
+
+  @Override
+  public void setVoltage(double voltage) {
+    m_leadingMotor.setControl(m_voltageOut.withOutput(voltage));
+    m_b001 = false;
   }
 }

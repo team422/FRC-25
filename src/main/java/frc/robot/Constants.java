@@ -220,6 +220,10 @@ public final class Constants {
     public static final LoggedTunableNumber kElevatorOffset =
         new LoggedTunableNumber("Elevator/Offset", Units.inchesToMeters(0));
 
+    // this is the more than the max amount that the belts will ever skip
+    public static final double kMaxSkip = 1.5;
+    public static final LoggedTunableNumber kSlamTime = new LoggedTunableNumber("Slam Time", 0.2);
+
     // Simulation constants
     public static final double kSimGearing = kGearRatio;
     public static final double kSimMOI = .001;

@@ -4,6 +4,7 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -19,6 +20,7 @@ public class Elevator extends SubsystemBase {
   public final ElevatorInputsAutoLogged m_inputs;
   private ElevatorIO m_io;
   private double m_desiredHeight;
+  private Timer m_timer = new Timer();
 
   private Alert m_leadingMotorDisconnectedAlert =
       new Alert("Elevator Leading Motor Disconnected", AlertType.kError);
@@ -33,6 +35,8 @@ public class Elevator extends SubsystemBase {
     kAlgaeDescoringFinal,
     kBargeScore,
     kFullTuning,
+    kSlamming,
+    // we force a slam every time we go down
   }
 
   private SubsystemProfiles<ElevatorState> m_profiles;
@@ -49,6 +53,7 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kAlgaeDescoringFinal, this::algaeDescoringFinalPeriodic);
     periodicHash.put(ElevatorState.kBargeScore, this::bargeScorePeriodic);
     periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
+    periodicHash.put(ElevatorState.kSlamming, this::slammingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
@@ -195,6 +200,9 @@ public class Elevator extends SubsystemBase {
       // if we are in full tuning mode we don't want to change the state
       return;
     }
+    if (state == ElevatorState.kSlamming) {
+      m_timer.restart();
+    }
 
     m_profiles.setCurrentProfile(state);
   }
@@ -211,7 +219,16 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean shouldZeroElevator() {
-    // check if we are no velocity no acceleration
+    // I AM JAMES BAE AND I WROTE THIS
+    // if the position is between tolerance and max skip amount we cut power so it slams and hard
+    // resets only when velocity is going down
+
+    if (m_profiles.getCurrentProfile() != ElevatorState.kSlamming
+        && m_io.getCurrHeight() > ElevatorConstants.kHeightTolerance
+        && m_io.getCurrHeight() < ElevatorConstants.kMaxSkip
+        && m_io.getVelocity() < 0) {
+      return true;
+    }
     return false;
   }
 
@@ -249,6 +266,15 @@ public class Elevator extends SubsystemBase {
 
   public void fullTuningPeriodic() {
     m_io.setDesiredHeight(FullTuningConstants.kElevatorSetpoint.get());
+  }
+
+  public void slammingPeriodic() {
+    m_io.setVoltage(0);
+    if (m_timer.hasElapsed(ElevatorConstants.kSlamTime.get())) {
+      m_io.zeroElevator();
+      m_profiles.revertToLastProfile();
+      // this is KRAZY we're using revert to last profile
+    }
   }
 
   public boolean atSetpoint() {

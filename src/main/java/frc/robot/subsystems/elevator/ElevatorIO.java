@@ -23,6 +23,7 @@ public interface ElevatorIO {
     public double followingStatorCurrent;
     public double leadingTemp;
     public double followingTemp;
+    public boolean positionControl;
   }
 
   public void updateInputs(ElevatorInputs inputs);
@@ -43,4 +44,8 @@ public interface ElevatorIO {
   public double getCurrHeight();
 
   public void zeroElevator();
+
+  public double getVelocity();
+
+  public void setVoltage(double voltage);
 }
