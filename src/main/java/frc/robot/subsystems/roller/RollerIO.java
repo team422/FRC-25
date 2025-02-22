@@ -6,8 +6,8 @@ public interface RollerIO {
   @AutoLog
   public class RollerInputs {
     public double voltage;
-    public double currVelocity;
-    public double outputCurrent;
+    public double velocity;
+    public double current;
   }
 
   public void updateInputs(RollerInputs inputs);
