@@ -14,8 +14,7 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
-
-import java.util.Queue;
+import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -48,6 +47,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
+import java.util.Queue;
 
 /**
  * Module IO implementation for Talon FX drive motor controller, Talon FX turn motor controller, and
@@ -166,18 +166,14 @@ public class ModuleIOTalonFX implements ModuleIO {
     var turnSlot0Configs = new Slot0Configs().withKP(0).withKI(0).withKD(0);
 
     var turnFeedback =
-        new FeedbackConfigs()
-            .withSensorToMechanismRatio(DriveConstants.kTurnGearRatio)
-            .withFusedCANcoder(m_cancoder);
+        new FeedbackConfigs().withSensorToMechanismRatio(DriveConstants.kTurnGearRatio);
 
     var turnTorque =
         new TorqueCurrentConfigs()
             .withPeakForwardTorqueCurrent(CurrentLimitConstants.kTurnDefaultSupplyCurrentLimit)
             .withPeakReverseTorqueCurrent(-CurrentLimitConstants.kTurnDefaultSupplyCurrentLimit);
 
-    var turnClosedLoopGeneral = new ClosedLoopGeneralConfigs();
-    // there's no method chaining option for ContinuousWrap for some reason
-    turnClosedLoopGeneral.ContinuousWrap = true;
+    var turnClosedLoopGeneral = new ClosedLoopGeneralConfigs().withContinuousWrap(true);
 
     m_turnConfig =
         new TalonFXConfiguration()
@@ -186,6 +182,7 @@ public class ModuleIOTalonFX implements ModuleIO {
             .withFeedback(turnFeedback)
             .withTorqueCurrent(turnTorque)
             .withClosedLoopGeneral(turnClosedLoopGeneral);
+
     m_turnTalon.getConfigurator().apply(m_turnConfig);
     setTurnBrakeMode(true);
 
@@ -193,15 +190,14 @@ public class ModuleIOTalonFX implements ModuleIO {
     var currMagnet = new MagnetSensorConfigs();
     m_cancoder.getConfigurator().refresh(currMagnet);
 
-    m_cancoder
-        .getConfigurator()
-        .apply(
-            new CANcoderConfiguration()
-                .withMagnetSensor(
-                    currMagnet.withSensorDirection(
-                        m_isCancoderInverted
-                            ? SensorDirectionValue.Clockwise_Positive
-                            : SensorDirectionValue.CounterClockwise_Positive)));
+    currMagnet
+        .withSensorDirection(
+            m_isCancoderInverted
+                ? SensorDirectionValue.Clockwise_Positive
+                : SensorDirectionValue.CounterClockwise_Positive)
+        .withAbsoluteSensorDiscontinuityPoint(Rotations.of(0.5));
+
+    m_cancoder.getConfigurator().apply(new CANcoderConfiguration().withMagnetSensor(currMagnet));
 
     m_timestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
 
@@ -259,12 +255,8 @@ public class ModuleIOTalonFX implements ModuleIO {
           m_cancoderSupplyVoltage);
     }
 
-    inputs.drivePositionRad =
-        Units.rotationsToRadians(m_drivePosition.getValueAsDouble())
-            / DriveConstants.kDriveGearRatio;
-    inputs.driveVelocityRadPerSec =
-        Units.rotationsToRadians(m_driveVelocity.getValueAsDouble())
-            / DriveConstants.kDriveGearRatio;
+    inputs.drivePositionRad = Units.rotationsToRadians(m_drivePosition.getValueAsDouble());
+    inputs.driveVelocityRadPerSec = Units.rotationsToRadians(m_driveVelocity.getValueAsDouble());
     inputs.driveAppliedVolts = m_driveAppliedVolts.getValueAsDouble();
     inputs.driveCurrentAmps = m_driveCurrent.getValueAsDouble();
     inputs.driveMotorIsConnected = m_driveConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
@@ -272,10 +264,8 @@ public class ModuleIOTalonFX implements ModuleIO {
     inputs.turnAbsolutePosition =
         Rotation2d.fromRotations(m_turnAbsolutePosition.getValueAsDouble())
             .minus(m_absoluteEncoderOffset);
-    inputs.turnPosition =
-        Rotation2d.fromRotations(m_turnPosition.getValueAsDouble() / DriveConstants.kTurnGearRatio);
-    inputs.turnVelocityRadPerSec =
-        Units.rotationsToRadians(m_turnVelocity.getValueAsDouble()) / DriveConstants.kTurnGearRatio;
+    inputs.turnPosition = Rotation2d.fromRotations(m_turnPosition.getValueAsDouble());
+    inputs.turnVelocityRadPerSec = Units.rotationsToRadians(m_turnVelocity.getValueAsDouble());
     inputs.turnAppliedVolts = m_turnAppliedVolts.getValueAsDouble();
     inputs.turnCurrentAmps = m_turnCurrent.getValueAsDouble();
     inputs.turnMotorIsConnected = m_turnConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
@@ -289,12 +279,11 @@ public class ModuleIOTalonFX implements ModuleIO {
         m_timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
     inputs.odometryDrivePositionsRad =
         m_drivePositionQueue.stream()
-            .mapToDouble(
-                (Double value) -> Units.rotationsToRadians(value) / DriveConstants.kDriveGearRatio)
+            .mapToDouble((Double value) -> Units.rotationsToRadians(value))
             .toArray();
     inputs.odometryTurnPositions =
         m_turnPositionQueue.stream()
-            .map((Double value) -> Rotation2d.fromRotations(value / DriveConstants.kTurnGearRatio))
+            .map((Double value) -> Rotation2d.fromRotations(value))
             .toArray(Rotation2d[]::new);
     m_timestampQueue.clear();
     m_drivePositionQueue.clear();
@@ -368,5 +357,10 @@ public class ModuleIOTalonFX implements ModuleIO {
   @Override
   public void setTurnPID(double kP, double kI, double kD) {
     m_turnTalon.getConfigurator().apply(m_turnConfig.Slot0.withKP(kP).withKI(kI).withKD(kD), 0.0);
+  }
+
+  @Override
+  public void resetTurnMotor(Angle position) {
+    m_turnTalon.getConfigurator().setPosition(position);
   }
 }

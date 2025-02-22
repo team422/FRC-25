@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -69,6 +70,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
             .withMotorOutput(motorOutput);
 
     m_motor.getConfigurator().apply(m_config);
+    m_motor.getConfigurator().setPosition(0.0);
 
     m_connectedMotor = m_motor.getConnectedMotor();
     m_motorPosition = m_motor.getPosition();
@@ -151,8 +153,16 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   }
 
   @Override
-  public void setPositionPID(double kP, double kI, double kD) {
-    m_motor.getConfigurator().apply(m_config.Slot0.withKP(kP).withKI(kI).withKD(kD), 0.0);
+  public void setPositionPID(double kP, double kI, double kD, double kS) {
+    m_motor
+        .getConfigurator()
+        .apply(
+            m_config.Slot0.withKP(kP)
+                .withKI(kI)
+                .withKD(kD)
+                .withKS(kS)
+                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
+            0.0);
   }
 
   @Override

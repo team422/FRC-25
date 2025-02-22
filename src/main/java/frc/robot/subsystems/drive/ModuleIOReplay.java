@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 
 public class ModuleIOReplay implements ModuleIO {
 
@@ -33,4 +34,7 @@ public class ModuleIOReplay implements ModuleIO {
 
   @Override
   public void setTurnPID(double kP, double kI, double kD) {}
+
+  @Override
+  public void resetTurnMotor(Angle position) {}
 }

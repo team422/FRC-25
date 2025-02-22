@@ -227,4 +227,10 @@ public class ElevatorIOKraken implements ElevatorIO {
   public double getCurrHeight() {
     return m_leadingPosition.getValueAsDouble();
   }
+
+  @Override
+  public void zeroElevator() {
+    m_leadingMotor.getConfigurator().setPosition(0.0, 0.0);
+    m_followingMotor.getConfigurator().setPosition(0.0, 0.0);
+  }
 }

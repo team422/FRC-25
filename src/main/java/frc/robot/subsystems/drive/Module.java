@@ -31,7 +31,7 @@ public class Module {
   private final int m_index;
 
   private final SimpleMotorFeedforward m_driveFeedforward;
-  private Rotation2d m_turnRelativeOffset = null; // Relative + Offset = Absolute
+  private boolean m_turnRelativeReset = false; // whether we reset the turn motor already
   private SwerveModulePosition[] m_odometryPositions = new SwerveModulePosition[] {};
 
   private Alert m_driveDisconnectedAlert;
@@ -46,12 +46,13 @@ public class Module {
     // separate robot with different tuning)
     if (RobotBase.isReal()) {
       m_driveFeedforward = new SimpleMotorFeedforward(0.1, 0.13);
+      m_io.setDrivePID(0.1, 0.0, 0.0);
+      m_io.setTurnPID(100.0, 0.0, 0.0);
     } else {
       m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13);
+      m_io.setDrivePID(0.1, 0.0, 0.0);
+      m_io.setTurnPID(10.0, 0.0, 0.0);
     }
-
-    m_io.setDrivePID(0.1, 0.0, 0.0);
-    m_io.setTurnPID(10.0, 0.0, 0.0);
 
     setBrakeMode(true);
 
@@ -73,14 +74,17 @@ public class Module {
   }
 
   public void periodic() {
+    if (!m_turnRelativeReset && m_inputs.turnEncoderIsConnected) {
+      m_io.resetTurnMotor(m_inputs.turnAbsolutePosition.getMeasure());
+      m_turnRelativeReset = true;
+    }
+
     // Calculate positions for odometry
     int sampleCount = m_inputs.odometryTimestamps.length; // All signals are sampled together
     m_odometryPositions = new SwerveModulePosition[sampleCount];
     for (int i = 0; i < sampleCount; i++) {
       double positionMeters = m_inputs.odometryDrivePositionsRad[i] * DriveConstants.kWheelRadius;
-      Rotation2d angle =
-          m_inputs.odometryTurnPositions[i].plus(
-              m_turnRelativeOffset != null ? m_turnRelativeOffset : new Rotation2d());
+      Rotation2d angle = m_inputs.odometryTurnPositions[i];
       m_odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
 

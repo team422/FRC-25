@@ -8,6 +8,7 @@ import frc.robot.Constants.LedConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.ProtoConstants;
 import frc.robot.RobotState.RobotAction;
+import frc.robot.commands.auto.AutoFactory;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
@@ -48,6 +49,8 @@ import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOSim;
 import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
 import frc.robot.subsystems.manipulator.wrist.WristIOReplay;
 import frc.robot.subsystems.manipulator.wrist.WristIOSim;
+import frc.robot.util.PathPlannerUtil;
+import java.util.List;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -73,6 +76,8 @@ public class RobotContainer {
 
   // Dashboard inputs
   private LoggedDashboardChooser<Command> m_autoChooser;
+
+  private AutoFactory m_autoFactory;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -245,6 +250,8 @@ public class RobotContainer {
   private void configureCommands() {
     // Auto commands
     m_autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
+    m_autoFactory = new AutoFactory(m_drive);
+
     m_autoChooser.addOption("Do Nothing", Commands.none());
     m_autoChooser.addOption(
         "Drive Feedforward Characterization", DriveCommands.feedforwardCharacterization(m_drive));
@@ -254,6 +261,11 @@ public class RobotContainer {
     m_autoChooser.addOption(
         "Drive SysId Quasistatic", m_drive.sysIdQuasistatic(Direction.kForward));
     m_autoChooser.addOption("Drive SysId Dynamic", m_drive.sysIdDynamic(Direction.kForward));
+
+    List<String> paths = PathPlannerUtil.getExistingPaths();
+    for (String path : paths) {
+      m_autoChooser.addOption(path, m_autoFactory.getAutoCommand(path));
+    }
   }
 
   /** Configure the controllers. */

@@ -40,15 +40,6 @@ public class Elevator extends SubsystemBase {
   public Elevator(ElevatorIO io) {
     m_io = io;
     m_inputs = new ElevatorInputsAutoLogged();
-    m_io.setPIDFF(
-        0,
-        ElevatorConstants.kP0.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV0.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG0.getAsDouble());
 
     Map<ElevatorState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(ElevatorState.kStow, this::stowPeriodic);
@@ -60,6 +51,36 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
+
+    m_io.setPIDFF(
+        0,
+        ElevatorConstants.kP0.getAsDouble(),
+        ElevatorConstants.kI.getAsDouble(),
+        ElevatorConstants.kD.getAsDouble(),
+        ElevatorConstants.kKS.getAsDouble(),
+        ElevatorConstants.kKV0.getAsDouble(),
+        ElevatorConstants.kKA.getAsDouble(),
+        ElevatorConstants.kKG0.getAsDouble());
+
+    m_io.setPIDFF(
+        1,
+        ElevatorConstants.kP1.getAsDouble(),
+        ElevatorConstants.kI.getAsDouble(),
+        ElevatorConstants.kD.getAsDouble(),
+        ElevatorConstants.kKS.getAsDouble(),
+        ElevatorConstants.kKV1.getAsDouble(),
+        ElevatorConstants.kKA.getAsDouble(),
+        ElevatorConstants.kKG1.getAsDouble());
+
+    m_io.setPIDFF(
+        2,
+        ElevatorConstants.kP2.getAsDouble(),
+        ElevatorConstants.kI.getAsDouble(),
+        ElevatorConstants.kD.getAsDouble(),
+        ElevatorConstants.kKS.getAsDouble(),
+        ElevatorConstants.kKV2.getAsDouble(),
+        ElevatorConstants.kKA.getAsDouble(),
+        ElevatorConstants.kKG2.getAsDouble());
 
     // to set the setpoint
     updateState(ElevatorState.kStow);
@@ -187,6 +208,11 @@ public class Elevator extends SubsystemBase {
     if (m_profiles.getCurrentProfile() == ElevatorState.kScoring) {
       m_io.setDesiredHeight(m_desiredHeight);
     }
+  }
+
+  public boolean shouldZeroElevator() {
+    // check if we are no velocity no acceleration
+    return false;
   }
 
   public double getDesiredHeight() {

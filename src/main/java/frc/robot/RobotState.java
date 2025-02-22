@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -70,6 +71,8 @@ public class RobotState {
     kAlgaeDescoringFinal,
 
     kAutoDefault,
+    kAutoAutoScore,
+    kAutoCoralOuttaking,
   }
 
   private LedState currentLedState = LedState.kOff;
@@ -126,6 +129,8 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
+    periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
+    periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -155,6 +160,8 @@ public class RobotState {
   }
 
   public void updateRobotState() {
+    double start = HALUtil.getFPGATime();
+
     m_profiles.getPeriodicFunction().run();
 
     if (Constants.kUseComponents) {
@@ -162,6 +169,8 @@ public class RobotState {
     }
 
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
+
+    Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void coralIntakingPeriodic() {
@@ -219,6 +228,18 @@ public class RobotState {
           m_manipulator.getDesiredWristAngle().getRadians())) {
         m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
       }
+    }
+  }
+
+  public void autoAutoScorePeriodic() {
+    autoScorePeriodic();
+
+    // everything must be within tolerance to run the rollers
+    if (m_elevator.atSetpoint()
+        && m_manipulator.atSetpoint()
+        // when the command finishes, drive will go back to default
+        && m_drive.getCurrentProfile() == DriveProfiles.kDefault) {
+      updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }
 
@@ -285,6 +306,7 @@ public class RobotState {
         break;
 
       case kAutoScore:
+      case kAutoAutoScore:
         m_drive.updateProfile(DriveProfiles.kDriveToPoint);
         m_intake.manageStowOrHold();
         m_indexer.updateState(IndexerState.kIdle);
@@ -315,6 +337,7 @@ public class RobotState {
         break;
 
       case kCoralIntaking:
+        // TODO: intake needs to move out a little so it doesn't get in way of funnel
         m_drive.updateProfile(DriveProfiles.kDefault);
         m_intake.manageStowOrHold();
         m_indexer.updateState(IndexerState.kIdle);
@@ -335,6 +358,7 @@ public class RobotState {
         m_led.updateState(LedState.kEnabled);
         break;
 
+      case kAutoCoralOuttaking:
       case kCoralOuttaking:
         // don't change any other states since we want everything to stay in place
         m_manipulator.runRollerScoring();
@@ -445,7 +469,6 @@ public class RobotState {
   }
 
   public void onEnable() {
-    m_climb.zeroEncoder();
     setDefaultAction();
   }
 

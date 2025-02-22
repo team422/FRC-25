@@ -26,7 +26,7 @@ public interface ManipulatorRollerIO {
 
   public Angle getPosition();
 
-  public void setPositionPID(double kP, double kI, double kD);
+  public void setPositionPID(double kP, double kI, double kD, double kS);
 
   public void setCurrentLimits(double supplyLimit);
 }

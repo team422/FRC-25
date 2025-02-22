@@ -65,7 +65,7 @@ public class PivotIOKraken implements PivotIO {
     var motorOutput =
         new MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Brake)
-            .withInverted(InvertedValue.Clockwise_Positive);
+            .withInverted(InvertedValue.CounterClockwise_Positive);
 
     var feedback =
         new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kPivotGearRatio);
@@ -194,7 +194,7 @@ public class PivotIOKraken implements PivotIO {
 
   private Rotation2d getAbsoluteWrapAround() {
     double rawValue = m_absoluteEncoder.get();
-    rawValue += IntakeConstants.kWristOffset.getRotations();
+    rawValue += IntakeConstants.kPivotOffset.getRotations();
     // fix wrap around after offset applied
     rawValue %= 1.0;
     if (rawValue < 0) {

@@ -68,7 +68,7 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
   }
 
   @Override
-  public void setPositionPID(double kP, double kI, double kD) {
+  public void setPositionPID(double kP, double kI, double kD, double kS) {
     m_positionController.setPID(kP, kI, kD);
   }
 

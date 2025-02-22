@@ -41,4 +41,6 @@ public interface ElevatorIO {
   public boolean atSetpoint();
 
   public double getCurrHeight();
+
+  public void zeroElevator();
 }

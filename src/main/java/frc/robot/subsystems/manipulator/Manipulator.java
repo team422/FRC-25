@@ -70,6 +70,19 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kAlgaeDescoring, this::algaeDescoringPeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
+
+    m_wristIO.setPIDFF(
+        ManipulatorConstants.kWristP.get(),
+        ManipulatorConstants.kWristI.get(),
+        ManipulatorConstants.kWristD.get(),
+        ManipulatorConstants.kWristKS.get(),
+        ManipulatorConstants.kWristKG.get());
+
+    m_rollerIO.setPositionPID(
+        ManipulatorConstants.kRollerP.get(),
+        ManipulatorConstants.kRollerI.get(),
+        ManipulatorConstants.kRollerD.get(),
+        ManipulatorConstants.kRollerKS.get());
   }
 
   @Override
@@ -91,6 +104,20 @@ public class Manipulator extends SubsystemBase {
         ManipulatorConstants.kWristD,
         ManipulatorConstants.kWristKS,
         ManipulatorConstants.kWristKG);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_rollerIO.setPositionPID(
+              ManipulatorConstants.kRollerP.get(),
+              ManipulatorConstants.kRollerI.get(),
+              ManipulatorConstants.kRollerD.get(),
+              ManipulatorConstants.kRollerKS.get());
+        },
+        ManipulatorConstants.kRollerP,
+        ManipulatorConstants.kRollerI,
+        ManipulatorConstants.kRollerD,
+        ManipulatorConstants.kRollerKS);
 
     m_rollerIO.updateInputs(m_rollerInputs);
     m_wristIO.updateInputs(m_wristInputs);
@@ -163,9 +190,11 @@ public class Manipulator extends SubsystemBase {
     // if we have a game piece stop
     // if the indexer isn't running then the elevator and manipulator aren't both in position yet
     // so we don't want to intake yet
-    if (m_coralDetectorIO.hasGamePiece()
-        || RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
+    if (m_coralDetectorIO.hasGamePiece()) {
+      // m_rollerIO.setVoltage(0.0);
       updateState(ManipulatorState.kIndexing);
+    } else if (RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
+      m_rollerIO.setVoltage(0.0);
     } else {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
     }
@@ -173,7 +202,6 @@ public class Manipulator extends SubsystemBase {
 
   public void indexingPeriodic() {
     m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
-    // TODO: implement with desired position
   }
 
   public void scoringPeriodic() {

@@ -20,7 +20,7 @@ public class ManipulatorRollerIOReplay implements ManipulatorRollerIO {
   }
 
   @Override
-  public void setPositionPID(double kP, double kI, double kD) {}
+  public void setPositionPID(double kP, double kI, double kD, double kS) {}
 
   @Override
   public void setCurrentLimits(double supplyLimit) {}

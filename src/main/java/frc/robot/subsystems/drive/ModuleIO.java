@@ -14,6 +14,7 @@
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface ModuleIO {
@@ -69,4 +70,7 @@ public interface ModuleIO {
 
   /** Set the turn motor's PID gains. */
   public void setTurnPID(double kP, double kI, double kD);
+
+  /** Resets the turn motor's position. Useful for syncing up with the CanCoder */
+  public void resetTurnMotor(Angle position);
 }

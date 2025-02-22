@@ -52,6 +52,13 @@ public class Intake extends SubsystemBase {
     periodicHash.put(IntakeState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IntakeState.kStow);
+
+    m_pivotIO.setPIDFF(
+        IntakeConstants.kPivotP.get(),
+        IntakeConstants.kPivotI.get(),
+        IntakeConstants.kPivotD.get(),
+        IntakeConstants.kPivotKS.get(),
+        IntakeConstants.kPivotKG.get());
   }
 
   public void updateState(IntakeState state) {

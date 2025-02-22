@@ -18,6 +18,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.DriveConstants;
@@ -140,4 +141,7 @@ public class ModuleIOSim implements ModuleIO {
   public void setTurnPID(double kP, double kI, double kD) {
     m_turnFeedback.setPID(kP, kI, kD);
   }
+
+  @Override
+  public void resetTurnMotor(Angle position) {}
 }

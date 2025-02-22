@@ -115,4 +115,9 @@ public class ElevatorIOSim implements ElevatorIO {
   public double getCurrHeight() {
     return m_sim.getPositionMeters();
   }
+
+  @Override
+  public void zeroElevator() {
+    // not needed for sim
+  }
 }

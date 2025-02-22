@@ -30,4 +30,7 @@ public class ElevatorIOReplay implements ElevatorIO {
   public double getCurrHeight() {
     return 0.0;
   }
+
+  @Override
+  public void zeroElevator() {}
 }

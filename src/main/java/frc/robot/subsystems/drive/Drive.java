@@ -103,6 +103,10 @@ public class Drive extends SubsystemBase {
           });
   private SwerveSetpointGenerator m_swerveSetpointGenerator;
 
+  private boolean m_enableDesiredChassisSpeeds =
+      true; // when we run characterization we want to disable all chassis speeds calculations until
+  // complete
+
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -253,11 +257,14 @@ public class Drive extends SubsystemBase {
   }
 
   public void defaultPeriodic() {
-    runVelocity(m_desiredChassisSpeeds);
+    if (m_enableDesiredChassisSpeeds) {
+      runVelocity(m_desiredChassisSpeeds);
+    }
 
     Logger.recordOutput("Drive/DesiredHeading", m_desiredHeading.getDegrees());
     Logger.recordOutput("Drive/CurrentHeading", getPose().getRotation().getDegrees());
     Logger.recordOutput("Drive/DesiredSpeeds", m_desiredChassisSpeeds);
+    Logger.recordOutput("Drive/EnableChassisSpeeds", m_enableDesiredChassisSpeeds);
   }
 
   public void autoAlignPeriodic() {
@@ -327,6 +334,7 @@ public class Drive extends SubsystemBase {
   }
 
   public void setDesiredChassisSpeeds(ChassisSpeeds speeds) {
+    m_enableDesiredChassisSpeeds = true;
     m_desiredChassisSpeeds = speeds;
   }
 
@@ -353,6 +361,7 @@ public class Drive extends SubsystemBase {
 
   /** Stops the drive. */
   public void stop() {
+    m_enableDesiredChassisSpeeds = false;
     runVelocity(new ChassisSpeeds());
   }
 
@@ -373,6 +382,7 @@ public class Drive extends SubsystemBase {
    * return to their normal orientations the next time a nonzero velocity is requested.
    */
   public void stopWithX() {
+    m_enableDesiredChassisSpeeds = false;
     Rotation2d[] headings = new Rotation2d[4];
     for (int i = 0; i < 4; i++) {
       headings[i] = DriveConstants.kModuleTranslations[i].getAngle();
@@ -472,6 +482,7 @@ public class Drive extends SubsystemBase {
 
   /** Runs the drive in a straight line with the specified drive output. */
   public void runCharacterization(double output) {
+    m_enableDesiredChassisSpeeds = false;
     for (int i = 0; i < 4; i++) {
       m_modules[i].runCharacterization(output);
     }
