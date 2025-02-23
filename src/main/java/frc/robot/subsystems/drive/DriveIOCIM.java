@@ -16,21 +16,26 @@ public class DriveIOCIM implements DriveIO {
     m_RR = new SparkMax(3, MotorType.kBrushed);
   }
 
-  public void updateInputs(DriveInputs inputs) {
-    inputs.LF =
-        new double[] {m_LF.getBusVoltage(), m_LF.getOutputCurrent(), m_LF.getAppliedOutput()};
-    inputs.LR =
-        new double[] {m_LR.getBusVoltage(), m_LR.getOutputCurrent(), m_LR.getAppliedOutput()};
-    inputs.RF =
-        new double[] {m_RF.getBusVoltage(), m_RF.getOutputCurrent(), m_RF.getAppliedOutput()};
-    inputs.RR =
-        new double[] {m_RR.getBusVoltage(), m_RR.getOutputCurrent(), m_RR.getAppliedOutput()};
+  public SparkMax getMotor(int id) {
+    switch (id) {
+      case 0:
+        return m_LF;
+      case 1:
+        return m_LR;
+      case 2:
+        return m_RF;
+      case 3:
+        return m_RR;
+      default:
+        return new SparkMax(0, MotorType.kBrushed);
+    }
   }
 
-  public void setVoltage(double voltageLF, double voltageLR, double voltageRF, double voltageRR) {
-    m_LF.setVoltage(voltageLF);
-    m_LR.setVoltage(voltageLR);
-    m_RF.setVoltage(voltageRF);
-    m_RR.setVoltage(voltageRR);
+  public void updateInputs(DriveInputs inputs) {
+    for (int id = 0; id < 4; id++) {
+      inputs.voltage[id] = this.getMotor(id).getBusVoltage();
+      inputs.current[id] = this.getMotor(id).getOutputCurrent();
+      inputs.output[id] = this.getMotor(id).getAppliedOutput();
+    }
   }
 }

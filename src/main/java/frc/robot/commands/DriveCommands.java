@@ -16,16 +16,15 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
-import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
+
   private DriveCommands() {}
 
-  /**
-   * Field relative drive command using two joysticks (controlling linear and angular velocities).
-   */
-  public static Command arcadeDrive(
-      Drive drive, DoubleSupplier xSupplier, DoubleSupplier omegaSupplier) {
-    return Commands.run(() -> {}, drive);
+  public static Command arcadeDrive(Drive drive, Double xSupplier, Double omegaSupplier) {
+    return Commands.run(
+        () -> {
+          drive.arcadeDrive(xSupplier, omegaSupplier);
+        });
   }
 }
