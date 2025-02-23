@@ -540,7 +540,7 @@ public class RobotState {
             new Translation3d(-0.31, 0, 0.19),
             new Rotation3d(
                 Degrees.of(0),
-                Degrees.of(-150 + m_intake.getRotation().getDegrees()),
+                Degrees.of(-120 + m_intake.getRotation().getDegrees()),
                 Degrees.of(180)));
     Pose3d elevatorStage2Pose =
         new Pose3d(
@@ -563,11 +563,12 @@ public class RobotState {
     Pose3d manipulatorPose =
         new Pose3d( // Manipulator
             new Translation3d(
-                Meters.of(0.285), Meters.zero(), Meters.of(0.203 + m_elevator.getCurrHeight())),
-            // new Translation3d(-0.31, 0, 0.19),
+                Meters.of(0.285),
+                Meters.zero(),
+                Meters.of(0.203).plus(Inches.of(m_elevator.getCurrHeight()))),
             new Rotation3d(
                 Degrees.of(0),
-                Degrees.of(-90 + m_manipulator.getCurrAngle().getDegrees()),
+                Degrees.of(-m_manipulator.getCurrAngle().getDegrees()),
                 Degrees.of(0)));
     Pose3d climbPose =
         new Pose3d( // static for now

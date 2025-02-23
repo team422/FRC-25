@@ -151,6 +151,9 @@ public final class Constants {
 
     public static final double kClimbReduction = (5.0 / 1.0) * (4.0 / 1.0) * (68.0 / 18.0);
 
+    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(0.0);
+    public static final Rotation2d kMaxAngle = Rotation2d.fromDegrees(360.0);
+
     // sim constants
     public static final double kSimGearing = 1.0;
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(1);

@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -162,6 +163,14 @@ public class WristIOKraken implements WristIO {
 
   @Override
   public void setDesiredAngle(Rotation2d angle) {
+    double value = angle.getRadians();
+    value =
+        MathUtil.clamp(
+            value,
+            ManipulatorConstants.kWristMinAngle.getRadians(),
+            ManipulatorConstants.kWristMaxAngle.getRadians());
+    angle = Rotation2d.fromRadians(value);
+
     m_desiredAngle = angle;
     m_motor.setControl(m_positionControl.withPosition(angle.getRotations()));
   }

@@ -26,6 +26,11 @@ public class DriverControlsPS5 implements DriverControls {
   }
 
   @Override
+  public Trigger resetFieldCentric() {
+    return m_controller.R3();
+  }
+
+  @Override
   public Trigger coralIntake() {
     return m_controller.L1();
   }

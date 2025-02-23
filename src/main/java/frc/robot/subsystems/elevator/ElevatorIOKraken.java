@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -174,6 +175,8 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   @Override
   public void setDesiredHeight(double inches) {
+    inches = MathUtil.clamp(inches, ElevatorConstants.kMinHeight, ElevatorConstants.kMaxHeight);
+
     // feedback
     m_desiredHeight = inches;
     // m_leadingMotor.setControl(m_magicMotion.withPosition(meters));
