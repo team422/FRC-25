@@ -133,9 +133,6 @@ public class PivotIOKraken implements PivotIO {
       resetRelativeEncoder();
     }
 
-    org.littletonrobotics.junction.Logger.recordOutput(
-        "Hello", getAbsoluteWrapAround().getDegrees());
-
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();

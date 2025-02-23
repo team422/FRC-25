@@ -465,21 +465,17 @@ public final class Constants {
 
   public static final class CurrentLimitConstants {
     // Drive
-    public static final double kDriveDefaultSupplyCurrentLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 75.0;
+    public static final double kDriveDefaultSupplyCurrentLimit = 75.0;
     public static final double kDriveDefaultStatorCurrentLimit = 180.0;
 
-    public static final double kTurnDefaultSupplyCurrentLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 60.0;
+    public static final double kTurnDefaultSupplyCurrentLimit = 60.0;
     public static final double kTurnDefaultStatorCurrentLimit = 120.0;
 
     // Intake
-    public static final double kIntakePivotDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kIntakePivotDefaultSupplyLimit = 80.0;
     public static final double kIntakePivotDefaultStatorLimit = 120.0;
 
-    public static final double kIntakeRollerDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
     // Indexer
@@ -498,7 +494,7 @@ public final class Constants {
     public static final double kElevatorDefaultStatorLimit = 95.0;
 
     // Climb
-    public static final double kClimbDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kClimbDefaultSupplyLimit = 80.0;
     public static final double kClimbDefaultStatorLimit = 120.0;
   }
 
