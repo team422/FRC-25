@@ -41,7 +41,7 @@ public class RobotContainer {
 
   private void configureBindings() {
     m_drive.setDefaultCommand(
-        DriveCommands.arcadeDrive(m_drive, m_controller.getMovement(), m_controller.getRotation()));
+        DriveCommands.arcadeDrive(m_drive, m_controller::getMovement, m_controller::getRotation));
   }
 
   public Command getAutonomousCommand() {
