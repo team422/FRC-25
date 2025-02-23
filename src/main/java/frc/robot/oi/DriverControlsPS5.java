@@ -22,7 +22,7 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public double getTurn() {
-    return m_controller.getRightX();
+    return -m_controller.getRightX();
   }
 
   @Override
@@ -42,22 +42,22 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger setLocationL1() {
-    return m_controller.povUp();
-  }
-
-  @Override
-  public Trigger setLocationL2() {
-    return m_controller.povRight();
-  }
-
-  @Override
-  public Trigger setLocationL3() {
     return m_controller.povDown();
   }
 
   @Override
-  public Trigger setLocationL4() {
+  public Trigger setLocationL2() {
     return m_controller.povLeft();
+  }
+
+  @Override
+  public Trigger setLocationL3() {
+    return m_controller.povUp();
+  }
+
+  @Override
+  public Trigger setLocationL4() {
+    return m_controller.povRight();
   }
 
   @Override

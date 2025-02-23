@@ -31,4 +31,6 @@ public interface ManipulatorRollerIO {
   public void setCurrentLimits(double supplyLimit);
 
   public boolean withinPositionTolerance();
+
+  public double getCurrent();
 }

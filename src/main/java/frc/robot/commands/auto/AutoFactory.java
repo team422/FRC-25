@@ -47,25 +47,29 @@ public class AutoFactory {
               RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
             }));
 
-    NamedCommands.registerCommand("Set Height L1",
+    NamedCommands.registerCommand(
+        "Set Height L1",
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L1);
             }));
 
-    NamedCommands.registerCommand("Set Height L2",
+    NamedCommands.registerCommand(
+        "Set Height L2",
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L2);
             }));
 
-    NamedCommands.registerCommand("Set Height L3",
+    NamedCommands.registerCommand(
+        "Set Height L3",
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
             }));
 
-    NamedCommands.registerCommand("Set Height L4",
+    NamedCommands.registerCommand(
+        "Set Height L4",
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
@@ -87,8 +91,7 @@ public class AutoFactory {
                 })
             .andThen(new AutoAutoScore()));
 
-    NamedCommands.registerCommand(
-        "Intake", new AutoIntake());
+    NamedCommands.registerCommand("Coral Intake", new AutoCoralIntake());
 
     AutoBuilder.configure(
         m_drive::getPose,

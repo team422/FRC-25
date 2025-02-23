@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
+import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.RobotState;
@@ -51,6 +52,7 @@ public class Manipulator extends SubsystemBase {
     kIndexing,
     kScoring,
     kAlgaeDescoring,
+    kAlgaeHold,
     kFullTuning,
   }
 
@@ -68,6 +70,7 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kIndexing, this::indexingPeriodic);
     periodicHash.put(ManipulatorState.kScoring, this::scoringPeriodic);
     periodicHash.put(ManipulatorState.kAlgaeDescoring, this::algaeDescoringPeriodic);
+    periodicHash.put(ManipulatorState.kAlgaeHold, this::algaeHoldPeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
 
@@ -207,7 +210,11 @@ public class Manipulator extends SubsystemBase {
   public void scoringPeriodic() {
     m_wristIO.setDesiredAngle(m_desiredWristAngle);
     if (m_runRollerScoring) {
-      m_rollerIO.setVoltage(ManipulatorConstants.kRollerScoringVoltage.get());
+      if (RobotState.getInstance().getDesiredReefHeight() == ReefHeight.L1) {
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerLowerScoringVoltage.get());
+      } else {
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerUpperScoringVoltage.get());
+      }
     } else {
       m_rollerIO.setVoltage(0.0);
     }
@@ -217,11 +224,21 @@ public class Manipulator extends SubsystemBase {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeDescoringAngle.get()));
 
+    if (m_rollerIO.getCurrent() > ManipulatorConstants.kRollerAlgaeCurrentThreshold.get()) {
+      updateState(ManipulatorState.kAlgaeHold);
+    }
+
     if (m_runRollerAlgaeDescoring) {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeDescoringVoltage.get());
     } else {
       m_rollerIO.setVoltage(0.0);
     }
+  }
+
+  public void algaeHoldPeriodic() {
+    m_wristIO.setDesiredAngle(
+        Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeHoldAngle.get()));
+    m_rollerIO.setVoltage(0.0);
   }
 
   public void fullTuningPeriodic() {
@@ -244,6 +261,14 @@ public class Manipulator extends SubsystemBase {
 
   public void stopRollerAlgaeDescoring() {
     m_runRollerAlgaeDescoring = false;
+  }
+
+  public void manageStowOrHold() {
+    if (m_profiles.getCurrentProfile() == ManipulatorState.kAlgaeHold) {
+      return;
+    }
+
+    updateState(ManipulatorState.kStow);
   }
 
   public boolean atSetpoint() {

@@ -103,9 +103,9 @@ public class RobotContainer {
 
         // TODO: re-enable this when the algae intake is re-installed
         m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
-            // new Intake(
-            //     new IntakeRollerIOKraken(Ports.kIntakeRoller),
-            //     new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        // new Intake(
+        //     new IntakeRollerIOKraken(Ports.kIntakeRoller),
+        //     new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
 
@@ -314,11 +314,6 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().manageCoralOuttakePressed();
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().manageCoralOuttakeRelease();
                 }));
 
     m_driverControls

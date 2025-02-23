@@ -209,9 +209,15 @@ public class AprilTagVision extends SubsystemBase {
               // since the cameras have some roll, the false reprojection will be up in the air or
               // in the ground
               // so we can just choose the one that is closer to the floor
-              double height1 = Math.abs(robotPose3d1.getZ());
-              double height2 = Math.abs(robotPose3d2.getZ());
-              if (height1 < height2) {
+              // double height1 = Math.abs(robotPose3d1.getZ());
+              // double height2 = Math.abs(robotPose3d2.getZ());
+              double pitch1 = Math.abs(robotPose3d1.getRotation().getY());
+              double pitch2 = Math.abs(robotPose3d2.getRotation().getY());
+              double yaw1 = Math.abs(robotPose3d1.getRotation().getZ());
+              double yaw2 = Math.abs(robotPose3d2.getRotation().getZ());
+              if ((pitch1 < pitch2 && RobotState.getInstance().getNumVisionGyroObservations() < 100)
+                  || (yaw1 < yaw2
+                      && RobotState.getInstance().getNumVisionGyroObservations() >= 100)) {
                 cameraPose = cameraPose1;
                 robotPose3d = robotPose3d1;
                 error = error1;
@@ -406,9 +412,11 @@ public class AprilTagVision extends SubsystemBase {
       allVisionObservations = allVisionObservations.subList(0, maxObservations);
     }
 
-    allVisionObservations.stream()
-        .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
-        .forEach(RobotState.getInstance()::addVisionObservation);
+    if (Math.abs(AprilTagVisionConstants.kUseVision.get() - 1.0) < 1e-1) {
+      allVisionObservations.stream()
+          .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
+          .forEach(RobotState.getInstance()::addVisionObservation);
+    }
 
     if (Constants.kUseAlerts) {
       for (int i = 0; i < m_noReadingsAlerts.length; i++) {

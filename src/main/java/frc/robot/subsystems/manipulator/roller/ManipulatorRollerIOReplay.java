@@ -29,4 +29,9 @@ public class ManipulatorRollerIOReplay implements ManipulatorRollerIO {
   public boolean withinPositionTolerance() {
     return false;
   }
+
+  @Override
+  public double getCurrent() {
+    return 0.0;
+  }
 }

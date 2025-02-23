@@ -174,6 +174,12 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
 
   @Override
   public boolean withinPositionTolerance() {
-    return Math.abs(m_motorPosition.getValue().minus(m_desiredPosition).in(Degrees)) < ManipulatorConstants.kRollerPositionTolerance;
+    return Math.abs(m_motorPosition.getValue().minus(m_desiredPosition).in(Degrees))
+        < ManipulatorConstants.kRollerPositionTolerance;
+  }
+
+  @Override
+  public double getCurrent() {
+    return m_motorCurrent.getValueAsDouble();
   }
 }

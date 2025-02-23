@@ -362,7 +362,7 @@ public class Drive extends SubsystemBase {
   /** Stops the drive. */
   public void stop() {
     m_enableDesiredChassisSpeeds = false;
-    runVelocity(new ChassisSpeeds());
+    // runVelocity(new ChassisSpeeds());
   }
 
   public void setCoast() {
@@ -488,7 +488,7 @@ public class Drive extends SubsystemBase {
     }
   }
 
-  /** Returns the average velocity of the modules in rotations/sec (Phoenix native units). */
+  /** Returns the average velocity of the modules in radians/sec. */
   public double getFFCharacterizationVelocity() {
     double output = 0.0;
     for (int i = 0; i < 4; i++) {

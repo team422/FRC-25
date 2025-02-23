@@ -87,7 +87,7 @@ public class DriveCommands {
                   linearVelocity.getY() * DriveConstants.kMaxLinearSpeed,
                   omega * DriveConstants.kMaxAngularSpeed);
 
-          drive.runVelocity(
+          drive.setDesiredChassisSpeeds(
               robotRelative
                   ? speeds
                   : ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -142,7 +142,7 @@ public class DriveCommands {
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()
                       && DriverStation.getAlliance().get() == Alliance.Red;
-              drive.runVelocity(
+              drive.setDesiredChassisSpeeds(
                   ChassisSpeeds.fromFieldRelativeSpeeds(
                       speeds, isFlipped ? rotation.plus(new Rotation2d(Math.PI)) : rotation));
             },
@@ -228,7 +228,7 @@ public class DriveCommands {
             Commands.run(
                 () -> {
                   double speed = limiter.calculate(WHEEL_RADIUS_MAX_VELOCITY);
-                  drive.runVelocity(new ChassisSpeeds(0.0, 0.0, speed));
+                  drive.setDesiredChassisSpeeds(new ChassisSpeeds(0.0, 0.0, speed));
                 },
                 drive)),
 

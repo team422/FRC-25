@@ -81,4 +81,9 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
   public boolean withinPositionTolerance() {
     return m_positionController.atSetpoint();
   }
+
+  @Override
+  public double getCurrent() {
+    return m_sim.getCurrentDrawAmps();
+  }
 }

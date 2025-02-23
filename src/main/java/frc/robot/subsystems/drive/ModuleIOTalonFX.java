@@ -233,8 +233,8 @@ public class ModuleIOTalonFX implements ModuleIO {
         m_turnAppliedVolts,
         m_turnCurrent,
         m_cancoderSupplyVoltage);
-    m_driveTalon.optimizeBusUtilization();
-    m_turnTalon.optimizeBusUtilization();
+    // m_driveTalon.optimizeBusUtilization();
+    // m_turnTalon.optimizeBusUtilization();
   }
 
   @Override
