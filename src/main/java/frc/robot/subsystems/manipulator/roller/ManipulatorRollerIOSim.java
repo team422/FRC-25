@@ -76,4 +76,9 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
   public void setCurrentLimits(double supplyLimit) {
     // Not needed for simulation
   }
+
+  @Override
+  public boolean withinPositionTolerance() {
+    return m_positionController.atSetpoint();
+  }
 }

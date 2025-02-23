@@ -73,6 +73,7 @@ public class RobotState {
     kAutoDefault,
     kAutoAutoScore,
     kAutoCoralOuttaking,
+    kAutoCoralIntaking,
   }
 
   private LedState currentLedState = LedState.kOff;
@@ -131,6 +132,7 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
     periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
+    periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -183,6 +185,14 @@ public class RobotState {
       m_indexer.updateState(IndexerState.kIndexing);
     } else {
       m_indexer.updateState(IndexerState.kIdle);
+    }
+  }
+
+  public void autoCoralIntakingPeriodic() {
+    coralIntakingPeriodic();
+
+    if (m_manipulator.hasGamePiece() && m_manipulator.getCurrentState() == ManipulatorState.kIndexing && m_manipulator.rollerWithinTolerance()) {
+      setDefaultAction();
     }
   }
 
@@ -336,6 +346,7 @@ public class RobotState {
         m_led.updateState(LedState.kEnabled);
         break;
 
+      case kAutoCoralIntaking:
       case kCoralIntaking:
         // TODO: intake needs to move out a little so it doesn't get in way of funnel
         m_drive.updateProfile(DriveProfiles.kDefault);

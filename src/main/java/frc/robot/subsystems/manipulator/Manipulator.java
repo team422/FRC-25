@@ -257,4 +257,8 @@ public class Manipulator extends SubsystemBase {
   public Rotation2d getCurrAngle() {
     return m_wristIO.getCurrAngle();
   }
+
+  public boolean rollerWithinTolerance() {
+    return m_rollerIO.withinPositionTolerance();
+  }
 }
