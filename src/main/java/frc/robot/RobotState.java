@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.EqualsUtil;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.ManipulatorConstants;
@@ -88,6 +89,11 @@ public class RobotState {
   private int m_desiredBranchIndex = 0;
 
   private int m_numVisionGyroObservations = 0;
+
+  // this is scuffed
+  // what it does is reset the odometry to 0,0 when the value is changed
+  // the actual value doesn't matter
+  private LoggedTunableNumber m_resetOdometry = new LoggedTunableNumber("Reset Odometry", 0);
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -170,6 +176,14 @@ public class RobotState {
     if (Constants.kUseComponents) {
       updateComponent();
     }
+
+    // this is scuffed but it's really funny
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_drive.setPose(new Pose2d());
+        },
+        m_resetOdometry);
 
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());

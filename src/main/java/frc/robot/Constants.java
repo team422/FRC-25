@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.util.Color;
+import frc.lib.littletonUtils.GeomUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.SwerveSetpointGenerator.ModuleLimits;
 import java.util.ArrayList;
@@ -75,6 +76,11 @@ public final class Constants {
     public static final double kMaxAngularAcceleration = kMaxLinearAcceleration / kDriveBaseRadius;
     public static final LoggedTunableNumber kTeleopRotationSpeed =
         new LoggedTunableNumber("Teleop Rotation Speed", 10.0);
+    // 0 - linear
+    // 1 - quadratic
+    // 2 - polynomial ("""exponential""" why do they call it exponential when it's not)
+    public static final LoggedTunableNumber kDriveControlMode =
+        new LoggedTunableNumber("Drive Control Mode", 1.0);
 
     public static final Translation2d[] kModuleTranslations =
         new Translation2d[] {
@@ -316,12 +322,10 @@ public final class Constants {
           //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
           //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
           new Transform3d(
-              Inches.of(9.843),
-              Inches.of(-9.16),
-              Inches.of(12.061),
-              new Rotation3d()
-                  .rotateBy(new Rotation3d(Degrees.of(180 - 25), Degrees.zero(), Degrees.zero()))
-                  .rotateBy(new Rotation3d(Degrees.zero(), Degrees.zero(), Degrees.of(0)))),
+              Inches.of(7.533),
+              Inches.of(-12.433),
+              Inches.of(7.416),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-35), Degrees.of(-10))),
           new Transform3d(),
           new Transform3d(),
           new Transform3d(),
@@ -331,21 +335,6 @@ public final class Constants {
     public static final double kRotationErrorThreshold = 0.3;
     public static final double kRotationDistanceThreshold = Units.inchesToMeters(200);
     public static final double kRotationSpeedThreshold = 0.2; // m/s
-
-    public static final int kCalibIndex = 3;
-
-    public static final LoggedTunableNumber transformCameraX =
-        new LoggedTunableNumber("cameraX", kCameraTransforms[kCalibIndex].getX());
-    public static final LoggedTunableNumber cameraY =
-        new LoggedTunableNumber("cameraY", kCameraTransforms[kCalibIndex].getY());
-    public static final LoggedTunableNumber cameraZ =
-        new LoggedTunableNumber("cameraZ", kCameraTransforms[kCalibIndex].getZ());
-    public static final LoggedTunableNumber cameraRoll =
-        new LoggedTunableNumber("cameraRoll", kCameraTransforms[kCalibIndex].getRotation().getX());
-    public static final LoggedTunableNumber cameraPitch =
-        new LoggedTunableNumber("cameraPitch", kCameraTransforms[kCalibIndex].getRotation().getY());
-    public static final LoggedTunableNumber cameraYaw =
-        new LoggedTunableNumber("cameraYaw", kCameraTransforms[kCalibIndex].getRotation().getZ());
   }
 
   public static final class IntakeConstants {

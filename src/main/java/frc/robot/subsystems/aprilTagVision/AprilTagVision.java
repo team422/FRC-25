@@ -9,7 +9,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -18,7 +17,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.lib.littletonUtils.EqualsUtil;
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.FieldConstants;
@@ -76,27 +75,6 @@ public class AprilTagVision extends SubsystemBase {
   @Override
   public void periodic() {
     double start = HALUtil.getFPGATime();
-
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          AprilTagVisionConstants.kCameraTransforms[AprilTagVisionConstants.kCalibIndex] =
-              new Transform3d(
-                  new Translation3d(
-                      AprilTagVisionConstants.transformCameraX.get(),
-                      AprilTagVisionConstants.cameraY.get(),
-                      AprilTagVisionConstants.cameraZ.get()),
-                  new Rotation3d(
-                      AprilTagVisionConstants.cameraRoll.get(),
-                      AprilTagVisionConstants.cameraPitch.get(),
-                      AprilTagVisionConstants.cameraYaw.get()));
-        },
-        AprilTagVisionConstants.transformCameraX,
-        AprilTagVisionConstants.cameraY,
-        AprilTagVisionConstants.cameraZ,
-        AprilTagVisionConstants.cameraRoll,
-        AprilTagVisionConstants.cameraPitch,
-        AprilTagVisionConstants.cameraYaw);
 
     for (int i = 0; i < m_ios.length; i++) {
       m_ios[i].updateInputs(m_inputs[i]);
@@ -412,7 +390,7 @@ public class AprilTagVision extends SubsystemBase {
       allVisionObservations = allVisionObservations.subList(0, maxObservations);
     }
 
-    if (Math.abs(AprilTagVisionConstants.kUseVision.get() - 1.0) < 1e-1) {
+    if (EqualsUtil.epsilonEquals(AprilTagVisionConstants.kUseVision.get(), 1.0)) {
       allVisionObservations.stream()
           .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
           .forEach(RobotState.getInstance()::addVisionObservation);

@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import java.text.DecimalFormat;
@@ -33,6 +34,43 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class DriveCommands {
+  private enum DriveControlMode {
+    kLinear(0),
+    kQuadratic(1),
+    kPolynomial(2);
+
+    private static final LoggedTunableNumber kPolynomialPower =
+        new LoggedTunableNumber("Drive Control Polynomial Power", 2.0);
+
+    private final int value;
+
+    DriveControlMode(int value) {
+      this.value = value;
+    }
+
+    public static DriveControlMode fromDouble(double value) {
+      int intValue = (int) value;
+      for (DriveControlMode mode : values()) {
+        if (mode.value == intValue) {
+          return mode;
+        }
+      }
+      return kLinear;
+    }
+
+    public double apply(double input) {
+      switch (this) {
+        case kLinear:
+          return input;
+        case kQuadratic:
+          return Math.copySign(input * input, input);
+        case kPolynomial:
+          return Math.copySign(Math.pow(input, kPolynomialPower.get()), input);
+      }
+      return input;
+    }
+  }
+
   public static final double DEADBAND = 0.1;
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
@@ -50,8 +88,11 @@ public class DriveCommands {
     double linearMagnitude = MathUtil.applyDeadband(Math.hypot(x, y), DEADBAND);
     Rotation2d linearDirection = new Rotation2d(Math.atan2(y, x));
 
-    // Square magnitude for more precise control
-    linearMagnitude = linearMagnitude * linearMagnitude;
+    // Apply control mode
+    DriveControlMode controlMode =
+        DriveControlMode.fromDouble(DriveConstants.kDriveControlMode.get());
+
+    linearMagnitude = controlMode.apply(linearMagnitude);
 
     // Return new linear velocity
     return new Pose2d(new Translation2d(), linearDirection)
@@ -78,14 +119,16 @@ public class DriveCommands {
           // Apply rotation deadband
           double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
 
-          // Square rotation value for more precise control
-          omega = Math.copySign(omega * omega, omega);
+          // Apply control mode
+          DriveControlMode controlMode =
+              DriveControlMode.fromDouble(DriveConstants.kDriveControlMode.get());
+          omega = controlMode.apply(omega);
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
                   linearVelocity.getX() * DriveConstants.kMaxLinearSpeed,
                   linearVelocity.getY() * DriveConstants.kMaxLinearSpeed,
-                  omega * DriveConstants.kMaxAngularSpeed);
+                  omega * DriveConstants.kTeleopRotationSpeed.get());
 
           drive.setDesiredChassisSpeeds(
               robotRelative
