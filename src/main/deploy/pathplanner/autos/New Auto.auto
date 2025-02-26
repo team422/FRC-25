@@ -3,7 +3,68 @@
   "command": {
     "type": "sequential",
     "data": {
-      "commands": []
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "BlueLeftOut1"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Auto auto score"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6hp"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Auto intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "HPto4"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Auto auto score"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Next one"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Auto intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "New Path"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Auto auto score"
+          }
+        }
+      ]
     }
   },
   "resetOdom": true,
