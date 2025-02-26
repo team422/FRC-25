@@ -177,6 +177,10 @@ public class Elevator extends SubsystemBase {
       m_io.setDesiredHeight(m_inputs.desiredLocation);
     }
 
+    if (shouldZeroElevator()) {
+      updateState(ElevatorState.kSlamming);
+    }
+
     m_profiles.getPeriodicFunction().run();
 
     Logger.processInputs("Elevator", m_inputs);
@@ -241,7 +245,10 @@ public class Elevator extends SubsystemBase {
   }
 
   public void stowPeriodic() {
-    m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+    // wait for the manipulator to move out of the way before descending
+    if (RobotState.getInstance().manipulatorAtSetpoint()) {
+      m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+    }
   }
 
   public void scoringPeriodic() {

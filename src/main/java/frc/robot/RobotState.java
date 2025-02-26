@@ -7,14 +7,17 @@ import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.EqualsUtil;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
+import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
@@ -73,6 +76,7 @@ public class RobotState {
     kAutoDefault,
     kAutoAutoScore,
     kAutoCoralOuttaking,
+    kAutoCoralIntaking,
   }
 
   private LedState currentLedState = LedState.kOff;
@@ -85,6 +89,11 @@ public class RobotState {
   private int m_desiredBranchIndex = 0;
 
   private int m_numVisionGyroObservations = 0;
+
+  // this is scuffed
+  // what it does is reset the odometry to 0,0 when the value is changed
+  // the actual value doesn't matter
+  private LoggedTunableNumber m_resetOdometry = new LoggedTunableNumber("Reset Odometry", 0);
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -123,7 +132,6 @@ public class RobotState {
     periodicHash.put(RobotAction.kAutoScore, this::autoScorePeriodic);
     periodicHash.put(RobotAction.kManualScore, this::manualScorePeriodic);
     periodicHash.put(RobotAction.kDriveToProcessor, this::driveToProcessorPeriodic);
-    periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kCoralOuttaking, this::coralOuttakingPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
@@ -131,6 +139,7 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
     periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
+    periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -168,7 +177,16 @@ public class RobotState {
       updateComponent();
     }
 
+    // this is scuffed but it's really funny
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_drive.setPose(new Pose2d());
+        },
+        m_resetOdometry);
+
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
+    Logger.recordOutput("RobotState/TimerValue", m_timer.get());
 
     Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
@@ -186,8 +204,18 @@ public class RobotState {
     }
   }
 
+  public void autoCoralIntakingPeriodic() {
+    coralIntakingPeriodic();
+
+    if (m_manipulator.hasGamePiece()
+        && m_manipulator.getCurrentState() == ManipulatorState.kIndexing
+        && m_manipulator.rollerWithinTolerance()) {
+      setDefaultAction();
+    }
+  }
+
   public void coralOuttakingPeriodic() {
-    if (m_timer.hasElapsed(0.5)) {
+    if (m_timer.hasElapsed(0.4)) {
       // after we release the coral go back to stow
       setDefaultAction();
     }
@@ -223,10 +251,16 @@ public class RobotState {
       if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
         m_elevator.setDesiredHeight(setpoint.elevatorHeight());
       }
-      if (!EqualsUtil.epsilonEquals(
-          setpoint.manipulatorAngle().getRadians(),
-          m_manipulator.getDesiredWristAngle().getRadians())) {
-        m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+      // don't deploy manipulator until we're at the elevator setpoint (L4 only)
+      if (!m_elevator.atSetpoint()) {
+        if (!EqualsUtil.epsilonEquals(
+            setpoint.manipulatorAngle().getRadians(),
+            m_manipulator.getDesiredWristAngle().getRadians())) {
+          m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+        }
+      } else {
+        m_manipulator.setDesiredWristAngle(
+            Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
       }
     }
   }
@@ -249,10 +283,16 @@ public class RobotState {
     if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
       m_elevator.setDesiredHeight(setpoint.elevatorHeight());
     }
-    if (!EqualsUtil.epsilonEquals(
-        setpoint.manipulatorAngle().getRadians(),
-        m_manipulator.getDesiredWristAngle().getRadians())) {
-      m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+    // don't deploy manipulator until we're at the elevator setpoint (L4 only)
+    if (!(m_desiredReefHeight == ReefHeight.L4 && !m_elevator.atSetpoint())) {
+      if (!EqualsUtil.epsilonEquals(
+          setpoint.manipulatorAngle().getRadians(),
+          m_manipulator.getDesiredWristAngle().getRadians())) {
+        m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+      }
+    } else {
+      m_manipulator.setDesiredWristAngle(
+          Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
     }
     // don't worry about drive in manual score
   }
@@ -275,6 +315,8 @@ public class RobotState {
   public void algaeDescoringPeriodic() {
     // each step in the sequence is identical in terms of whether to advance to the next step
     int index = kAlgaeDescoreSequence.indexOf(m_profiles.getCurrentProfile());
+    Logger.recordOutput("AlgaeDescore/ElevatorAtSetpoint", m_elevator.atSetpoint());
+    Logger.recordOutput("AlgaeDescore/ManipulatorAtSetpoint", m_manipulator.atSetpoint());
     if (m_elevator.atSetpoint()
         && m_manipulator.atSetpoint()
         && index < kAlgaeDescoreSequence.size() - 1) {
@@ -290,7 +332,7 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kStow);
+        m_manipulator.manageStowOrHold();
         m_led.updateState(LedState.kEnabled);
         break;
 
@@ -322,7 +364,7 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kStow);
+        m_manipulator.manageStowOrHold();
         m_led.updateState(LedState.kEnabled);
         break;
 
@@ -332,10 +374,11 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kDeploy);
         m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kStow);
+        m_manipulator.manageStowOrHold();
         m_led.updateState(LedState.kEnabled);
         break;
 
+      case kAutoCoralIntaking:
       case kCoralIntaking:
         // TODO: intake needs to move out a little so it doesn't get in way of funnel
         m_drive.updateProfile(DriveProfiles.kDefault);
@@ -354,7 +397,7 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kStow);
+        m_manipulator.manageStowOrHold();
         m_led.updateState(LedState.kEnabled);
         break;
 
@@ -377,7 +420,7 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kStow);
+        m_manipulator.manageStowOrHold();
         m_led.updateState(LedState.kEnabled);
         break;
 
@@ -387,7 +430,7 @@ public class RobotState {
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kAlgaeDescoringInitial);
-        m_manipulator.updateState(ManipulatorState.kStow);
+        m_manipulator.manageStowOrHold();
         m_led.updateState(LedState.kEnabled);
         break;
 
@@ -540,7 +583,7 @@ public class RobotState {
             new Translation3d(-0.31, 0, 0.19),
             new Rotation3d(
                 Degrees.of(0),
-                Degrees.of(-150 + m_intake.getRotation().getDegrees()),
+                Degrees.of(-120 + m_intake.getRotation().getDegrees()),
                 Degrees.of(180)));
     Pose3d elevatorStage2Pose =
         new Pose3d(
@@ -563,11 +606,12 @@ public class RobotState {
     Pose3d manipulatorPose =
         new Pose3d( // Manipulator
             new Translation3d(
-                Meters.of(0.285), Meters.zero(), Meters.of(0.203 + m_elevator.getCurrHeight())),
-            // new Translation3d(-0.31, 0, 0.19),
+                Meters.of(0.285),
+                Meters.zero(),
+                Meters.of(0.203).plus(Inches.of(m_elevator.getCurrHeight()))),
             new Rotation3d(
                 Degrees.of(0),
-                Degrees.of(-90 + m_manipulator.getCurrAngle().getDegrees()),
+                Degrees.of(-m_manipulator.getCurrAngle().getDegrees()),
                 Degrees.of(0)));
     Pose3d climbPose =
         new Pose3d( // static for now
@@ -591,6 +635,20 @@ public class RobotState {
 
   public void incrementNumVisionGyroObservations() {
     m_numVisionGyroObservations++;
+  }
+
+  private boolean m_usingVision = true;
+
+  public boolean getUsingVision() {
+    return m_usingVision;
+  }
+
+  public void toggleUsingVision() {
+    m_usingVision = !m_usingVision;
+  }
+
+  public boolean manipulatorAtSetpoint() {
+    return m_manipulator.atSetpoint();
   }
 
   public DriveProfiles getDriveProfile() {

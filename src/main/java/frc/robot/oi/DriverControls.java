@@ -9,6 +9,8 @@ public interface DriverControls {
 
   public double getTurn();
 
+  public Trigger resetFieldCentric();
+
   public Trigger coralIntake();
 
   public Trigger coralOuttake();

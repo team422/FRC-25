@@ -12,6 +12,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Current;
@@ -120,6 +121,12 @@ public class ClimbIOKraken implements ClimbIO {
 
   @Override
   public void setDesiredAngle(Rotation2d angle, double feedforward) {
+    double value = angle.getRadians();
+    value =
+        MathUtil.clamp(
+            value, ClimbConstants.kMinAngle.getRadians(), ClimbConstants.kMaxAngle.getRadians());
+    angle = Rotation2d.fromRadians(value);
+
     m_desiredAngle = angle;
     m_motor.setControl(
         m_positionVoltage.withPosition(angle.getMeasure()).withFeedForward(feedforward));

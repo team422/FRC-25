@@ -6,6 +6,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import frc.lib.littletonUtils.AllianceFlipUtil;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
@@ -19,19 +21,19 @@ public class SetpointGenerator {
       Pose2d drivePose, Rotation2d manipulatorAngle, double elevatorHeight) {}
 
   // TODO: populate with real values
-  private static final Map<ReefHeight, Double> kElevatorHeights =
+  private static final Map<ReefHeight, LoggedTunableNumber> kElevatorHeights =
       Map.of(
-          ReefHeight.L1, 0.0,
-          ReefHeight.L2, 0.5,
-          ReefHeight.L3, 1.0,
-          ReefHeight.L4, 1.5);
+          ReefHeight.L1, new LoggedTunableNumber("Elevator L1 Height", 7.5),
+          ReefHeight.L2, new LoggedTunableNumber("Elevator L2 Height", 27.0),
+          ReefHeight.L3, new LoggedTunableNumber("Elevator L3 Height", 43.25),
+          ReefHeight.L4, new LoggedTunableNumber("Elevator L4 Height", 70.0));
 
-  private static final Map<ReefHeight, Rotation2d> kManipulatorAngles =
+  private static final Map<ReefHeight, LoggedTunableNumber> kManipulatorAngles =
       Map.of(
-          ReefHeight.L1, Rotation2d.fromDegrees(0.0),
-          ReefHeight.L2, Rotation2d.fromDegrees(30.0),
-          ReefHeight.L3, Rotation2d.fromDegrees(60.0),
-          ReefHeight.L4, Rotation2d.fromDegrees(80.0));
+          ReefHeight.L1, new LoggedTunableNumber("Wrist L1 Angle", 120.0),
+          ReefHeight.L2, new LoggedTunableNumber("Wrist L2 Angle", 63.0),
+          ReefHeight.L3, new LoggedTunableNumber("Wrist L3 Angle", 63.0),
+          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 50.0));
 
   // we need to move back a bit from the raw branch pose
   private static final double kDriveXOffset =
@@ -62,7 +64,7 @@ public class SetpointGenerator {
       throw new IllegalArgumentException("Invalid reef height: " + reefHeight);
     }
 
-    var centerFacePose = FieldConstants.Reef.kCenterFaces[reefIndex / 2];
+    var centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[reefIndex / 2]);
 
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
@@ -71,12 +73,13 @@ public class SetpointGenerator {
                 kDriveXOffset,
                 // move to left or right depending on the reef index
                 (reefIndex % 2 == 0) ? kDriveYOffset : -kDriveYOffset,
-                new Rotation2d()));
+                Rotation2d.fromDegrees(180)));
 
-    var manipulatorAngle = kManipulatorAngles.get(reefHeight);
-    var elevatorHeight = kElevatorHeights.get(reefHeight);
+    var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
+    var elevatorHeight = kElevatorHeights.get(reefHeight).get();
 
-    return new RobotSetpoint(drivePoseFinal, manipulatorAngle, elevatorHeight);
+    return new RobotSetpoint(
+        drivePoseFinal, Rotation2d.fromDegrees(manipulatorAngle), elevatorHeight);
   }
 
   /**
@@ -95,7 +98,8 @@ public class SetpointGenerator {
     int rightIndex = -1;
     for (int i = 0; i < branchPoses.size(); i++) {
       // the reef height doesn't matter here so we just use L1
-      Translation2d curr = branchPoses.get(i).get(ReefHeight.L1).toPose2d().getTranslation();
+      Translation2d curr =
+          AllianceFlipUtil.apply(branchPoses.get(i).get(ReefHeight.L1).toPose2d()).getTranslation();
       double distance = drivePose.getTranslation().getDistance(curr);
       if (i % 2 == 0) {
         // left branch
@@ -118,13 +122,16 @@ public class SetpointGenerator {
     // no need for abs because of distance formula
     return drivePose
             .getTranslation()
-            .getDistance(FieldConstants.Processor.kCenterFace.getTranslation())
+            .getDistance(
+                AllianceFlipUtil.apply(FieldConstants.Processor.kCenterFace.getTranslation()))
         < kDistanceThreshold;
   }
 
   public static boolean isNearBarge(Pose2d drivePose) {
     // for the barge we only care about the x coordinate
-    return Math.abs(drivePose.getTranslation().getX() - FieldConstants.Barge.kMiddleCage.getX())
+    return Math.abs(
+            drivePose.getTranslation().getX()
+                - AllianceFlipUtil.apply(FieldConstants.Barge.kMiddleCage.getX()))
         < kDistanceThreshold;
   }
 }

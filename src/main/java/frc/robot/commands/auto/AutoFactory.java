@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.littletonUtils.LocalADStarAK;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.drive.Drive;
@@ -47,6 +48,34 @@ public class AutoFactory {
             }));
 
     NamedCommands.registerCommand(
+        "Set Height L1",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setDesiredReefHeight(ReefHeight.L1);
+            }));
+
+    NamedCommands.registerCommand(
+        "Set Height L2",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setDesiredReefHeight(ReefHeight.L2);
+            }));
+
+    NamedCommands.registerCommand(
+        "Set Height L3",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
+            }));
+
+    NamedCommands.registerCommand(
+        "Set Height L4",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
+            }));
+
+    NamedCommands.registerCommand(
         "Autoscore Left",
         Commands.runOnce(
                 () -> {
@@ -61,6 +90,8 @@ public class AutoFactory {
                   RobotState.getInstance().setReefIndexRight();
                 })
             .andThen(new AutoAutoScore()));
+
+    NamedCommands.registerCommand("Coral Intake", new AutoCoralIntake());
 
     AutoBuilder.configure(
         m_drive::getPose,

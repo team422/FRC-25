@@ -9,7 +9,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -18,7 +17,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.lib.littletonUtils.EqualsUtil;
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.FieldConstants;
@@ -76,27 +75,6 @@ public class AprilTagVision extends SubsystemBase {
   @Override
   public void periodic() {
     double start = HALUtil.getFPGATime();
-
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          AprilTagVisionConstants.kCameraTransforms[AprilTagVisionConstants.kCalibIndex] =
-              new Transform3d(
-                  new Translation3d(
-                      AprilTagVisionConstants.transformCameraX.get(),
-                      AprilTagVisionConstants.cameraY.get(),
-                      AprilTagVisionConstants.cameraZ.get()),
-                  new Rotation3d(
-                      AprilTagVisionConstants.cameraRoll.get(),
-                      AprilTagVisionConstants.cameraPitch.get(),
-                      AprilTagVisionConstants.cameraYaw.get()));
-        },
-        AprilTagVisionConstants.transformCameraX,
-        AprilTagVisionConstants.cameraY,
-        AprilTagVisionConstants.cameraZ,
-        AprilTagVisionConstants.cameraRoll,
-        AprilTagVisionConstants.cameraPitch,
-        AprilTagVisionConstants.cameraYaw);
 
     for (int i = 0; i < m_ios.length; i++) {
       m_ios[i].updateInputs(m_inputs[i]);
@@ -209,9 +187,15 @@ public class AprilTagVision extends SubsystemBase {
               // since the cameras have some roll, the false reprojection will be up in the air or
               // in the ground
               // so we can just choose the one that is closer to the floor
-              double height1 = Math.abs(robotPose3d1.getZ());
-              double height2 = Math.abs(robotPose3d2.getZ());
-              if (height1 < height2) {
+              // double height1 = Math.abs(robotPose3d1.getZ());
+              // double height2 = Math.abs(robotPose3d2.getZ());
+              double pitch1 = Math.abs(robotPose3d1.getRotation().getY());
+              double pitch2 = Math.abs(robotPose3d2.getRotation().getY());
+              double yaw1 = Math.abs(robotPose3d1.getRotation().getZ());
+              double yaw2 = Math.abs(robotPose3d2.getRotation().getZ());
+              if ((pitch1 < pitch2 && RobotState.getInstance().getNumVisionGyroObservations() < 100)
+                  || (yaw1 < yaw2
+                      && RobotState.getInstance().getNumVisionGyroObservations() >= 100)) {
                 cameraPose = cameraPose1;
                 robotPose3d = robotPose3d1;
                 error = error1;
@@ -406,9 +390,11 @@ public class AprilTagVision extends SubsystemBase {
       allVisionObservations = allVisionObservations.subList(0, maxObservations);
     }
 
-    allVisionObservations.stream()
-        .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
-        .forEach(RobotState.getInstance()::addVisionObservation);
+    if (EqualsUtil.epsilonEquals(AprilTagVisionConstants.kUseVision.get(), 1.0)) {
+      allVisionObservations.stream()
+          .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
+          .forEach(RobotState.getInstance()::addVisionObservation);
+    }
 
     if (Constants.kUseAlerts) {
       for (int i = 0; i < m_noReadingsAlerts.length; i++) {

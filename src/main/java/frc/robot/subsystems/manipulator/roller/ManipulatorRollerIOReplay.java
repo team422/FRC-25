@@ -16,7 +16,7 @@ public class ManipulatorRollerIOReplay implements ManipulatorRollerIO {
 
   @Override
   public Angle getPosition() {
-    return Degrees.of(0);
+    return Degrees.zero();
   }
 
   @Override
@@ -24,4 +24,14 @@ public class ManipulatorRollerIOReplay implements ManipulatorRollerIO {
 
   @Override
   public void setCurrentLimits(double supplyLimit) {}
+
+  @Override
+  public boolean withinPositionTolerance() {
+    return false;
+  }
+
+  @Override
+  public double getCurrent() {
+    return 0.0;
+  }
 }

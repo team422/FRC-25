@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Pounds;
 
@@ -21,6 +23,7 @@ import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.util.Color;
+import frc.lib.littletonUtils.GeomUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.SwerveSetpointGenerator.ModuleLimits;
 import java.util.ArrayList;
@@ -65,14 +68,19 @@ public final class Constants {
   public static final class DriveConstants {
     public static final double kMaxLinearSpeed = 6.0; // meters per second
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
-    public static final double kTrackWidthX = Units.inchesToMeters(28.0);
-    public static final double kTrackWidthY = Units.inchesToMeters(28.0);
+    public static final double kTrackWidthX = Units.inchesToMeters(22.75);
+    public static final double kTrackWidthY = Units.inchesToMeters(22.75);
     public static final double kDriveBaseRadius =
         Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
     public static final double kMaxAngularSpeed = kMaxLinearSpeed / kDriveBaseRadius;
     public static final double kMaxAngularAcceleration = kMaxLinearAcceleration / kDriveBaseRadius;
     public static final LoggedTunableNumber kTeleopRotationSpeed =
         new LoggedTunableNumber("Teleop Rotation Speed", 10.0);
+    // 0 - linear
+    // 1 - quadratic
+    // 2 - polynomial ("""exponential""" why do they call it exponential when it's not)
+    public static final LoggedTunableNumber kDriveControlMode =
+        new LoggedTunableNumber("Drive Control Mode", 1.0);
 
     public static final Translation2d[] kModuleTranslations =
         new Translation2d[] {
@@ -88,7 +96,7 @@ public final class Constants {
     public static final ModuleLimits kModuleLimitsFree =
         new ModuleLimits(kMaxLinearSpeed, kMaxAngularSpeed, Units.degreesToRadians(1080.0));
 
-    public static final double kWheelRadius = Units.inchesToMeters(2.0);
+    public static final double kWheelRadius = Units.inchesToMeters(1.941);
     public static final double kOdometryFrequency = 250.0;
 
     public static final double kDriveGearRatio =
@@ -150,6 +158,9 @@ public final class Constants {
         new LoggedTunableNumber("Climb Deploy Rad", 240); // degrees
 
     public static final double kClimbReduction = (5.0 / 1.0) * (4.0 / 1.0) * (68.0 / 18.0);
+
+    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(0.0);
+    public static final Rotation2d kMaxAngle = Rotation2d.fromDegrees(360.0);
 
     // sim constants
     public static final double kSimGearing = 1.0;
@@ -229,7 +240,7 @@ public final class Constants {
     public static final double kSimMOI = .001;
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
     public static final double kMinHeight = 0;
-    public static final double kMaxHeight = 70;
+    public static final double kMaxHeight = 71.5;
     public static final double kHeightTolerance = 0.25;
   }
 
@@ -249,6 +260,8 @@ public final class Constants {
   }
 
   public static final class AprilTagVisionConstants {
+    public static final LoggedTunableNumber kUseVision = new LoggedTunableNumber("Use Vision", 1);
+
     public static final AprilTagFieldLayout kAprilTagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
     public static final double kAprilTagWidth = Units.inchesToMeters(6.5);
@@ -276,57 +289,52 @@ public final class Constants {
     public static final Transform3d[] kCameraTransforms =
         new Transform3d[] {
           // front right (shooter)
-          new Transform3d(
-              Units.inchesToMeters(9.454),
-              Units.inchesToMeters(-5.541),
-              Units.inchesToMeters(7.766),
-              new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
-                  .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(-9.97)))),
+          // new Transform3d(
+          //     Units.inchesToMeters(9.454),
+          //     Units.inchesToMeters(-5.541),
+          //     Units.inchesToMeters(7.766),
+          //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
+          //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(-9.97)))),
 
-          // back right (intake)
-          new Transform3d(
-              new Translation3d(
-                  Units.inchesToMeters(-14.620),
-                  Units.inchesToMeters(4.673),
-                  Units.inchesToMeters(8.585)),
-              new Rotation3d(0.0, Units.degreesToRadians(-35), Units.degreesToRadians(180 - 10))),
+          // // back right (intake)
+          // new Transform3d(
+          //     new Translation3d(
+          //         Units.inchesToMeters(-14.620),
+          //         Units.inchesToMeters(4.673),
+          //         Units.inchesToMeters(8.585)),
+          //     new Rotation3d(0.0, Units.degreesToRadians(-35), Units.degreesToRadians(180 -
+          // 10))),
 
-          // back left (intake)
-          new Transform3d(
-              new Translation3d(
-                  Units.inchesToMeters(-14.620),
-                  Units.inchesToMeters(4.673),
-                  Units.inchesToMeters(8.585)),
-              new Rotation3d(0.0, Units.degreesToRadians(-35), Units.degreesToRadians(180 - 10))),
+          // // back left (intake)
+          // new Transform3d(
+          //     new Translation3d(
+          //         Units.inchesToMeters(-14.620),
+          //         Units.inchesToMeters(4.673),
+          //         Units.inchesToMeters(8.585)),
+          //     new Rotation3d(0.0, Units.degreesToRadians(-35), Units.degreesToRadians(180 -
+          // 10))),
 
-          // front left (shooter)
+          // // front left (shooter)
+          // new Transform3d(
+          //     Units.inchesToMeters(9.454),
+          //     Units.inchesToMeters(5.541),
+          //     Units.inchesToMeters(7.766),
+          //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
+          //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
           new Transform3d(
-              Units.inchesToMeters(9.454),
-              Units.inchesToMeters(5.541),
-              Units.inchesToMeters(7.766),
-              new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
-                  .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
+              Inches.of(7.533),
+              Inches.of(-12.433),
+              Inches.of(7.416),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-35), Degrees.of(-10))),
+          new Transform3d(),
+          new Transform3d(),
+          new Transform3d(),
         };
 
     // tolerances for using the vision rotation, temp values
-    public static final double kRotationErrorThreshold = 0.1;
-    public static final double kRotationDistanceThreshold = Units.inchesToMeters(8);
+    public static final double kRotationErrorThreshold = 0.3;
+    public static final double kRotationDistanceThreshold = Units.inchesToMeters(200);
     public static final double kRotationSpeedThreshold = 0.2; // m/s
-
-    public static final int kCalibIndex = 3;
-
-    public static final LoggedTunableNumber transformCameraX =
-        new LoggedTunableNumber("cameraX", kCameraTransforms[kCalibIndex].getX());
-    public static final LoggedTunableNumber cameraY =
-        new LoggedTunableNumber("cameraY", kCameraTransforms[kCalibIndex].getY());
-    public static final LoggedTunableNumber cameraZ =
-        new LoggedTunableNumber("cameraZ", kCameraTransforms[kCalibIndex].getZ());
-    public static final LoggedTunableNumber cameraRoll =
-        new LoggedTunableNumber("cameraRoll", kCameraTransforms[kCalibIndex].getRotation().getX());
-    public static final LoggedTunableNumber cameraPitch =
-        new LoggedTunableNumber("cameraPitch", kCameraTransforms[kCalibIndex].getRotation().getY());
-    public static final LoggedTunableNumber cameraYaw =
-        new LoggedTunableNumber("cameraYaw", kCameraTransforms[kCalibIndex].getRotation().getZ());
   }
 
   public static final class IntakeConstants {
@@ -401,14 +409,14 @@ public final class Constants {
     // the offset needs to be so that it starts at 180 degrees (all the way out)
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
-    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(-70.50);
+    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(-72.50);
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
     public static final double kRollerPositionTolerance = 10.0; // degrees
 
     // how many degrees to move after photoelectric is tripped
     public static final LoggedTunableNumber kRollerIndexingPosition =
-        new LoggedTunableNumber("Manipulator Roller Indexing Position", 0.0);
+        new LoggedTunableNumber("Manipulator Roller Indexing Position", 150.0);
 
     public static final LoggedTunableNumber kWristP = new LoggedTunableNumber("Wrist P", 55.0);
     public static final LoggedTunableNumber kWristI = new LoggedTunableNumber("Wrist I", 0.0);
@@ -417,31 +425,38 @@ public final class Constants {
     public static final LoggedTunableNumber kWristKG = new LoggedTunableNumber("Wrist kG", 0.0);
 
     public static final LoggedTunableNumber kWristStowAngle =
-        new LoggedTunableNumber("Wrist Stow Angle", 0.0);
+        new LoggedTunableNumber("Wrist Stow Angle", 100.0);
     public static final LoggedTunableNumber kWristIntakeAngle =
-        new LoggedTunableNumber("Wrist Intake Angle", 50.0);
+        new LoggedTunableNumber("Wrist Intake Angle", 100.0);
     public static final LoggedTunableNumber kWristScoringOffset =
         new LoggedTunableNumber("Wrist Scoring Offset", 0.0);
     public static final LoggedTunableNumber kWristAlgaeDescoringAngle =
         new LoggedTunableNumber("Wrist Algae Descoring Angle", 0.0);
+    public static final LoggedTunableNumber kWristAlgaeHoldAngle =
+        new LoggedTunableNumber("Wrist Algae Hold Angle", 0.0);
+
+    public static final LoggedTunableNumber kRollerAlgaeCurrentThreshold =
+        new LoggedTunableNumber("Roller Algae Current Threshold", 0.5);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Manipulator Roller Intake Voltage", 2.0);
-    public static final LoggedTunableNumber kRollerScoringVoltage =
-        new LoggedTunableNumber("Manipulator Roller Scoring Voltage", 0.0);
+        new LoggedTunableNumber("Manipulator Roller Intake Voltage", 5.0);
+    public static final LoggedTunableNumber kRollerLowerScoringVoltage =
+        new LoggedTunableNumber("Manipulator Roller Lower Scoring Voltage", 2.25);
+    public static final LoggedTunableNumber kRollerUpperScoringVoltage =
+        new LoggedTunableNumber("Manipulator Roller Upper Scoring Voltage", 5.0);
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", -2.0);
 
     public static final LoggedTunableNumber kRollerP =
-        new LoggedTunableNumber("Manipulator Roller P", 0.0);
+        new LoggedTunableNumber("Manipulator Roller P", 20.0);
     public static final LoggedTunableNumber kRollerI =
         new LoggedTunableNumber("Manipulator Roller I", 0.0);
     public static final LoggedTunableNumber kRollerD =
         new LoggedTunableNumber("Manipulator Roller D", 0.0);
     public static final LoggedTunableNumber kRollerKS =
-        new LoggedTunableNumber("Manipulator Roller kS", 0.0);
+        new LoggedTunableNumber("Manipulator Roller kS", 0.22);
 
     // Simulation constants
     public static final DCMotor kWristSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -462,21 +477,17 @@ public final class Constants {
 
   public static final class CurrentLimitConstants {
     // Drive
-    public static final double kDriveDefaultSupplyCurrentLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 75.0;
+    public static final double kDriveDefaultSupplyCurrentLimit = 75.0;
     public static final double kDriveDefaultStatorCurrentLimit = 180.0;
 
-    public static final double kTurnDefaultSupplyCurrentLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 60.0;
+    public static final double kTurnDefaultSupplyCurrentLimit = 60.0;
     public static final double kTurnDefaultStatorCurrentLimit = 120.0;
 
     // Intake
-    public static final double kIntakePivotDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kIntakePivotDefaultSupplyLimit = 80.0;
     public static final double kIntakePivotDefaultStatorLimit = 120.0;
 
-    public static final double kIntakeRollerDefaultSupplyLimit =
-        kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
     public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
     // Indexer
@@ -495,7 +506,7 @@ public final class Constants {
     public static final double kElevatorDefaultStatorLimit = 95.0;
 
     // Climb
-    public static final double kClimbDefaultSupplyLimit = kCurrentMode == Mode.PROTO ? 5.0 : 80.0;
+    public static final double kClimbDefaultSupplyLimit = 80.0;
     public static final double kClimbDefaultStatorLimit = 120.0;
   }
 
@@ -507,7 +518,7 @@ public final class Constants {
     public static final LoggedTunableNumber kIndexerIdleVoltage =
         new LoggedTunableNumber("Indexer Idle Voltage", 0.0);
     public static final LoggedTunableNumber kIndexerIndexingVoltage =
-        new LoggedTunableNumber("Indexer Indexing Voltage", 2.0);
+        new LoggedTunableNumber("Indexer Indexing Voltage", 7.75);
 
     // Simulation constants
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -528,7 +539,8 @@ public final class Constants {
     public static final int kBackLeftTurn = 7;
     public static final int kBackLeftCancoder = 8;
 
-    public static final int kBackRightDrive = 9;
+    // TODO: change back when we swap intake back
+    public static final int kBackRightDrive = 45;
     public static final int kBackRightTurn = 10;
     public static final int kBackRightCancoder = 11;
 

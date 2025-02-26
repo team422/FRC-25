@@ -6,14 +6,18 @@
 // the root directory of this project.
 package frc.lib.littletonUtils;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Angle;
 
 /** Geometry utilities for working with translations, rotations, transforms, and poses. */
 public class GeomUtil {
@@ -147,5 +151,33 @@ public class GeomUtil {
    */
   public static Pose2d withRotation(Pose2d pose, Rotation2d rotation) {
     return new Pose2d(pose.getTranslation(), rotation);
+  }
+
+  /**
+   * Constructs a Rotation3d by applying pitch, roll, and yaw values individually
+   *
+   * @param pitch The pitch value in radians
+   * @param roll The roll value in radians
+   * @param yaw The yaw value in radians
+   * @return The resulting rotation
+   */
+  public static Rotation3d constructRotation3d(double pitch, double roll, double yaw) {
+    return new Rotation3d(roll, 0, 0)
+        .rotateBy(new Rotation3d(0, pitch, 0))
+        .rotateBy(new Rotation3d(0, 0, yaw));
+  }
+
+  /**
+   * Constructs a Rotation3d by applying pitch, roll, and yaw values individually
+   *
+   * @param pitch The pitch angle
+   * @param roll The roll angle
+   * @param yaw The yaw angle
+   * @return The resulting rotation
+   */
+  public static Rotation3d constructRotation3d(Angle pitch, Angle roll, Angle yaw) {
+    return new Rotation3d(roll, Degrees.zero(), Degrees.zero())
+        .rotateBy(new Rotation3d(Degrees.zero(), pitch, Degrees.zero()))
+        .rotateBy(new Rotation3d(Degrees.zero(), Degrees.zero(), yaw));
   }
 }

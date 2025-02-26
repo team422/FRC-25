@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -24,7 +25,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.Ports;
-import org.littletonrobotics.junction.Logger;
 
 public class ElevatorIOKraken implements ElevatorIO {
   private TalonFX m_leadingMotor;
@@ -174,6 +174,8 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   @Override
   public void setDesiredHeight(double inches) {
+    inches = MathUtil.clamp(inches, ElevatorConstants.kMinHeight, ElevatorConstants.kMaxHeight);
+
     // feedback
     m_desiredHeight = inches;
     // m_leadingMotor.setControl(m_magicMotion.withPosition(meters));
@@ -186,7 +188,6 @@ public class ElevatorIOKraken implements ElevatorIO {
   @Override
   public void setPIDFF(
       int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG) {
-    Logger.recordOutput("set ks ", kS);
     var slotConfigs =
         new SlotConfigs()
             .withKP(kP)

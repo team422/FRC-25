@@ -20,6 +20,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.RobotState;
@@ -45,9 +46,9 @@ public class Module {
     // Switch constants based on mode (the physics simulator is treated as a
     // separate robot with different tuning)
     if (RobotBase.isReal()) {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.1, 0.13);
-      m_io.setDrivePID(0.1, 0.0, 0.0);
-      m_io.setTurnPID(100.0, 0.0, 0.0);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.229, 0.138);
+      m_io.setDrivePID(1.0, 0.0, 0.0);
+      m_io.setTurnPID(300.0, 0.0, 0.0);
     } else {
       m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13);
       m_io.setDrivePID(0.1, 0.0, 0.0);
@@ -106,6 +107,8 @@ public class Module {
 
   /** Runs the module with the specified setpoint state. */
   public void runSetpoint(SwerveModuleState state) {
+    state.optimize(getAngle());
+
     double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.kWheelRadius;
 
     m_io.setDriveVelocity(speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec));
@@ -118,11 +121,13 @@ public class Module {
     m_io.setTurnPosition(new Rotation2d());
 
     // Open loop drive control
+    Logger.recordOutput("Module/character", Timer.getFPGATimestamp());
     m_io.setDriveRawOutput(output);
   }
 
   /** Disables all outputs to motors. */
   public void stop() {
+    Logger.recordOutput("Module/stop", Timer.getFPGATimestamp());
     m_io.setDriveRawOutput(0.0);
     m_io.setTurnRawOutput(0.0);
   }

@@ -1,5 +1,7 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -99,10 +101,11 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
-        m_intake =
-            new Intake(
-                new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        // TODO: re-enable this when the algae intake is re-installed
+        m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
+        // new Intake(
+        //     new IntakeRollerIOKraken(Ports.kIntakeRoller),
+        //     new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
 
@@ -285,6 +288,14 @@ public class RobotContainer {
             false));
 
     m_driverControls
+        .resetFieldCentric()
+        .onTrue(
+            Commands.runOnce(
+                () ->
+                    m_drive.setPose(
+                        new Pose2d(m_drive.getPose().getTranslation(), new Rotation2d()))));
+
+    m_driverControls
         .coralIntake()
         .onTrue(
             Commands.runOnce(
@@ -303,11 +314,6 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().manageCoralOuttakePressed();
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().manageCoralOuttakeRelease();
                 }));
 
     m_driverControls

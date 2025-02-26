@@ -39,6 +39,7 @@ public class ClimbIOSim implements ClimbIO {
     inputs.desiredPositionDegrees = m_controller.getSetpoint();
     inputs.voltage = m_voltage;
     inputs.current = m_sim.getCurrentDrawAmps();
+    inputs.motorIsConnected = false;
   }
 
   @Override
