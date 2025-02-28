@@ -181,6 +181,7 @@ public class RobotState {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
+          Logger.recordOutput("WE CHANGED", Timer.getFPGATimestamp());
           m_drive.setPose(new Pose2d());
         },
         m_resetOdometry);
@@ -251,8 +252,8 @@ public class RobotState {
       if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
         m_elevator.setDesiredHeight(setpoint.elevatorHeight());
       }
-      // don't deploy manipulator until we're at the elevator setpoint (L4 only)
-      if (!m_elevator.atSetpoint()) {
+      // don't deploy manipulator until we're at the elevator setpoint
+      if (!m_elevator.atSetpoint(10.0)) {
         if (!EqualsUtil.epsilonEquals(
             setpoint.manipulatorAngle().getRadians(),
             m_manipulator.getDesiredWristAngle().getRadians())) {
@@ -283,8 +284,8 @@ public class RobotState {
     if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
       m_elevator.setDesiredHeight(setpoint.elevatorHeight());
     }
-    // don't deploy manipulator until we're at the elevator setpoint (L4 only)
-    if (!(m_desiredReefHeight == ReefHeight.L4 && !m_elevator.atSetpoint())) {
+    // don't deploy manipulator until we're at the elevator setpoint
+    if (m_elevator.atSetpoint(10.0)) {
       if (!EqualsUtil.epsilonEquals(
           setpoint.manipulatorAngle().getRadians(),
           m_manipulator.getDesiredWristAngle().getRadians())) {
@@ -312,15 +313,25 @@ public class RobotState {
     // TODO: when we trust the vision more we will add full auto score (rollers decide when to go)
   }
 
+  // this is a hack but trust
+  private boolean m_hasRunASingleCycle = false;
+
   public void algaeDescoringPeriodic() {
     // each step in the sequence is identical in terms of whether to advance to the next step
     int index = kAlgaeDescoreSequence.indexOf(m_profiles.getCurrentProfile());
     Logger.recordOutput("AlgaeDescore/ElevatorAtSetpoint", m_elevator.atSetpoint());
     Logger.recordOutput("AlgaeDescore/ManipulatorAtSetpoint", m_manipulator.atSetpoint());
+    Logger.recordOutput("AlgaeDescore/Index", index);
     if (m_elevator.atSetpoint()
         && m_manipulator.atSetpoint()
-        && index < kAlgaeDescoreSequence.size() - 1) {
-      m_profiles.setCurrentProfile(kAlgaeDescoreSequence.get(index + 1));
+        && index < kAlgaeDescoreSequence.size() - 2
+        && m_hasRunASingleCycle) {
+      Logger.recordOutput("AlgaeDescore/TransitionTime", Timer.getFPGATimestamp());
+      updateRobotAction(kAlgaeDescoreSequence.get(index + 1));
+    }
+
+    if (!m_hasRunASingleCycle) {
+      m_hasRunASingleCycle = true;
     }
   }
 
@@ -382,7 +393,7 @@ public class RobotState {
       case kCoralIntaking:
         // TODO: intake needs to move out a little so it doesn't get in way of funnel
         m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
+        m_intake.updateState(IntakeState.kCoralIntaking);
         m_indexer.updateState(IndexerState.kIdle);
         m_climb.updateState(ClimbState.kStow);
         m_elevator.updateState(ElevatorState.kIntaking);
@@ -470,6 +481,8 @@ public class RobotState {
     // stop the timer so a previous action doesn't affect the new one
     m_timer.stop();
     m_timer.reset();
+
+    m_hasRunASingleCycle = false;
   }
 
   public RobotAction getCurrentAction() {

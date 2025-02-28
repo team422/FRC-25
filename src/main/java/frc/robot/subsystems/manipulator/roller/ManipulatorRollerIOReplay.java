@@ -34,4 +34,9 @@ public class ManipulatorRollerIOReplay implements ManipulatorRollerIO {
   public double getCurrent() {
     return 0.0;
   }
+
+  @Override
+  public double getAcceleration() {
+    return 0.0;
+  }
 }

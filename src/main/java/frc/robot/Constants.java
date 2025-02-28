@@ -5,10 +5,11 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Pounds;
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -159,8 +160,8 @@ public final class Constants {
 
     public static final double kClimbReduction = (5.0 / 1.0) * (4.0 / 1.0) * (68.0 / 18.0);
 
-    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(0.0);
-    public static final Rotation2d kMaxAngle = Rotation2d.fromDegrees(360.0);
+    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(5.0);
+    public static final Rotation2d kMaxAngle = Rotation2d.fromDegrees(600.0);
 
     // sim constants
     public static final double kSimGearing = 1.0;
@@ -222,6 +223,8 @@ public final class Constants {
         new LoggedTunableNumber("Elevator Algae Descore Final Height", 0.0);
     public static final LoggedTunableNumber kBargeScoreHeight =
         new LoggedTunableNumber("Elevator Barge Score Height", 0.0);
+    public static final LoggedTunableNumber kAlgaeHoldHeight =
+        new LoggedTunableNumber("Algae Hold Height", 5.0);
 
     public static final double kDiameter = 2.256; // inches
     public static final double kGearRatio = 54.0 / 12.0;
@@ -232,8 +235,10 @@ public final class Constants {
         new LoggedTunableNumber("Elevator/Offset", Units.inchesToMeters(0));
 
     // this is the more than the max amount that the belts will ever skip
-    public static final double kMaxSkip = 1.5;
+    public static final double kMaxSkip = 4.0;
     public static final LoggedTunableNumber kSlamTime = new LoggedTunableNumber("Slam Time", 0.2);
+    public static final LoggedTunableNumber kSlamVoltage =
+        new LoggedTunableNumber("Slam Voltage", -3.0);
 
     // Simulation constants
     public static final double kSimGearing = kGearRatio;
@@ -263,7 +268,19 @@ public final class Constants {
     public static final LoggedTunableNumber kUseVision = new LoggedTunableNumber("Use Vision", 1);
 
     public static final AprilTagFieldLayout kAprilTagLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+        new AprilTagFieldLayout(
+            List.of(
+                new AprilTag(
+                    7,
+                    new Pose3d(
+                        13.890498,
+                        4.0208200000000005,
+                        0.3508375,
+                        new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0))))),
+            17.548,
+            8.042);
+    // public static final AprilTagFieldLayout kAprilTagLayout =
+    //     AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
     public static final double kAprilTagWidth = Units.inchesToMeters(6.5);
 
     public static final double kAmbiguityThreshold = 0.4;
@@ -348,28 +365,31 @@ public final class Constants {
     // the offset needs to be so that it starts at 90 degrees (top)
     // public static final Rotation2d kPivotOffset =
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
-    public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(-284.1);
-    // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
+    // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(-284.1);
+    public static final Rotation2d kPivotOffset =
+        Rotation2d.fromDegrees(-82.6 * kPivotAbsoluteEncoderGearRatio);
 
     public static final double kRollerCurrentGamepieceThreshold =
-        0.5; // amps to be considered holding a gamepiece, temp value
+        1; // amps to be considered holding a gamepiece, temp value
     public static final double kRollerAccelGamepieceThreshold =
-        1.0; // rotations per second squared to be considered holding a gamepiece, temp value
+        999; // rotations per second squared to be considered holding a gamepiece, temp value
 
-    public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 0.0);
+    public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 40.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
     public static final LoggedTunableNumber kPivotD = new LoggedTunableNumber("Pivot D", 0.0);
-    public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.0);
+    public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.23);
     public static final LoggedTunableNumber kPivotKG = new LoggedTunableNumber("Pivot kG", 0.0);
 
     public static final LoggedTunableNumber kPivotStowAngle =
-        new LoggedTunableNumber("Pivot Stow Angle", 0.0);
+        new LoggedTunableNumber("Pivot Stow Angle", 5.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
-        new LoggedTunableNumber("Pivot Intake Angle", 150.0);
+        new LoggedTunableNumber("Pivot Intake Angle", 60.0);
     public static final LoggedTunableNumber kPivotHoldAngle =
-        new LoggedTunableNumber("Pivot Hold Angle", 75.0);
+        new LoggedTunableNumber("Pivot Hold Angle", 25.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =
-        new LoggedTunableNumber("Pivot Outtake Angle", 150.0);
+        new LoggedTunableNumber("Pivot Outtake Angle", 25.0);
+    public static final LoggedTunableNumber kPivotCoralIntakeAngle =
+        new LoggedTunableNumber("Pivot Coral Intake Angle", 20.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
@@ -409,7 +429,8 @@ public final class Constants {
     // the offset needs to be so that it starts at 180 degrees (all the way out)
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
-    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(-72.50);
+    public static final Rotation2d kWristOffset =
+        Rotation2d.fromDegrees(-40.34 * kWristAbsoluteEncoderGearRatio);
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
     public static final double kRollerPositionTolerance = 10.0; // degrees
@@ -436,7 +457,9 @@ public final class Constants {
         new LoggedTunableNumber("Wrist Algae Hold Angle", 0.0);
 
     public static final LoggedTunableNumber kRollerAlgaeCurrentThreshold =
-        new LoggedTunableNumber("Roller Algae Current Threshold", 0.5);
+        new LoggedTunableNumber("Roller Algae Current Threshold", 2.0);
+    public static final LoggedTunableNumber kRollerAlgaeAccelerationThreshold =
+        new LoggedTunableNumber("Roller Algae Acceleration Threshold", -5);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
@@ -448,6 +471,8 @@ public final class Constants {
         new LoggedTunableNumber("Manipulator Roller Upper Scoring Voltage", 5.0);
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", -2.0);
+    public static final LoggedTunableNumber kRollerAlgaeHoldVoltage =
+        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 0.0);
 
     public static final LoggedTunableNumber kRollerP =
         new LoggedTunableNumber("Manipulator Roller P", 20.0);
@@ -539,8 +564,7 @@ public final class Constants {
     public static final int kBackLeftTurn = 7;
     public static final int kBackLeftCancoder = 8;
 
-    // TODO: change back when we swap intake back
-    public static final int kBackRightDrive = 45;
+    public static final int kBackRightDrive = 9;
     public static final int kBackRightTurn = 10;
     public static final int kBackRightCancoder = 11;
 

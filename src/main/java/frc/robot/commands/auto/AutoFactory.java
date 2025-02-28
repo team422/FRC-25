@@ -95,7 +95,8 @@ public class AutoFactory {
 
     AutoBuilder.configure(
         m_drive::getPose,
-        (Pose2d pose) -> {},
+        // turn off when we have vision
+        m_drive::setPose,
         m_drive::getChassisSpeeds,
         m_drive::setDesiredChassisSpeeds,
         new PPHolonomicDriveController(kLinearPID, kAngularPID, 0.02),
@@ -105,10 +106,10 @@ public class AutoFactory {
             new ModuleConfig(
                 DriveConstants.kWheelRadius,
                 DriveConstants.kMaxLinearSpeed,
-                1.0,
+                1.7,
                 DCMotor.getKrakenX60Foc(1),
                 CurrentLimitConstants.kDriveDefaultSupplyCurrentLimit,
-                4),
+                1),
             Meters.of(DriveConstants.kTrackWidthX)),
         () -> {
           // Boolean supplier that controls when the path will be mirrored for the red alliance
@@ -139,6 +140,7 @@ public class AutoFactory {
 
   public Command getAutoCommand(String name) {
     Command autoCommand = AutoBuilder.buildAuto(name);
-    return autoCommand.andThen(Commands.runOnce(m_drive::stopWithX));
+    // return autoCommand.andThen(Commands.runOnce(m_drive::stopWithX));
+    return autoCommand;
   }
 }

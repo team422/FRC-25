@@ -224,10 +224,6 @@ public class Manipulator extends SubsystemBase {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeDescoringAngle.get()));
 
-    if (m_rollerIO.getCurrent() > ManipulatorConstants.kRollerAlgaeCurrentThreshold.get()) {
-      updateState(ManipulatorState.kAlgaeHold);
-    }
-
     if (m_runRollerAlgaeDescoring) {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeDescoringVoltage.get());
     } else {
@@ -238,7 +234,7 @@ public class Manipulator extends SubsystemBase {
   public void algaeHoldPeriodic() {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeHoldAngle.get()));
-    m_rollerIO.setVoltage(0.0);
+    m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
   }
 
   public void fullTuningPeriodic() {
@@ -272,7 +268,7 @@ public class Manipulator extends SubsystemBase {
   }
 
   public boolean atSetpoint() {
-    return m_wristIO.atSetpoint();
+    return m_wristIO.atSetpoint() || m_profiles.getCurrentProfile() == ManipulatorState.kAlgaeHold;
   }
 
   public boolean hasGamePiece() {

@@ -39,4 +39,6 @@ public interface DriverControls {
     // if we have any input on the joysticks, we want to cancel the drive to point command
     return new Trigger(() -> getForward() > 0.1 || getStrafe() > 0.1 || getTurn() > 0.1);
   }
+
+  public Trigger zeroElevator();
 }

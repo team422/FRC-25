@@ -136,6 +136,6 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     double current = m_motorCurrent.getValueAsDouble();
     double accel = m_motorAcceleration.getValueAsDouble();
     return current > IntakeConstants.kRollerCurrentGamepieceThreshold
-        && accel < IntakeConstants.kRollerAccelGamepieceThreshold;
+        && accel > IntakeConstants.kRollerAccelGamepieceThreshold;
   }
 }

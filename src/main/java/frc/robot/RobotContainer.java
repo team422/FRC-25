@@ -43,6 +43,7 @@ import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
 import frc.robot.subsystems.led.Led;
 import frc.robot.subsystems.manipulator.Manipulator;
+import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOPhotoelectric;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIOReplay;
 import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIOKraken;
@@ -101,11 +102,10 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
-        // TODO: re-enable this when the algae intake is re-installed
-        m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
-        // new Intake(
-        //     new IntakeRollerIOKraken(Ports.kIntakeRoller),
-        //     new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        m_intake =
+            new Intake(
+                new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
 
@@ -118,7 +118,8 @@ public class RobotContainer {
         m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
 
         m_elevator =
-            new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+            // new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+            new Elevator(new ElevatorIOReplay());
 
         break;
 
@@ -295,18 +296,22 @@ public class RobotContainer {
                     m_drive.setPose(
                         new Pose2d(m_drive.getPose().getTranslation(), new Rotation2d()))));
 
+    // if anyone is reading this, here's a lesson
+    // don't use wpilib toggle, it's not good
     m_driverControls
         .coralIntake()
-        .onTrue(
+        .toggleOnTrue(
             Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
-                }))
-        .onFalse(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setDefaultAction();
-                }));
+                    () -> {
+                      RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+                    })
+                .andThen(Commands.idle())
+                .onlyWhile(
+                    () -> RobotState.getInstance().getCurrentAction() == RobotAction.kCoralIntaking)
+                .handleInterrupt(
+                    () -> {
+                      RobotState.getInstance().setDefaultAction();
+                    }));
 
     m_driverControls
         .coralOuttake()
@@ -424,7 +429,17 @@ public class RobotContainer {
         .onFalse(
             Commands.runOnce(
                 () -> {
+                  // we just assume that we have an algae until something else cancels it
+                  m_manipulator.updateState(ManipulatorState.kAlgaeHold);
                   RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .zeroElevator()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_elevator.zeroElevator();
                 }));
   }
 

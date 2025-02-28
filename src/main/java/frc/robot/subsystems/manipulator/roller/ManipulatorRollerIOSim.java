@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Radians;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.ManipulatorConstants;
@@ -41,6 +42,7 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
     inputs.positionControl = m_positionControl;
     inputs.desiredPositionDegrees = m_positionController.getSetpoint();
     inputs.velocityRPS = m_sim.getAngularVelocityRPM() / 60.0;
+    inputs.accelerationRPSSq = getAcceleration();
     inputs.current = m_sim.getCurrentDrawAmps();
     inputs.voltage = m_voltage;
 
@@ -85,5 +87,10 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
   @Override
   public double getCurrent() {
     return m_sim.getCurrentDrawAmps();
+  }
+
+  @Override
+  public double getAcceleration() {
+    return Units.radiansToRotations(m_sim.getAngularAccelerationRadPerSecSq());
   }
 }

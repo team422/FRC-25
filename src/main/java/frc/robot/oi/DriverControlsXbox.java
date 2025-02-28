@@ -82,11 +82,16 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public Trigger algaeIntakeOuttake() {
-    return m_controller.leftTrigger(0.1);
+    return m_controller.rightTrigger(0.1);
   }
 
   @Override
   public Trigger algaeDescore() {
-    return m_controller.rightTrigger(0.1);
+    return m_controller.leftTrigger(0.1);
+  }
+
+  @Override
+  public Trigger zeroElevator() {
+    return m_controller.back();
   }
 }

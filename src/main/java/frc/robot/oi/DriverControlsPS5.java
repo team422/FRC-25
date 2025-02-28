@@ -82,11 +82,16 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger algaeIntakeOuttake() {
-    return m_controller.L2();
+    return m_controller.R2();
   }
 
   @Override
   public Trigger algaeDescore() {
-    return m_controller.R2();
+    return m_controller.L2();
+  }
+
+  @Override
+  public Trigger zeroElevator() {
+    return m_controller.options();
   }
 }

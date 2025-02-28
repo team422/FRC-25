@@ -10,6 +10,7 @@ public interface ManipulatorRollerIO {
     public boolean positionControl;
     public double desiredPositionDegrees;
     public double velocityRPS;
+    public double accelerationRPSSq;
     public double current;
     public double statorCurrent;
     public double voltage;
@@ -33,4 +34,6 @@ public interface ManipulatorRollerIO {
   public boolean withinPositionTolerance();
 
   public double getCurrent();
+
+  public double getAcceleration();
 }

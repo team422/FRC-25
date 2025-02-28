@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
@@ -33,6 +34,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   private StatusSignal<ConnectedMotorValue> m_connectedMotor;
   private StatusSignal<Angle> m_motorPosition;
   private StatusSignal<AngularVelocity> m_motorVelocity;
+  private StatusSignal<AngularAcceleration> m_motorAcceleration;
   private StatusSignal<Current> m_motorCurrent;
   private StatusSignal<Current> m_motorStatorCurrent;
   private StatusSignal<Voltage> m_motorVoltage;
@@ -75,20 +77,21 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     m_connectedMotor = m_motor.getConnectedMotor();
     m_motorPosition = m_motor.getPosition();
     m_motorVelocity = m_motor.getVelocity();
+    m_motorAcceleration = m_motor.getAcceleration();
     m_motorVoltage = m_motor.getMotorVoltage();
     m_motorCurrent = m_motor.getSupplyCurrent();
     m_motorStatorCurrent = m_motor.getStatorCurrent();
     m_motorTemperature = m_motor.getDeviceTemp();
 
     // this is important for our logic so we need to update it more frequently
-    BaseStatusSignal.setUpdateFrequencyForAll(100.0, m_motorPosition);
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        100.0, m_motorPosition, m_motorCurrent, m_motorAcceleration);
 
     // all of these are for logging so we can use a lower frequency
     BaseStatusSignal.setUpdateFrequencyForAll(
         75.0,
         m_connectedMotor,
         m_motorVelocity,
-        m_motorCurrent,
         m_motorStatorCurrent,
         m_motorVoltage,
         m_motorTemperature);
@@ -101,6 +104,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
               m_connectedMotor,
               m_motorPosition,
               m_motorVelocity,
+              m_motorAcceleration,
               m_motorCurrent,
               m_motorStatorCurrent,
               m_motorVoltage,
@@ -115,6 +119,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
           m_connectedMotor,
           m_motorPosition,
           m_motorVelocity,
+          m_motorAcceleration,
           m_motorCurrent,
           m_motorStatorCurrent,
           m_motorVoltage,
@@ -127,6 +132,7 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     inputs.positionControl = m_positionControl;
     inputs.desiredPositionDegrees = m_desiredPosition.in(Degrees);
     inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
+    inputs.accelerationRPSSq = m_motorAcceleration.getValueAsDouble();
     inputs.current = m_motorCurrent.getValueAsDouble();
     inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
     inputs.voltage = m_motorVoltage.getValueAsDouble();
@@ -181,5 +187,10 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
   @Override
   public double getCurrent() {
     return m_motorCurrent.getValueAsDouble();
+  }
+
+  @Override
+  public double getAcceleration() {
+    return m_motorAcceleration.getValueAsDouble();
   }
 }

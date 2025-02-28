@@ -20,7 +20,6 @@ public class SetpointGenerator {
   public static record RobotSetpoint(
       Pose2d drivePose, Rotation2d manipulatorAngle, double elevatorHeight) {}
 
-  // TODO: populate with real values
   private static final Map<ReefHeight, LoggedTunableNumber> kElevatorHeights =
       Map.of(
           ReefHeight.L1, new LoggedTunableNumber("Elevator L1 Height", 7.5),
@@ -30,10 +29,10 @@ public class SetpointGenerator {
 
   private static final Map<ReefHeight, LoggedTunableNumber> kManipulatorAngles =
       Map.of(
-          ReefHeight.L1, new LoggedTunableNumber("Wrist L1 Angle", 120.0),
-          ReefHeight.L2, new LoggedTunableNumber("Wrist L2 Angle", 63.0),
-          ReefHeight.L3, new LoggedTunableNumber("Wrist L3 Angle", 63.0),
-          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 50.0));
+          ReefHeight.L1, new LoggedTunableNumber("Wrist L1 Angle", 112.0),
+          ReefHeight.L2, new LoggedTunableNumber("Wrist L2 Angle", 55.0),
+          ReefHeight.L3, new LoggedTunableNumber("Wrist L3 Angle", 55.0),
+          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 42.0));
 
   // we need to move back a bit from the raw branch pose
   private static final double kDriveXOffset =

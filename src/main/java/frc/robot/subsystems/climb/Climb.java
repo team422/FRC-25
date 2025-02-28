@@ -45,6 +45,8 @@ public class Climb extends SubsystemBase {
     periodicHash.put(ClimbState.kDeploy, this::deployPeriodic);
 
     m_profiles = new SubsystemProfiles<Climb.ClimbState>(periodicHash, ClimbState.kStow);
+
+    zeroEncoder();
   }
 
   @Override
@@ -97,7 +99,7 @@ public class Climb extends SubsystemBase {
   }
 
   public void deployPeriodic() {
-    m_io.setSlot(1);
+    m_io.setSlot(0);
     m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbDeployPos.get()), 0.0);
   }
 

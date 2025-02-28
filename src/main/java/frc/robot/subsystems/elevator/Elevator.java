@@ -11,6 +11,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
+import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -247,7 +248,11 @@ public class Elevator extends SubsystemBase {
   public void stowPeriodic() {
     // wait for the manipulator to move out of the way before descending
     if (RobotState.getInstance().manipulatorAtSetpoint()) {
-      m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+      if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kAlgaeHold) {
+        m_io.setDesiredHeight(ElevatorConstants.kAlgaeHoldHeight.get());
+      } else {
+        m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+      }
     }
   }
 
@@ -276,7 +281,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public void slammingPeriodic() {
-    m_io.setVoltage(0);
+    m_io.setVoltage(ElevatorConstants.kSlamVoltage.get());
     if (m_timer.hasElapsed(ElevatorConstants.kSlamTime.get())) {
       m_io.zeroElevator();
       m_profiles.revertToLastProfile();
@@ -286,5 +291,13 @@ public class Elevator extends SubsystemBase {
 
   public boolean atSetpoint() {
     return m_io.atSetpoint();
+  }
+
+  public boolean atSetpoint(double tolerance) {
+    return Math.abs(m_io.getCurrHeight() - m_desiredHeight) < tolerance;
+  }
+
+  public void zeroElevator() {
+    m_io.zeroElevator();
   }
 }
