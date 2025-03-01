@@ -10,19 +10,19 @@ public class DriveIOCIM implements DriveIO {
   private SparkMax m_RR;
 
   public DriveIOCIM() {
-    m_LF = new SparkMax(0, MotorType.kBrushed);
-    m_LR = new SparkMax(1, MotorType.kBrushed);
-    m_RF = new SparkMax(2, MotorType.kBrushed);
+    m_LF = new SparkMax(1, MotorType.kBrushed);
+    m_LR = new SparkMax(2, MotorType.kBrushed);
+    m_RF = new SparkMax(4, MotorType.kBrushed);
     m_RR = new SparkMax(3, MotorType.kBrushed);
   }
 
   public SparkMax getMotor(int id) {
     switch (id) {
-      case 0:
-        return m_LF;
       case 1:
-        return m_LR;
+        return m_LF;
       case 2:
+        return m_LR;
+      case 4:
         return m_RF;
       case 3:
         return m_RR;

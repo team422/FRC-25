@@ -13,17 +13,17 @@
 
 package frc.robot.commands;
 
-import java.util.function.DoubleSupplier;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
+import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
 
   private DriveCommands() {}
 
-  public static Command arcadeDrive(Drive drive, DoubleSupplier xSupplier, DoubleSupplier omegaSupplier) {
+  public static Command arcadeDrive(
+      Drive drive, DoubleSupplier xSupplier, DoubleSupplier omegaSupplier) {
     return Commands.run(
         () -> {
           drive.arcadeDrive(xSupplier.getAsDouble(), omegaSupplier.getAsDouble());
