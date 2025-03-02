@@ -1,9 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.SubsystemProfiles;
@@ -25,9 +21,7 @@ public class Drive extends SubsystemBase {
   public Drive(DriveIO io) {
     m_io = io;
 
-    m_drivetrain = new DifferentialDrive(m_io.getMotor(0), m_io.getMotor(2));
-
-    configureMotors();
+    m_drivetrain = new DifferentialDrive(m_io::setLeft, m_io::setRight);
 
     m_driveInputs = new DriveInputsAutoLogged();
 
@@ -49,32 +43,5 @@ public class Drive extends SubsystemBase {
 
   public void arcadeDrive(double x, double omega) {
     m_drivetrain.arcadeDrive(x, omega);
-  }
-
-  public void configureMotors() {
-    SparkMaxConfig m_frontConfig = new SparkMaxConfig();
-    m_frontConfig.idleMode(IdleMode.kCoast);
-    m_io.getMotor(1)
-        .configure(
-            m_frontConfig,
-            ResetMode.kResetSafeParameters,
-            PersistMode.kPersistParameters); // front left
-    m_io.getMotor(4)
-        .configure(
-            m_frontConfig,
-            ResetMode.kResetSafeParameters,
-            PersistMode.kPersistParameters); // front right
-
-    SparkMaxConfig m_LRConfig = new SparkMaxConfig();
-    m_LRConfig.idleMode(IdleMode.kCoast);
-    m_LRConfig.follow(m_io.getMotor(1), true);
-    m_io.getMotor(2)
-        .configure(m_LRConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-    SparkMaxConfig m_RRConfig = new SparkMaxConfig();
-    m_RRConfig.idleMode(IdleMode.kCoast);
-    m_RRConfig.follow(m_io.getMotor(4), true);
-    m_io.getMotor(3)
-        .configure(m_RRConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 }

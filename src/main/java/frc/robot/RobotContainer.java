@@ -9,6 +9,7 @@ import frc.robot.oi.ControlsPS5;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOCIM;
 import frc.robot.subsystems.roller.Roller;
+import frc.robot.subsystems.roller.RollerIOCIM;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -31,6 +32,7 @@ public class RobotContainer {
   /** Configure the subsystems. */
   private void configureSubsystems() {
     m_drive = new Drive(new DriveIOCIM());
+    m_roller = new Roller(new RollerIOCIM());
     RobotState.startInstance(m_drive, m_roller);
   }
 

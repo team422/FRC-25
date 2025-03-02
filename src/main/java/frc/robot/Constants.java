@@ -23,6 +23,15 @@ public final class Constants {
     public static final double kCurrentLimit = 60.0;
   }
 
+  public class Ports {
+    public static final int kLFPort = 1;
+    public static final int kLRPort = 2;
+    public static final int KRFPort = 4;
+    public static final int kRRPort = 3;
+
+    public static final double kRollerPort = 5;
+  }
+
   public class RollerConstants {
     public static final double kRollerSpeed = 0.5;
   }

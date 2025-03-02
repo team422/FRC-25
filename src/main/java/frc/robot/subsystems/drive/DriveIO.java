@@ -1,6 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import com.revrobotics.spark.SparkMax;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface DriveIO {
@@ -13,5 +12,7 @@ public interface DriveIO {
 
   public void updateInputs(DriveInputs inputs);
 
-  public SparkMax getMotor(int id);
+  public void setLeft(double value);
+
+  public void setRight(double value);
 }

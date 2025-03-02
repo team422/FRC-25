@@ -27,6 +27,7 @@ public class DriveCommands {
     return Commands.run(
         () -> {
           drive.arcadeDrive(xSupplier.getAsDouble(), omegaSupplier.getAsDouble());
-        });
+        },
+        drive);
   }
 }

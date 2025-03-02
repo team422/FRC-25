@@ -1,6 +1,7 @@
 package frc.robot.oi;
 
 import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 public class ControlsPS5 implements Controls {
   private CommandPS5Controller m_controller;
@@ -17,5 +18,10 @@ public class ControlsPS5 implements Controls {
   @Override
   public double getRotation() {
     return m_controller.getRightX();
+  }
+
+  @Override
+  public Trigger roller() {
+    return m_controller.R2();
   }
 }
