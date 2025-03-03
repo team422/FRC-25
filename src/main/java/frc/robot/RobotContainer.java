@@ -9,8 +9,8 @@ import frc.robot.oi.ControlsPS5;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveIOCIM;
 import frc.robot.subsystems.roller.Roller;
-import frc.robot.subsystems.roller.RollerIOCIM;
 import frc.robot.subsystems.roller.Roller.RollerProfiles;
+import frc.robot.subsystems.roller.RollerIOCIM;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -45,16 +45,19 @@ public class RobotContainer {
   private void configureBindings() {
     m_drive.setDefaultCommand(
         DriveCommands.arcadeDrive(m_drive, m_controller::getMovement, m_controller::getRotation));
-        
-    m_controller.roller().onTrue(
-      Commands.runOnce(() -> {
-        m_roller.updateState(RollerProfiles.kOuttake);
-      })
-    ).onFalse(
-      Commands.runOnce(() -> {
-        m_roller.updateState(RollerProfiles.kIdle);
-      })
-    );
+
+    m_controller
+        .roller()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_roller.updateState(RollerProfiles.kOuttake);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  m_roller.updateState(RollerProfiles.kIdle);
+                }));
   }
 
   public Command getAutonomousCommand() {
