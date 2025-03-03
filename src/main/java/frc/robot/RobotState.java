@@ -59,7 +59,6 @@ public class RobotState {
       updateRobotAction(RobotAction.kTeleopDefault);
     }
   }
-
   public void onEnable() {}
 
   public void onDisable() {}

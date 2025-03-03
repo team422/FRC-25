@@ -19,7 +19,6 @@ public class Drive extends SubsystemBase {
   }
 
   public Drive(DriveIO io) {
-    m_io = io;
 
     m_drivetrain = new DifferentialDrive(m_io::setLeft, m_io::setRight);
 
@@ -35,7 +34,6 @@ public class Drive extends SubsystemBase {
 
     Logger.processInputs("Drive/Inputs", m_driveInputs);
     Logger.recordOutput("Drive/State", m_profiles.getCurrentProfile());
-
     m_io.updateInputs(m_driveInputs);
   }
 

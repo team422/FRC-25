@@ -7,7 +7,6 @@ public interface DriveIO {
   public class DriveInputs {
     public double[] voltage = {0, 0, 0, 0};
     public double[] current = {0, 0, 0, 0};
-    public double[] output = {0, 0, 0, 0};
   }
 
   public void updateInputs(DriveInputs inputs);
