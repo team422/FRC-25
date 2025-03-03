@@ -175,7 +175,7 @@ public class GeomUtil {
    * @param yaw The yaw angle
    * @return The resulting rotation
    */
-  public static Rotation3d constructRotation3d(Angle pitch, Angle roll, Angle yaw) {
+  public static Rotation3d constructRotation3d(Angle roll, Angle pitch, Angle yaw) {
     return new Rotation3d(roll, Degrees.zero(), Degrees.zero())
         .rotateBy(new Rotation3d(Degrees.zero(), pitch, Degrees.zero()))
         .rotateBy(new Rotation3d(Degrees.zero(), Degrees.zero(), yaw));

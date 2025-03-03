@@ -50,10 +50,6 @@ public class DriveToPoint extends Command {
 
   public void setTargetPose(Pose2d targetPose) {
     m_targetPose = targetPose;
-    if (isScheduled()) {
-      cancel();
-      schedule();
-    }
   }
 
   @Override

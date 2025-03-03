@@ -53,6 +53,7 @@ public class Manipulator extends SubsystemBase {
     kScoring,
     kAlgaeDescoring,
     kAlgaeHold,
+    kAlgaeOuttake,
     kFullTuning,
   }
 
@@ -71,6 +72,7 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kScoring, this::scoringPeriodic);
     periodicHash.put(ManipulatorState.kAlgaeDescoring, this::algaeDescoringPeriodic);
     periodicHash.put(ManipulatorState.kAlgaeHold, this::algaeHoldPeriodic);
+    periodicHash.put(ManipulatorState.kAlgaeOuttake, this::algaeOuttakePeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
 
@@ -237,6 +239,12 @@ public class Manipulator extends SubsystemBase {
     m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
   }
 
+  public void algaeOuttakePeriodic() {
+    m_wristIO.setDesiredAngle(
+        Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeOuttakeAngle.get()));
+    m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeOuttakeVoltage.get());
+  }
+
   public void fullTuningPeriodic() {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(FullTuningConstants.kManipulatorWristSetpoint.get()));
@@ -259,12 +267,12 @@ public class Manipulator extends SubsystemBase {
     m_runRollerAlgaeDescoring = false;
   }
 
-  public void manageStowOrHold() {
+  public ManipulatorState getStowOrHold() {
     if (m_profiles.getCurrentProfile() == ManipulatorState.kAlgaeHold) {
-      return;
+      return ManipulatorState.kAlgaeHold;
     }
 
-    updateState(ManipulatorState.kStow);
+    return ManipulatorState.kStow;
   }
 
   public boolean atSetpoint() {

@@ -13,6 +13,7 @@ import frc.robot.subsystems.intake.pivot.PivotIO;
 import frc.robot.subsystems.intake.pivot.PivotInputsAutoLogged;
 import frc.robot.subsystems.intake.roller.IntakeRollerIO;
 import frc.robot.subsystems.intake.roller.IntakeRollerInputsAutoLogged;
+import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -139,30 +140,36 @@ public class Intake extends SubsystemBase {
   }
 
   public void coralIntakingPeriodic() {
-    m_rollerIO.setVoltage(0.0);
-    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotCoralIntakeAngle.get()));
+    // when we have a game piece (update to indexing) the intake can come back
+    if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kIntaking) {
+      m_pivotIO.setDesiredAngle(
+          Rotation2d.fromDegrees(IntakeConstants.kPivotCoralIntakeAngle.get()));
+    } else {
+      m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()));
+    }
+    m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeVoltage.get());
   }
 
   public void fullTuningPeriodic() {
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
   }
 
-  public void manageStowOrHold() {
+  public IntakeState getStowOrHold() {
     // if we have a game piece, do nothing and continue to hold
     // otherwise, stow
     if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
-      return;
+      return IntakeState.kGamepieceHold;
     }
-    updateState(IntakeState.kStow);
+    return IntakeState.kStow;
   }
 
-  public void manageIntakeOrOuttake() {
+  public IntakeState getIntakeOrOuttake() {
     // our button is a toggle, so we need to check if we are holding a game piece
     // if we are, outtake
     if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
-      updateState(IntakeState.kOuttake);
+      return IntakeState.kOuttake;
     } else {
-      updateState(IntakeState.kIntake);
+      return IntakeState.kIntake;
     }
   }
 

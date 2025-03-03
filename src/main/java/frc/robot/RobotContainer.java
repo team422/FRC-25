@@ -17,10 +17,12 @@ import frc.robot.oi.DriverControlsPS5;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.climb.Climb;
+import frc.robot.subsystems.climb.Climb.ClimbState;
 import frc.robot.subsystems.climb.ClimbIOKraken;
 import frc.robot.subsystems.climb.ClimbIOReplay;
 import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
@@ -102,24 +104,28 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
+        // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
         m_intake =
             new Intake(
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+        // m_indexer = new Indexer(new IndexerIOReplay());
 
         m_manipulator =
             new Manipulator(
                 new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
                 new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
                 new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+        // new ManipulatorRollerIOReplay(), new WristIOReplay(), new CoralDetectorIOReplay());
 
         m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
+        // m_climb = new Climb(new ClimbIOReplay());
 
         m_elevator =
-            // new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
-            new Elevator(new ElevatorIOReplay());
+            new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+        // new Elevator(new ElevatorIOReplay());
 
         break;
 
@@ -255,6 +261,14 @@ public class RobotContainer {
     // Auto commands
     m_autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
     m_autoFactory = new AutoFactory(m_drive);
+
+    m_autoChooser.addDefaultOption(
+        "Test drive to point",
+        Commands.runOnce(
+            () -> {
+              m_drive.setTargetPose(new Pose2d(14.58, 4.33, Rotation2d.fromDegrees(180.0)));
+              m_drive.updateProfile(DriveProfiles.kDriveToPoint);
+            }));
 
     m_autoChooser.addOption("Do Nothing", Commands.none());
     m_autoChooser.addOption(
@@ -403,7 +417,12 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kClimbing);
+                  // this isn't gonna be in robot state because that's too much work
+                  ClimbState newState =
+                      m_climb.getCurrentState() == ClimbState.kDeploy
+                          ? ClimbState.kStow
+                          : ClimbState.kDeploy;
+                  m_climb.updateState(newState);
                 }));
 
     m_driverControls
@@ -411,7 +430,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
+                  RobotState.getInstance().manageAlgaeIntake();
                 }))
         .onFalse(
             Commands.runOnce(
@@ -438,9 +457,10 @@ public class RobotContainer {
         .zeroElevator()
         .onTrue(
             Commands.runOnce(
-                () -> {
-                  m_elevator.zeroElevator();
-                }));
+                    () -> {
+                      m_elevator.zeroElevator();
+                    })
+                .ignoringDisable(true));
   }
 
   /**

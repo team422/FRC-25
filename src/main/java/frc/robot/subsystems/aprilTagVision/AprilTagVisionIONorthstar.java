@@ -16,14 +16,14 @@ import edu.wpi.first.networktables.PubSubOption;
 import frc.robot.Constants.AprilTagVisionConstants;
 
 public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
-  private static final int cameraResolutionWidth = 1280;
-  private static final int cameraResolutionHeight = 800;
+  private static final int cameraResolutionWidth = 1600;
+  private static final int cameraResolutionHeight = 1200;
   private static final int cameraAutoExposure = 1;
-  private static final int cameraExposure = 30;
-  private static final int cameraGain = 50;
-  private static final int cameraBrightness = 0;
-  private static final int cameraContrast = 32;
-  private static final int cameraGamma = 100;
+  private static final int cameraExposure = 50;
+  private static final int cameraGain = 30;
+  private static final int cameraBrightness = 30;
+  private static final int cameraContrast = 47;
+  private static final int cameraGamma = 10;
   // all non-ground tags
   private static final long[] tagIDBlacklist = new long[] {1, 2, 3, 4, 5, 12, 13, 14, 15, 16};
 

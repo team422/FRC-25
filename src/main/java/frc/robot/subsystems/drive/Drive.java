@@ -353,6 +353,11 @@ public class Drive extends SubsystemBase {
   public void setTargetPose(Pose2d pose) {
     m_driveToPointTargetPose = pose;
     m_driveToPointCommand.setTargetPose(pose);
+    if (m_profiles.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
+      // restart the command if we're in drive to point
+      m_driveToPointCommand.cancel();
+      m_driveToPointCommand.schedule();
+    }
   }
 
   public Pose2d getTargetPose() {

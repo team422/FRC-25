@@ -22,7 +22,7 @@ public class SetpointGenerator {
 
   private static final Map<ReefHeight, LoggedTunableNumber> kElevatorHeights =
       Map.of(
-          ReefHeight.L1, new LoggedTunableNumber("Elevator L1 Height", 7.5),
+          ReefHeight.L1, new LoggedTunableNumber("Elevator L1 Height", 9.5),
           ReefHeight.L2, new LoggedTunableNumber("Elevator L2 Height", 27.0),
           ReefHeight.L3, new LoggedTunableNumber("Elevator L3 Height", 43.25),
           ReefHeight.L4, new LoggedTunableNumber("Elevator L4 Height", 70.0));
@@ -36,10 +36,12 @@ public class SetpointGenerator {
 
   // we need to move back a bit from the raw branch pose
   private static final double kDriveXOffset =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(2.0);
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
+  // TODO: THIS NUMBER HAS BEEN MODIFIED! original: 6.469
+  // DURING A PRACTICE MATCH IF LEFT-RIGHT IS OFF THEN CHANGE
   private static final double kDriveYOffset = Units.inchesToMeters(6.469);
 
   // we are considered "close" to a field element (processor, barge) if we're within this distance
@@ -100,7 +102,10 @@ public class SetpointGenerator {
       Translation2d curr =
           AllianceFlipUtil.apply(branchPoses.get(i).get(ReefHeight.L1).toPose2d()).getTranslation();
       double distance = drivePose.getTranslation().getDistance(curr);
-      if (i % 2 == 0) {
+      if (AllianceFlipUtil.shouldFlip()) {
+        // if we're on red then i is off by one
+      }
+      if (i % 2 == 1) {
         // left branch
         if (distance < minLeftDistance) {
           minLeftDistance = distance;
@@ -132,5 +137,22 @@ public class SetpointGenerator {
             drivePose.getTranslation().getX()
                 - AllianceFlipUtil.apply(FieldConstants.Barge.kMiddleCage.getX()))
         < kDistanceThreshold;
+  }
+
+  public static ReefHeight getAlgaeHeight(Pose2d drivePose) {
+    // first we get the closest reef center face
+    Pose2d closestCenterFace = FieldConstants.Reef.kCenterFaces[0];
+    int closestIndex = 0;
+    for (int i = 1; i < FieldConstants.Reef.kCenterFaces.length; i++) {
+      Pose2d curr = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[i]);
+      if (drivePose.getTranslation().getDistance(curr.getTranslation())
+          < drivePose.getTranslation().getDistance(closestCenterFace.getTranslation())) {
+        closestCenterFace = curr;
+        closestIndex = i;
+      }
+    }
+    // now we determine if the algae is at L2 or L3
+    ReefHeight algaeHeight = FieldConstants.Reef.kAlgaeHeights[closestIndex];
+    return algaeHeight;
   }
 }

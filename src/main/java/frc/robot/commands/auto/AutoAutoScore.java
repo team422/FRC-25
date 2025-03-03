@@ -7,7 +7,7 @@ import frc.robot.RobotState.RobotAction;
 public class AutoAutoScore extends Command {
   @Override
   public void initialize() {
-    RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
+    RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
   }
 
   @Override

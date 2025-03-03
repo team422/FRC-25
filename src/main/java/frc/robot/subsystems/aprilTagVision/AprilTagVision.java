@@ -43,6 +43,8 @@ public class AprilTagVision extends SubsystemBase {
 
   private Alert[] m_noReadingsAlerts;
 
+  private boolean m_firstMeasurement = true;
+
   public AprilTagVision(AprilTagVisionIO... ios) {
     m_ios = ios;
     m_inputs = new AprilTagVisionInputs[m_ios.length];
@@ -187,15 +189,13 @@ public class AprilTagVision extends SubsystemBase {
               // since the cameras have some roll, the false reprojection will be up in the air or
               // in the ground
               // so we can just choose the one that is closer to the floor
-              // double height1 = Math.abs(robotPose3d1.getZ());
-              // double height2 = Math.abs(robotPose3d2.getZ());
-              double pitch1 = Math.abs(robotPose3d1.getRotation().getY());
-              double pitch2 = Math.abs(robotPose3d2.getRotation().getY());
-              double yaw1 = Math.abs(robotPose3d1.getRotation().getZ());
-              double yaw2 = Math.abs(robotPose3d2.getRotation().getZ());
-              if ((pitch1 < pitch2 && RobotState.getInstance().getNumVisionGyroObservations() < 100)
-                  || (yaw1 < yaw2
-                      && RobotState.getInstance().getNumVisionGyroObservations() >= 100)) {
+              double height1 = Math.abs(robotPose3d1.getZ());
+              double height2 = Math.abs(robotPose3d2.getZ());
+              // double pitch1 = Math.abs(robotPose3d1.getRotation().getY());
+              // double pitch2 = Math.abs(robotPose3d2.getRotation().getY());
+              // double yaw1 = Math.abs(robotPose3d1.getRotation().getZ());
+              // double yaw2 = Math.abs(robotPose3d2.getRotation().getZ());
+              if (height1 < height2) {
                 cameraPose = cameraPose1;
                 robotPose3d = robotPose3d1;
                 error = error1;
@@ -388,6 +388,15 @@ public class AprilTagVision extends SubsystemBase {
     int maxObservations = 10;
     if (allVisionObservations.size() > maxObservations) {
       allVisionObservations = allVisionObservations.subList(0, maxObservations);
+    }
+
+    if (m_firstMeasurement) {
+      for (int i = 0; i < allVisionObservations.size(); i++) {
+        var curr = allVisionObservations.get(i);
+        curr = new VisionObservation(curr.visionPose, curr.timestamp, VecBuilder.fill(0, 0, 0));
+        allVisionObservations.set(i, curr);
+      }
+      m_firstMeasurement = false;
     }
 
     if (EqualsUtil.epsilonEquals(AprilTagVisionConstants.kUseVision.get(), 1.0)) {

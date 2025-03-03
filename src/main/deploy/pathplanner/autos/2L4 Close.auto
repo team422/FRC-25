@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueLeftOut1"
+            "pathName": "close start to left"
           }
         },
         {
@@ -19,67 +19,37 @@
         {
           "type": "named",
           "data": {
-            "name": "Auto auto score"
+            "name": "Autoscore Left"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "6hp"
+            "pathName": "close left to coral"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto intake"
+            "name": "Coral Intake"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "HPto4"
+            "pathName": "close coral to right"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Set Height L3"
+            "name": "Set Height L4"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Auto auto score"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "Next one"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Auto intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "New Path"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Set Height L2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Auto auto score"
+            "name": "Autoscore Right"
           }
         }
       ]

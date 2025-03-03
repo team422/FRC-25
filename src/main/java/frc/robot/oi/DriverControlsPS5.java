@@ -12,12 +12,12 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public double getForward() {
-    return m_controller.getLeftY();
+    return -m_controller.getLeftY();
   }
 
   @Override
   public double getStrafe() {
-    return m_controller.getLeftX();
+    return -m_controller.getLeftX();
   }
 
   @Override

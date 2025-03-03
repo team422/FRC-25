@@ -15,6 +15,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.ManipulatorConstants;
@@ -62,10 +63,10 @@ public class RobotState {
     kAlgaeIntakingOuttaking,
     kAutoScore,
     kManualScore,
-    kClimbing,
     kDriveToProcessor,
     kBargeScore,
     kBargeOuttaking,
+    kProcessorOuttake,
 
     // algae descore sequence
     kAlgaeDescoringInitial,
@@ -128,11 +129,11 @@ public class RobotState {
     periodicHash.put(RobotAction.kAutoDefault, () -> {});
     periodicHash.put(RobotAction.kAlgaeIntakingOuttaking, this::algaeIntakingOuttakingPeriodic);
     periodicHash.put(RobotAction.kCoralIntaking, this::coralIntakingPeriodic);
-    periodicHash.put(RobotAction.kClimbing, this::climbingPeriodic);
     periodicHash.put(RobotAction.kAutoScore, this::autoScorePeriodic);
     periodicHash.put(RobotAction.kManualScore, this::manualScorePeriodic);
     periodicHash.put(RobotAction.kDriveToProcessor, this::driveToProcessorPeriodic);
     periodicHash.put(RobotAction.kCoralOuttaking, this::coralOuttakingPeriodic);
+    periodicHash.put(RobotAction.kProcessorOuttake, () -> {});
     periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
@@ -220,7 +221,7 @@ public class RobotState {
       // after we release the coral go back to stow
       setDefaultAction();
     }
-    if (!m_timer.isRunning() && !m_manipulator.hasGamePiece()) {
+    if (m_manipulator.hasGamePiece() || !m_timer.isRunning()) {
       m_timer.restart();
     }
   }
@@ -242,18 +243,23 @@ public class RobotState {
       m_drive.setTargetPose(setpoint.drivePose());
     }
 
+    Logger.recordOutput("AutoScore/BranchIndex", m_desiredBranchIndex);
+    Logger.recordOutput("AutoScore/ReefHeight", m_desiredReefHeight);
+    Logger.recordOutput(
+        "AutoScore/DistanceToSetpoint",
+        Units.metersToInches(
+            m_drive.getPose().getTranslation().getDistance(setpoint.drivePose().getTranslation())));
+
     // we don't want to deploy elevator or manipulator until we're close to the setpoint
     if (Math.abs(
-            m_drive
-                .getTargetPose()
-                .getTranslation()
-                .getDistance(setpoint.drivePose().getTranslation()))
+            m_drive.getPose().getTranslation().getDistance(setpoint.drivePose().getTranslation()))
         < Units.inchesToMeters(6)) {
+      Logger.recordOutput("AutoScore/WithinDriveTolerance", Timer.getFPGATimestamp());
       if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
         m_elevator.setDesiredHeight(setpoint.elevatorHeight());
       }
       // don't deploy manipulator until we're at the elevator setpoint
-      if (!m_elevator.atSetpoint(10.0)) {
+      if (m_elevator.atSetpoint(10.0)) {
         if (!EqualsUtil.epsilonEquals(
             setpoint.manipulatorAngle().getRadians(),
             m_manipulator.getDesiredWristAngle().getRadians())) {
@@ -270,16 +276,20 @@ public class RobotState {
     autoScorePeriodic();
 
     // everything must be within tolerance to run the rollers
-    if (m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint()
-        // when the command finishes, drive will go back to default
-        && m_drive.getCurrentProfile() == DriveProfiles.kDefault) {
+    // if (m_elevator.atSetpoint()
+    //     && m_manipulator.atSetpoint()
+    // when the command finishes, drive will go back to default
+    if (m_drive.getCurrentProfile() == DriveProfiles.kDefault) {
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }
 
   public void manualScorePeriodic() {
     RobotSetpoint setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+
+    Logger.recordOutput("ManualScore/BranchIndex", m_desiredBranchIndex);
+    Logger.recordOutput("ManualScore/ReefHeight", m_desiredReefHeight);
+
     // only set the setpoints if they're different so we don't reset the motion profile
     if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
       m_elevator.setDesiredHeight(setpoint.elevatorHeight());
@@ -303,10 +313,6 @@ public class RobotState {
     if (!EqualsUtil.GeomExtensions.epsilonEquals(processorPose, m_drive.getTargetPose())) {
       m_drive.setTargetPose(processorPose);
     }
-  }
-
-  public void climbingPeriodic() {
-    // TODO: come back here, i don't think this needs anything but it feels like it should
   }
 
   public void bargeScorePeriodic() {
@@ -336,85 +342,64 @@ public class RobotState {
   }
 
   public void updateRobotAction(RobotAction newAction) {
+    DriveProfiles newDriveProfiles = DriveProfiles.kDefault;
+    IntakeState newIntakeState = m_intake.getStowOrHold();
+    IndexerState newIndexerState = IndexerState.kIdle;
+    ClimbState newClimbState = ClimbState.kStow;
+    ElevatorState newElevatorState = ElevatorState.kStow;
+    ManipulatorState newManipulatorState = m_manipulator.getStowOrHold();
+    LedState newLedState = LedState.kEnabled;
+
     switch (newAction) {
       case kAlgaeIntakingOuttaking:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageIntakeOrOuttake();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.manageStowOrHold();
-        m_led.updateState(LedState.kEnabled);
+        newIntakeState = m_intake.getIntakeOrOuttake();
+
         break;
 
       case kManualScore:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kScoring);
-        m_manipulator.updateState(ManipulatorState.kScoring);
-        m_led.updateState(LedState.kAutoScore);
+        newElevatorState = ElevatorState.kScoring;
+        newManipulatorState = ManipulatorState.kScoring;
+        newLedState = LedState.kAutoScore;
         // guys don't use fallthrough it's not worth it
         break;
 
       case kAutoScore:
       case kAutoAutoScore:
-        m_drive.updateProfile(DriveProfiles.kDriveToPoint);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kScoring);
-        m_manipulator.updateState(ManipulatorState.kScoring);
-        m_led.updateState(LedState.kAutoScore);
+        newDriveProfiles = DriveProfiles.kDriveToPoint;
+        newElevatorState = ElevatorState.kScoring;
+        newManipulatorState = ManipulatorState.kScoring;
+        newLedState = LedState.kAutoScore;
+
         break;
 
       case kDriveToProcessor:
-        m_drive.updateProfile(DriveProfiles.kDriveToPoint);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.manageStowOrHold();
-        m_led.updateState(LedState.kEnabled);
-        break;
+        newDriveProfiles = DriveProfiles.kDriveToPoint;
 
-      case kClimbing:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kDeploy);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.manageStowOrHold();
-        m_led.updateState(LedState.kEnabled);
         break;
 
       case kAutoCoralIntaking:
       case kCoralIntaking:
-        // TODO: intake needs to move out a little so it doesn't get in way of funnel
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.updateState(IntakeState.kCoralIntaking);
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kIntaking);
-        m_manipulator.updateState(ManipulatorState.kIntaking);
-        m_led.updateState(LedState.kEnabled);
+        newIntakeState = IntakeState.kCoralIntaking;
+        newElevatorState = ElevatorState.kIntaking;
+        newManipulatorState = ManipulatorState.kIntaking;
+
         break;
 
       case kAutoDefault:
       case kTeleopDefault:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.manageStowOrHold();
-        m_led.updateState(LedState.kEnabled);
         break;
 
       case kAutoCoralOuttaking:
       case kCoralOuttaking:
         // don't change any other states since we want everything to stay in place
+        newDriveProfiles = m_drive.getCurrentProfile();
+        newIntakeState = m_intake.getCurrentState();
+        newIndexerState = m_indexer.getCurrentState();
+        newClimbState = m_climb.getCurrentState();
+        newElevatorState = m_elevator.getCurrentState();
+        newManipulatorState = m_manipulator.getCurrentState();
+        newLedState = m_led.getCurrentState();
+
         m_manipulator.runRollerScoring();
         break;
 
@@ -422,60 +407,77 @@ public class RobotState {
         // don't change any other states since we want everything to stay in place
         // name is kinda confusing but we would still be in the algae descore sequence on the
         // manipulator
+        newDriveProfiles = m_drive.getCurrentProfile();
+        newIntakeState = m_intake.getCurrentState();
+        newIndexerState = m_indexer.getCurrentState();
+        newClimbState = m_climb.getCurrentState();
+        newElevatorState = m_elevator.getCurrentState();
+        newManipulatorState = m_manipulator.getCurrentState();
+        newLedState = m_led.getCurrentState();
+
         m_manipulator.runRollerAlgaeDescoring();
         break;
 
       case kBargeScore:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.manageStowOrHold();
-        m_led.updateState(LedState.kEnabled);
+        break;
+
+      case kProcessorOuttake:
+        newManipulatorState = ManipulatorState.kAlgaeOuttake;
+
         break;
 
       case kAlgaeDescoringInitial:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kAlgaeDescoringInitial);
-        m_manipulator.manageStowOrHold();
-        m_led.updateState(LedState.kEnabled);
+        newElevatorState = ElevatorState.kAlgaeDescoringInitial;
+
         break;
 
       case kAlgaeDescoringDeployManipulator:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kAlgaeDescoringInitial);
-        m_manipulator.updateState(ManipulatorState.kAlgaeDescoring);
-        m_led.updateState(LedState.kEnabled);
+        newElevatorState = ElevatorState.kAlgaeDescoringInitial;
+        newManipulatorState = ManipulatorState.kAlgaeDescoring;
+
         break;
 
       case kAlgaeDescoringMoveUp:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kAlgaeDescoringFinal);
-        m_manipulator.updateState(ManipulatorState.kAlgaeDescoring);
-        m_led.updateState(LedState.kEnabled);
+        newElevatorState = ElevatorState.kAlgaeDescoringFinal;
+        newManipulatorState = ManipulatorState.kAlgaeDescoring;
+
         break;
 
       case kAlgaeDescoringFinal:
-        m_drive.updateProfile(DriveProfiles.kDefault);
-        m_intake.manageStowOrHold();
-        m_indexer.updateState(IndexerState.kIdle);
-        m_climb.updateState(ClimbState.kStow);
-        m_elevator.updateState(ElevatorState.kStow);
-        m_manipulator.updateState(ManipulatorState.kAlgaeDescoring);
+        newManipulatorState = ManipulatorState.kAlgaeDescoring;
         m_manipulator.stopRollerAlgaeDescoring();
-        m_led.updateState(LedState.kEnabled);
+
         break;
     }
+
+    if (m_drive.getCurrentProfile() != newDriveProfiles) {
+      m_drive.updateProfile(newDriveProfiles);
+    }
+
+    if (m_intake.getCurrentState() != newIntakeState) {
+      m_intake.updateState(newIntakeState);
+    }
+
+    if (m_indexer.getCurrentState() != newIndexerState) {
+      m_indexer.updateState(newIndexerState);
+    }
+
+    if (m_climb.getCurrentState() != newClimbState) {
+      m_climb.updateState(newClimbState);
+    }
+
+    if (m_elevator.getCurrentState() != newElevatorState) {
+      m_elevator.updateState(newElevatorState);
+    }
+
+    if (m_manipulator.getCurrentState() != newManipulatorState) {
+      m_manipulator.updateState(newManipulatorState);
+    }
+
+    if (m_led.getCurrentState() != newLedState) {
+      m_led.updateState(newLedState);
+    }
+
     m_profiles.setCurrentProfile(newAction);
 
     // stop the timer so a previous action doesn't affect the new one
@@ -483,6 +485,13 @@ public class RobotState {
     m_timer.reset();
 
     m_hasRunASingleCycle = false;
+
+    // reset the scoring angles
+    if (newAction != RobotAction.kCoralOuttaking && newAction != RobotAction.kAutoCoralOuttaking) {
+      m_manipulator.setDesiredWristAngle(
+          Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
+      m_elevator.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+    }
   }
 
   public RobotAction getCurrentAction() {
@@ -521,6 +530,13 @@ public class RobotState {
       updateRobotAction(RobotAction.kBargeOuttaking);
     } else {
       updateRobotAction(RobotAction.kCoralOuttaking);
+    }
+  }
+
+  public void manageAlgaeIntake() {
+    // TODO: add otb stuff
+    if (m_manipulator.getCurrentState() == ManipulatorState.kAlgaeHold) {
+      updateRobotAction(RobotAction.kProcessorOuttake);
     }
   }
 

@@ -9,9 +9,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
 import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -265,11 +267,23 @@ public class Elevator extends SubsystemBase {
   }
 
   public void algaeDescoringInitialPeriodic() {
-    m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringIntialHeight.get());
+    ReefHeight currHeight =
+        SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
+    if (currHeight == ReefHeight.L2) {
+      m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringIntialHeightL2.get());
+    } else {
+      m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringIntialHeightL3.get());
+    }
   }
 
   public void algaeDescoringFinalPeriodic() {
-    m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringFinalHeight.get());
+    ReefHeight currHeight =
+        SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
+    if (currHeight == ReefHeight.L2) {
+      m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringFinalHeightL2.get());
+    } else {
+      m_io.setDesiredHeight(ElevatorConstants.kAlgaeDescoringFinalHeightL3.get());
+    }
   }
 
   public void bargeScorePeriodic() {

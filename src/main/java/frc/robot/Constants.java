@@ -5,11 +5,10 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Pounds;
 
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -145,7 +144,7 @@ public final class Constants {
 
   public static final class ClimbConstants {
 
-    public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 0.0);
+    public static final LoggedTunableNumber kClimbP = new LoggedTunableNumber("Climb P", 30.0);
     public static final LoggedTunableNumber kClimbI = new LoggedTunableNumber("Climb I", 0.0);
     public static final LoggedTunableNumber kClimbD = new LoggedTunableNumber("Climb D", 0.0);
     public static final double kClimbTolerance = 5.0; // degrees
@@ -153,10 +152,13 @@ public final class Constants {
     public static final LoggedTunableNumber kStowFeedforward =
         new LoggedTunableNumber("Climb Stow Feedforward", 0.0);
 
+    // these are magic units
     public static final LoggedTunableNumber kClimbStowPos =
-        new LoggedTunableNumber("Climb Stow Rad", 15.0); // degrees
+        new LoggedTunableNumber("Climb Stow Angle", 15.0);
+    public static final LoggedTunableNumber kClimbMatchPos =
+        new LoggedTunableNumber("Climb Stow Angle", 300.0);
     public static final LoggedTunableNumber kClimbDeployPos =
-        new LoggedTunableNumber("Climb Deploy Rad", 240); // degrees
+        new LoggedTunableNumber("Climb Deploy Angle", 600.0);
 
     public static final double kClimbReduction = (5.0 / 1.0) * (4.0 / 1.0) * (68.0 / 18.0);
 
@@ -190,7 +192,7 @@ public final class Constants {
   }
 
   public static final class ElevatorConstants {
-    public static final LoggedTunableNumber kP0 = new LoggedTunableNumber("Elevator P0", 4.0);
+    public static final LoggedTunableNumber kP0 = new LoggedTunableNumber("Elevator P0", 2.0);
     public static final LoggedTunableNumber kI = new LoggedTunableNumber("Elevator I", 0.0);
     public static final LoggedTunableNumber kD = new LoggedTunableNumber("Elevator D", 0.08);
     public static final LoggedTunableNumber kKS = new LoggedTunableNumber("Elevator kS", 0.0);
@@ -198,11 +200,11 @@ public final class Constants {
     public static final LoggedTunableNumber kKV0 = new LoggedTunableNumber("Elevator kV0", 0.0);
     public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
 
-    public static final LoggedTunableNumber kP1 = new LoggedTunableNumber("Elevator P1", 4.0);
+    public static final LoggedTunableNumber kP1 = new LoggedTunableNumber("Elevator P1", 2.0);
     public static final LoggedTunableNumber kKV1 = new LoggedTunableNumber("Elevator kV1", 0.0);
     public static final LoggedTunableNumber kKG1 = new LoggedTunableNumber("Elevator kG1", 0.22);
 
-    public static final LoggedTunableNumber kP2 = new LoggedTunableNumber("Elevator P2", 4.0);
+    public static final LoggedTunableNumber kP2 = new LoggedTunableNumber("Elevator P2", 2.0);
     public static final LoggedTunableNumber kKV2 = new LoggedTunableNumber("Elevator kV2", 0.0);
     public static final LoggedTunableNumber kKG2 = new LoggedTunableNumber("Elevator kG2", 0.22);
 
@@ -217,10 +219,14 @@ public final class Constants {
         new LoggedTunableNumber("Elevator Stow Height", 0.0);
     public static final LoggedTunableNumber kIntakingHeight =
         new LoggedTunableNumber("Elevator Intake Height", 0.0);
-    public static final LoggedTunableNumber kAlgaeDescoringIntialHeight =
-        new LoggedTunableNumber("Elevator Algae Descore Initial Height", 0.0);
-    public static final LoggedTunableNumber kAlgaeDescoringFinalHeight =
-        new LoggedTunableNumber("Elevator Algae Descore Final Height", 0.0);
+    public static final LoggedTunableNumber kAlgaeDescoringIntialHeightL2 =
+        new LoggedTunableNumber("Elevator Algae Descore Initial Height", 17.0);
+    public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL2 =
+        new LoggedTunableNumber("Elevator Algae Descore Final Height", 23.0);
+    public static final LoggedTunableNumber kAlgaeDescoringIntialHeightL3 =
+        new LoggedTunableNumber("Elevator Algae Descore Initial Height", 30.0);
+    public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL3 =
+        new LoggedTunableNumber("Elevator Algae Descore Final Height", 36.0);
     public static final LoggedTunableNumber kBargeScoreHeight =
         new LoggedTunableNumber("Elevator Barge Score Height", 0.0);
     public static final LoggedTunableNumber kAlgaeHoldHeight =
@@ -232,7 +238,7 @@ public final class Constants {
     public static final double kSensorToMechanismRatio = (kGearRatio / (kDiameter * Math.PI));
     // public static final double kSensorToMechanismRatio = 1.0;
     public static final LoggedTunableNumber kElevatorOffset =
-        new LoggedTunableNumber("Elevator/Offset", Units.inchesToMeters(0));
+        new LoggedTunableNumber("Elevator Offset", Units.inchesToMeters(0));
 
     // this is the more than the max amount that the belts will ever skip
     public static final double kMaxSkip = 4.0;
@@ -267,20 +273,20 @@ public final class Constants {
   public static final class AprilTagVisionConstants {
     public static final LoggedTunableNumber kUseVision = new LoggedTunableNumber("Use Vision", 1);
 
-    public static final AprilTagFieldLayout kAprilTagLayout =
-        new AprilTagFieldLayout(
-            List.of(
-                new AprilTag(
-                    7,
-                    new Pose3d(
-                        13.890498,
-                        4.0208200000000005,
-                        0.3508375,
-                        new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0))))),
-            17.548,
-            8.042);
     // public static final AprilTagFieldLayout kAprilTagLayout =
-    //     AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+    //     new AprilTagFieldLayout(
+    //         List.of(
+    //             new AprilTag(
+    //                 7,
+    //                 new Pose3d(
+    //                     13.890498,
+    //                     4.0208200000000005,
+    //                     0.3508375,
+    //                     new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0))))),
+    //         17.548,
+    //         8.042);
+    public static final AprilTagFieldLayout kAprilTagLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
     public static final double kAprilTagWidth = Units.inchesToMeters(6.5);
 
     public static final double kAmbiguityThreshold = 0.4;
@@ -298,9 +304,9 @@ public final class Constants {
     public static final double kDisconnectTimeout = 20.0;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
-        new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.005);
+        new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.45);
     public static final LoggedTunableNumber kThetaStandardDeviationCoefficient =
-        new LoggedTunableNumber("thetaStandardDeviationCoefficient", 0.01);
+        new LoggedTunableNumber("thetaStandardDeviationCoefficient", 10.0);
 
     // transform from center of robot to camera
     public static final Transform3d[] kCameraTransforms =
@@ -338,14 +344,18 @@ public final class Constants {
           //     Units.inchesToMeters(7.766),
           //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
           //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
+          new Transform3d(),
+          new Transform3d(),
           new Transform3d(
-              Inches.of(7.533),
-              Inches.of(-12.433),
-              Inches.of(7.416),
-              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-35), Degrees.of(-10))),
-          new Transform3d(),
-          new Transform3d(),
-          new Transform3d(),
+              Inches.of(10.301),
+              Inches.of(10.933),
+              Inches.of(8.771),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.5), Degrees.of(-19.0))),
+          new Transform3d(
+              Inches.of(10.301),
+              Inches.of(-10.933),
+              Inches.of(8.771),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.5), Degrees.of(19.0))),
         };
 
     // tolerances for using the vision rotation, temp values
@@ -365,9 +375,9 @@ public final class Constants {
     // the offset needs to be so that it starts at 90 degrees (top)
     // public static final Rotation2d kPivotOffset =
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
-    // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(-284.1);
+    // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees(-82.6 * kPivotAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees(-80.96 * kPivotAbsoluteEncoderGearRatio);
 
     public static final double kRollerCurrentGamepieceThreshold =
         1; // amps to be considered holding a gamepiece, temp value
@@ -452,9 +462,11 @@ public final class Constants {
     public static final LoggedTunableNumber kWristScoringOffset =
         new LoggedTunableNumber("Wrist Scoring Offset", 0.0);
     public static final LoggedTunableNumber kWristAlgaeDescoringAngle =
-        new LoggedTunableNumber("Wrist Algae Descoring Angle", 0.0);
+        new LoggedTunableNumber("Wrist Algae Descoring Angle", 5.0);
     public static final LoggedTunableNumber kWristAlgaeHoldAngle =
-        new LoggedTunableNumber("Wrist Algae Hold Angle", 0.0);
+        new LoggedTunableNumber("Wrist Algae Hold Angle", 15.0);
+    public static final LoggedTunableNumber kWristAlgaeOuttakeAngle =
+        new LoggedTunableNumber("Wrist Algae Outtake Angle", 15.0);
 
     public static final LoggedTunableNumber kRollerAlgaeCurrentThreshold =
         new LoggedTunableNumber("Roller Algae Current Threshold", 2.0);
@@ -470,9 +482,11 @@ public final class Constants {
     public static final LoggedTunableNumber kRollerUpperScoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Upper Scoring Voltage", 5.0);
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", -2.0);
+        new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", 2.0);
     public static final LoggedTunableNumber kRollerAlgaeHoldVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 0.0);
+        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 1.5);
+    public static final LoggedTunableNumber kRollerAlgaeOuttakeVoltage =
+        new LoggedTunableNumber("Manipulator Roller Algae Outtake Voltage", -2.0);
 
     public static final LoggedTunableNumber kRollerP =
         new LoggedTunableNumber("Manipulator Roller P", 20.0);
@@ -733,6 +747,10 @@ public final class Constants {
           kBranchPositions.add(fillLeft);
         }
       }
+
+      public static final ReefHeight[] kAlgaeHeights = {
+        ReefHeight.L2, ReefHeight.L3, ReefHeight.L2, ReefHeight.L3, ReefHeight.L2, ReefHeight.L3
+      };
     }
 
     public static class StagingPositions {

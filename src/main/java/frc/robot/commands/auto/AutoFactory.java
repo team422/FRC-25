@@ -16,11 +16,9 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.littletonUtils.LocalADStarAK;
-import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState;
-import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 
@@ -38,13 +36,6 @@ public class AutoFactory {
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setDefaultAction();
-            }));
-
-    NamedCommands.registerCommand(
-        "Coral Intake",
-        Commands.runOnce(
-            () -> {
-              RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
             }));
 
     NamedCommands.registerCommand(
@@ -108,7 +99,7 @@ public class AutoFactory {
                 DriveConstants.kMaxLinearSpeed,
                 1.7,
                 DCMotor.getKrakenX60Foc(1),
-                CurrentLimitConstants.kDriveDefaultSupplyCurrentLimit,
+                600,
                 1),
             Meters.of(DriveConstants.kTrackWidthX)),
         () -> {

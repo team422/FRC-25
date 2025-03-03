@@ -22,7 +22,8 @@ public class Climb extends SubsystemBase {
 
   public static enum ClimbState {
     kStow,
-    kDeploy
+    kMatch,
+    kDeploy,
   }
 
   private SubsystemProfiles<ClimbState> m_profiles;
@@ -42,6 +43,7 @@ public class Climb extends SubsystemBase {
     // Create a map of periodic functions for each state, then make a SubsystemProfiles object
     Map<ClimbState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(ClimbState.kStow, this::stowPeriodic);
+    periodicHash.put(ClimbState.kMatch, this::matchPeriodic);
     periodicHash.put(ClimbState.kDeploy, this::deployPeriodic);
 
     m_profiles = new SubsystemProfiles<Climb.ClimbState>(periodicHash, ClimbState.kStow);
@@ -96,6 +98,11 @@ public class Climb extends SubsystemBase {
     m_io.setDesiredAngle(
         Rotation2d.fromDegrees(ClimbConstants.kClimbStowPos.get()),
         ClimbConstants.kStowFeedforward.get());
+  }
+
+  public void matchPeriodic() {
+    m_io.setSlot(0);
+    m_io.setDesiredAngle(Rotation2d.fromDegrees(ClimbConstants.kClimbMatchPos.get()), 0.0);
   }
 
   public void deployPeriodic() {

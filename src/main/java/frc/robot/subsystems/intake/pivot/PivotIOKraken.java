@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -205,7 +206,8 @@ public class PivotIOKraken implements PivotIO {
     double rawValue = m_absoluteEncoder.get();
     rawValue += IntakeConstants.kPivotOffset.getRotations();
     // fix wrap around after offset applied
-    rawValue %= 1.0;
+    // 140 is the range of the absolute encoder before it wraps around
+    rawValue %= Units.degreesToRotations(140);
     if (rawValue < 0) {
       rawValue += 1.0;
     }
