@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -19,6 +20,7 @@ import frc.lib.littletonUtils.LocalADStarAK;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 
@@ -82,11 +84,15 @@ public class AutoFactory {
                 })
             .andThen(new AutoAutoScore()));
 
-    NamedCommands.registerCommand("Coral Intake", new AutoCoralIntake());
+    NamedCommands.registerCommand(
+        "Coral Intake",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+            }));
 
     AutoBuilder.configure(
         m_drive::getPose,
-        // turn off when we have vision
         m_drive::setPose,
         m_drive::getChassisSpeeds,
         m_drive::setDesiredChassisSpeeds,
@@ -133,5 +139,16 @@ public class AutoFactory {
     Command autoCommand = AutoBuilder.buildAuto(name);
     // return autoCommand.andThen(Commands.runOnce(m_drive::stopWithX));
     return autoCommand;
+  }
+
+  public Pose2d getStartingPose(String autoName) {
+    try {
+      return PathPlannerAuto.getPathGroupFromAutoFile(autoName)
+          .get(0)
+          .getStartingHolonomicPose()
+          .get();
+    } catch (Exception e) {
+      return new Pose2d();
+    }
   }
 }

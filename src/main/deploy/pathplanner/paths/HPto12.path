@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.4551718026620357,
-        "y": 1.0339684606481478
+        "x": 1.4698022757780835,
+        "y": 1.0509639492620784
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.230298755787036,
-        "y": 1.6724247685185176
+        "x": 2.244929228903084,
+        "y": 1.6894202571324481
       },
       "isLocked": false,
       "linkedName": "bottom coral"
@@ -41,7 +41,7 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 2.0,
     "rotation": 63.585543933808346
   },
   "reversed": false,

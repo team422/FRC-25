@@ -4,8 +4,9 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
@@ -92,34 +93,136 @@ public class SetpointGenerator {
    *     the right reef, and the second index is the left reef.
    */
   public static Pair<Integer, Integer> getPossibleIndices(Pose2d drivePose) {
-    var branchPoses = FieldConstants.Reef.kBranchPositions;
-    double minLeftDistance = Double.POSITIVE_INFINITY;
-    double minRightDistance = Double.POSITIVE_INFINITY;
-    int leftIndex = -1;
-    int rightIndex = -1;
-    for (int i = 0; i < branchPoses.size(); i++) {
-      // the reef height doesn't matter here so we just use L1
-      Translation2d curr =
-          AllianceFlipUtil.apply(branchPoses.get(i).get(ReefHeight.L1).toPose2d()).getTranslation();
-      double distance = drivePose.getTranslation().getDistance(curr);
-      if (AllianceFlipUtil.shouldFlip()) {
-        // if we're on red then i is off by one
-      }
-      if (i % 2 == 1) {
-        // left branch
-        if (distance < minLeftDistance) {
-          minLeftDistance = distance;
-          leftIndex = i;
-        }
-      } else {
-        // right branch
-        if (distance < minRightDistance) {
-          minRightDistance = distance;
-          rightIndex = i;
-        }
+    // var branchPoses = FieldConstants.Reef.kBranchPositions;
+    // double minLeftDistance = Double.POSITIVE_INFINITY;
+    // double minRightDistance = Double.POSITIVE_INFINITY;
+    // int leftIndex = -1;
+    // int rightIndex = -1;
+    // for (int i = 0; i < branchPoses.size(); i++) {
+    //   // the reef height doesn't matter here so we just use L1
+    //   Translation2d curr =
+    //
+    // AllianceFlipUtil.apply(branchPoses.get(i).get(ReefHeight.L1).toPose2d()).getTranslation();
+    //   double distance = drivePose.getTranslation().getDistance(curr);
+    //   if (AllianceFlipUtil.shouldFlip()) {
+    //     // if we're on red then i is off by one
+    //   }
+    //   if (i % 2 == 1) {
+    //     // left branch
+    //     if (distance < minLeftDistance) {
+    //       minLeftDistance = distance;
+    //       leftIndex = i;
+    //     }
+    //   } else {
+    //     // right branch
+    //     if (distance < minRightDistance) {
+    //       minRightDistance = distance;
+    //       rightIndex = i;
+    //     }
+    //   }
+    // }
+    // return new Pair<>(rightIndex, leftIndex);
+
+    // check if we're on red or blue
+
+    // i used desmos to figure out these equations
+    // blue:
+    // x = 4.503
+    // y = sqrt3 / 3 * x + 1.4
+    // y = -sqrt3 / 3 * x + 6.6
+    // red:
+    // x = 13.062
+    // y = sqrt3 / 3 * x - 3.53
+    // y = -sqrt3 / 3 * x + 11.55
+
+    int[] vertical = checkVertical(drivePose);
+    int[] diagonalPositive = checkDiagonalPositive(drivePose);
+    int[] diagonalNegative = checkDiagonalNegative(drivePose);
+
+    // find the common index
+    int commonIndex = findCommonElement(vertical, diagonalPositive, diagonalNegative);
+
+    // turn the common index into a pair of indices (0-5 becomes 0-11)
+    int rightIndex = commonIndex * 2;
+    int leftIndex = commonIndex * 2 + 1;
+
+    return new Pair<>(rightIndex, leftIndex);
+  }
+
+  private static int findCommonElement(int[] arr1, int[] arr2, int[] arr3) {
+    for (int num : arr1) {
+      if (contains(arr2, num) && contains(arr3, num)) {
+        return num; // Return the first common element found
       }
     }
-    return new Pair<>(rightIndex, leftIndex);
+    return -1; // No common element found
+  }
+
+  private static boolean contains(int[] arr, int target) {
+    for (int num : arr) {
+      if (num == target) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static int[] checkVertical(Pose2d pose) {
+    // check the alliance
+    Alliance alliance = DriverStation.getAlliance().get();
+    if (alliance == Alliance.Red) {
+      if (pose.getX() >= 13.062) {
+        return new int[] {0, 1, 5};
+      } else {
+        return new int[] {2, 3, 4};
+      }
+    } else {
+      if (pose.getX() <= 4.503) {
+        return new int[] {0, 1, 5};
+      } else {
+        return new int[] {2, 3, 4};
+      }
+    }
+  }
+
+  private static int[] checkDiagonalPositive(Pose2d pose) {
+    Alliance alliance = DriverStation.getAlliance().get();
+    double m = Math.sqrt(3) / 3;
+    double b = alliance == Alliance.Red ? -3.53 : 1.4;
+    double ty = m * pose.getX() + b;
+    if (pose.getY() >= ty) {
+      if (alliance == Alliance.Red) {
+        return new int[] {3, 4, 5};
+      } else {
+        return new int[] {0, 1, 2};
+      }
+    } else {
+      if (alliance == Alliance.Red) {
+        return new int[] {0, 1, 2};
+      } else {
+        return new int[] {3, 4, 5};
+      }
+    }
+  }
+
+  private static int[] checkDiagonalNegative(Pose2d pose) {
+    Alliance alliance = DriverStation.getAlliance().get();
+    double m = -Math.sqrt(3) / 3;
+    double b = alliance == Alliance.Red ? 11.55 : 6.6;
+    double ty = m * pose.getX() + b;
+    if (pose.getY() >= ty) {
+      if (alliance == Alliance.Red) {
+        return new int[] {0, 4, 5};
+      } else {
+        return new int[] {1, 2, 3};
+      }
+    } else {
+      if (alliance == Alliance.Red) {
+        return new int[] {1, 2, 3};
+      } else {
+        return new int[] {0, 4, 5};
+      }
+    }
   }
 
   public static boolean isNearProcessor(Pose2d drivePose) {

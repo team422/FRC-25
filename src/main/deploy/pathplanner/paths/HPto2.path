@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.2143822337962953,
-        "y": 6.994136284722222
+        "x": 1.3367789336845737,
+        "y": 6.84747384237348
       },
       "prevControl": null,
       "nextControl": {
-        "x": 1.4844625289351843,
-        "y": 5.900479962384258
+        "x": 1.6068592288234627,
+        "y": 5.753817520035517
       },
       "isLocked": false,
       "linkedName": "close coral"
@@ -41,7 +41,7 @@
     "unlimited": false
   },
   "goalEndState": {
-    "velocity": 0,
+    "velocity": 2.0,
     "rotation": 0.0
   },
   "reversed": false,
