@@ -7,37 +7,13 @@
         {
           "type": "path",
           "data": {
-            "pathName": "close start to left"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Set Height L4"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Autoscore Left"
+            "pathName": "Push Left"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "1toHP"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Coral Intake"
-          }
-        },
-        {
-          "type": "path",
-          "data": {
-            "pathName": "HPto2"
+            "pathName": "Recover Left"
           }
         },
         {
@@ -50,6 +26,36 @@
           "type": "named",
           "data": {
             "name": "Autoscore Right"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "6toHP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Coral Intake"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "HPto4"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Set Height L4"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Autoscore Left"
           }
         }
       ]

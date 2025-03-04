@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "BlueLeftOut1"
+            "pathName": "BlueLeftOut5"
           }
         },
         {
@@ -25,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "6hp"
+            "pathName": "6toHP"
           }
         },
         {
@@ -55,7 +55,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Next one"
+            "pathName": "4toHP"
           }
         },
         {
