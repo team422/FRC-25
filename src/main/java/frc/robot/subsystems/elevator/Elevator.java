@@ -252,6 +252,8 @@ public class Elevator extends SubsystemBase {
     if (RobotState.getInstance().manipulatorAtSetpoint()) {
       if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kAlgaeHold) {
         m_io.setDesiredHeight(ElevatorConstants.kAlgaeHoldHeight.get());
+      } else if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kAlgaeOuttake) {
+        m_io.setDesiredHeight(ElevatorConstants.kAlgaeOuttakeHeight.get());
       } else {
         m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
       }

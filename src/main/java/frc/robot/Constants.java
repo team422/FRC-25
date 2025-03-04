@@ -76,11 +76,11 @@ public final class Constants {
     public static final double kMaxAngularAcceleration = kMaxLinearAcceleration / kDriveBaseRadius;
     public static final LoggedTunableNumber kTeleopRotationSpeed =
         new LoggedTunableNumber("Teleop Rotation Speed", 10.0);
-    // 0 - linear
-    // 1 - quadratic
-    // 2 - polynomial ("""exponential""" why do they call it exponential when it's not)
-    public static final LoggedTunableNumber kDriveControlMode =
-        new LoggedTunableNumber("Drive Control Mode", 1.0);
+
+    // the exponent to raise the input to
+    // ex 1.0 is linear, 2.0 is squared, etc
+    public static final LoggedTunableNumber kDriveControlsExponent =
+        new LoggedTunableNumber("Drive Control Mode", 2.0);
 
     public static final Translation2d[] kModuleTranslations =
         new Translation2d[] {
@@ -156,13 +156,13 @@ public final class Constants {
     public static final LoggedTunableNumber kClimbStowPos =
         new LoggedTunableNumber("Climb Stow Angle", 15.0);
     public static final LoggedTunableNumber kClimbMatchPos =
-        new LoggedTunableNumber("Climb Stow Angle", 300.0);
+        new LoggedTunableNumber("Climb Match Angle", 300.0);
     public static final LoggedTunableNumber kClimbDeployPos =
         new LoggedTunableNumber("Climb Deploy Angle", 600.0);
 
     public static final double kClimbReduction = (5.0 / 1.0) * (4.0 / 1.0) * (68.0 / 18.0);
 
-    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(5.0);
+    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(-25.0);
     public static final Rotation2d kMaxAngle = Rotation2d.fromDegrees(600.0);
 
     // sim constants
@@ -183,9 +183,10 @@ public final class Constants {
     public static final int kStripLength = 60;
 
     public static final Color kOff = Color.kBlack;
-    public static final Color kAutoscore = Color.kOrange;
-    public static final Color kHasGampiece = Color.kGreen;
-    public static final Color kEnabled = Color.kYellow;
+    public static final Color kL1 = Color.kRed;
+    public static final Color kL2 = Color.kOrangeRed;
+    public static final Color kL3 = Color.kYellow;
+    public static final Color kL4 = Color.kGreen;
     public static final Color kDisabled = Color.kMagenta;
     public static final Color kAlert = Color.kRed;
     public static final Color kFullTuning = Color.kWhite;
@@ -220,17 +221,19 @@ public final class Constants {
     public static final LoggedTunableNumber kIntakingHeight =
         new LoggedTunableNumber("Elevator Intake Height", 0.0);
     public static final LoggedTunableNumber kAlgaeDescoringIntialHeightL2 =
-        new LoggedTunableNumber("Elevator Algae Descore Initial Height", 17.0);
+        new LoggedTunableNumber("Elevator Algae Descore Initial Height L2", 19.0);
     public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL2 =
-        new LoggedTunableNumber("Elevator Algae Descore Final Height", 23.0);
+        new LoggedTunableNumber("Elevator Algae Descore Final Height L2", 26.0);
     public static final LoggedTunableNumber kAlgaeDescoringIntialHeightL3 =
-        new LoggedTunableNumber("Elevator Algae Descore Initial Height", 30.0);
+        new LoggedTunableNumber("Elevator Algae Descore Initial Height L3", 32.0);
     public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL3 =
-        new LoggedTunableNumber("Elevator Algae Descore Final Height", 36.0);
+        new LoggedTunableNumber("Elevator Algae Descore Final Height L3", 42.0);
     public static final LoggedTunableNumber kBargeScoreHeight =
         new LoggedTunableNumber("Elevator Barge Score Height", 0.0);
     public static final LoggedTunableNumber kAlgaeHoldHeight =
-        new LoggedTunableNumber("Algae Hold Height", 5.0);
+        new LoggedTunableNumber("Elevator Algae Hold Height", 5.0);
+    public static final LoggedTunableNumber kAlgaeOuttakeHeight =
+        new LoggedTunableNumber("Elevator Algae Outtake Height", 3.5);
 
     public static final double kDiameter = 2.256; // inches
     public static final double kGearRatio = 54.0 / 12.0;
@@ -241,7 +244,7 @@ public final class Constants {
         new LoggedTunableNumber("Elevator Offset", Units.inchesToMeters(0));
 
     // this is the more than the max amount that the belts will ever skip
-    public static final double kMaxSkip = 4.0;
+    public static final double kMaxSkip = 2.0;
     public static final LoggedTunableNumber kSlamTime = new LoggedTunableNumber("Slam Time", 0.2);
     public static final LoggedTunableNumber kSlamVoltage =
         new LoggedTunableNumber("Slam Voltage", -3.0);
@@ -380,9 +383,9 @@ public final class Constants {
         Rotation2d.fromDegrees(-80.96 * kPivotAbsoluteEncoderGearRatio);
 
     public static final double kRollerCurrentGamepieceThreshold =
-        1; // amps to be considered holding a gamepiece, temp value
+        30; // amps to be considered holding a gamepiece, temp value
     public static final double kRollerAccelGamepieceThreshold =
-        999; // rotations per second squared to be considered holding a gamepiece, temp value
+        -15; // rotations per second squared to be considered holding a gamepiece, temp value
 
     public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 40.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
@@ -464,9 +467,9 @@ public final class Constants {
     public static final LoggedTunableNumber kWristAlgaeDescoringAngle =
         new LoggedTunableNumber("Wrist Algae Descoring Angle", 5.0);
     public static final LoggedTunableNumber kWristAlgaeHoldAngle =
-        new LoggedTunableNumber("Wrist Algae Hold Angle", 15.0);
+        new LoggedTunableNumber("Wrist Algae Hold Angle", 25.0);
     public static final LoggedTunableNumber kWristAlgaeOuttakeAngle =
-        new LoggedTunableNumber("Wrist Algae Outtake Angle", 15.0);
+        new LoggedTunableNumber("Wrist Algae Outtake Angle", 0.0);
 
     public static final LoggedTunableNumber kRollerAlgaeCurrentThreshold =
         new LoggedTunableNumber("Roller Algae Current Threshold", 2.0);
@@ -482,11 +485,11 @@ public final class Constants {
     public static final LoggedTunableNumber kRollerUpperScoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Upper Scoring Voltage", 5.0);
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", 2.0);
+        new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", 3.0);
     public static final LoggedTunableNumber kRollerAlgaeHoldVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 1.5);
+        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 1.0);
     public static final LoggedTunableNumber kRollerAlgaeOuttakeVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Outtake Voltage", -2.0);
+        new LoggedTunableNumber("Manipulator Roller Algae Outtake Voltage", -4.0);
 
     public static final LoggedTunableNumber kRollerP =
         new LoggedTunableNumber("Manipulator Roller P", 20.0);
@@ -600,7 +603,7 @@ public final class Constants {
 
     public static final int kIndexerMotor = 25;
 
-    public static final int kLed = 2;
+    public static final int kLed = 9;
 
     public static final int kElevatorLead = 23;
     public static final int kElevatorFollowing = 24;
@@ -747,10 +750,6 @@ public final class Constants {
           kBranchPositions.add(fillLeft);
         }
       }
-
-      public static final ReefHeight[] kAlgaeHeights = {
-        ReefHeight.L2, ReefHeight.L3, ReefHeight.L2, ReefHeight.L3, ReefHeight.L2, ReefHeight.L3
-      };
     }
 
     public static class StagingPositions {

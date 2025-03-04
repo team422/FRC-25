@@ -141,7 +141,7 @@ public class SetpointGenerator {
 
   public static ReefHeight getAlgaeHeight(Pose2d drivePose) {
     // first we get the closest reef center face
-    Pose2d closestCenterFace = FieldConstants.Reef.kCenterFaces[0];
+    Pose2d closestCenterFace = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[0]);
     int closestIndex = 0;
     for (int i = 1; i < FieldConstants.Reef.kCenterFaces.length; i++) {
       Pose2d curr = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[i]);
@@ -152,7 +152,7 @@ public class SetpointGenerator {
       }
     }
     // now we determine if the algae is at L2 or L3
-    ReefHeight algaeHeight = FieldConstants.Reef.kAlgaeHeights[closestIndex];
+    ReefHeight algaeHeight = closestIndex % 2 == 0 ? ReefHeight.L3 : ReefHeight.L2;
     return algaeHeight;
   }
 }

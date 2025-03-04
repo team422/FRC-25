@@ -12,12 +12,14 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
+import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
@@ -177,6 +179,8 @@ public class RobotState {
     if (Constants.kUseComponents) {
       updateComponent();
     }
+
+    updateLED();
 
     // this is scuffed but it's really funny
     LoggedTunableNumber.ifChanged(
@@ -348,7 +352,6 @@ public class RobotState {
     ClimbState newClimbState = ClimbState.kStow;
     ElevatorState newElevatorState = ElevatorState.kStow;
     ManipulatorState newManipulatorState = m_manipulator.getStowOrHold();
-    LedState newLedState = LedState.kEnabled;
 
     switch (newAction) {
       case kAlgaeIntakingOuttaking:
@@ -359,7 +362,7 @@ public class RobotState {
       case kManualScore:
         newElevatorState = ElevatorState.kScoring;
         newManipulatorState = ManipulatorState.kScoring;
-        newLedState = LedState.kAutoScore;
+
         // guys don't use fallthrough it's not worth it
         break;
 
@@ -368,7 +371,6 @@ public class RobotState {
         newDriveProfiles = DriveProfiles.kDriveToPoint;
         newElevatorState = ElevatorState.kScoring;
         newManipulatorState = ManipulatorState.kScoring;
-        newLedState = LedState.kAutoScore;
 
         break;
 
@@ -398,7 +400,6 @@ public class RobotState {
         newClimbState = m_climb.getCurrentState();
         newElevatorState = m_elevator.getCurrentState();
         newManipulatorState = m_manipulator.getCurrentState();
-        newLedState = m_led.getCurrentState();
 
         m_manipulator.runRollerScoring();
         break;
@@ -413,7 +414,6 @@ public class RobotState {
         newClimbState = m_climb.getCurrentState();
         newElevatorState = m_elevator.getCurrentState();
         newManipulatorState = m_manipulator.getCurrentState();
-        newLedState = m_led.getCurrentState();
 
         m_manipulator.runRollerAlgaeDescoring();
         break;
@@ -474,10 +474,6 @@ public class RobotState {
       m_manipulator.updateState(newManipulatorState);
     }
 
-    if (m_led.getCurrentState() != newLedState) {
-      m_led.updateState(newLedState);
-    }
-
     m_profiles.setCurrentProfile(newAction);
 
     // stop the timer so a previous action doesn't affect the new one
@@ -534,9 +530,10 @@ public class RobotState {
   }
 
   public void manageAlgaeIntake() {
-    // TODO: add otb stuff
     if (m_manipulator.getCurrentState() == ManipulatorState.kAlgaeHold) {
       updateRobotAction(RobotAction.kProcessorOuttake);
+    } else {
+      updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
     }
   }
 
@@ -658,6 +655,32 @@ public class RobotState {
         });
   }
 
+  public void updateLED() {
+    if (FullTuningConstants.kFullTuningMode) {
+      m_led.updateState(LedState.kFullTuning);
+      return;
+    }
+    if (DriverStation.isDisabled()) {
+      m_led.updateState(LedState.kDisabled);
+      return;
+    }
+    // if we get here then we're in teleop so we should pick based on what level is selected
+    switch (m_desiredReefHeight) {
+      case L1:
+        m_led.updateState(LedState.kL1);
+        break;
+      case L2:
+        m_led.updateState(LedState.kL2);
+        break;
+      case L3:
+        m_led.updateState(LedState.kL3);
+        break;
+      case L4:
+        m_led.updateState(LedState.kL4);
+        break;
+    }
+  }
+
   public int getNumVisionGyroObservations() {
     return m_numVisionGyroObservations;
   }
@@ -704,7 +727,7 @@ public class RobotState {
     return m_elevator.getCurrentState();
   }
 
-  public LedState getLedState() {
-    return m_led.getCurrentState();
-  }
+  // public LedState getLedState() {
+  //   return m_led.getCurrentState();
+  // }
 }

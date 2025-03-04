@@ -46,7 +46,7 @@ public class Climb extends SubsystemBase {
     periodicHash.put(ClimbState.kMatch, this::matchPeriodic);
     periodicHash.put(ClimbState.kDeploy, this::deployPeriodic);
 
-    m_profiles = new SubsystemProfiles<Climb.ClimbState>(periodicHash, ClimbState.kStow);
+    m_profiles = new SubsystemProfiles<Climb.ClimbState>(periodicHash, ClimbState.kMatch);
 
     zeroEncoder();
   }
