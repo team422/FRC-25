@@ -280,10 +280,10 @@ public class RobotState {
     autoScorePeriodic();
 
     // everything must be within tolerance to run the rollers
-    // if (m_elevator.atSetpoint()
-    //     && m_manipulator.atSetpoint()
-    // when the command finishes, drive will go back to default
-    if (m_drive.getCurrentProfile() == DriveProfiles.kDefault) {
+    if (m_elevator.atSetpoint()
+        && m_manipulator.atSetpoint()
+        // when the command finishes, drive will go back to default
+        && m_drive.getCurrentProfile() == DriveProfiles.kDefault) {
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }

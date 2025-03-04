@@ -22,7 +22,6 @@ import frc.robot.subsystems.climb.ClimbIOKraken;
 import frc.robot.subsystems.climb.ClimbIOReplay;
 import frc.robot.subsystems.climb.ClimbIOSim;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOReplay;
 import frc.robot.subsystems.drive.ModuleIOReplay;
@@ -261,14 +260,6 @@ public class RobotContainer {
     // Auto commands
     m_autoChooser = new LoggedDashboardChooser<>("Auto Chooser");
     m_autoFactory = new AutoFactory(m_drive);
-
-    m_autoChooser.addDefaultOption(
-        "Test drive to point",
-        Commands.runOnce(
-            () -> {
-              m_drive.setTargetPose(new Pose2d(14.58, 4.33, Rotation2d.fromDegrees(180.0)));
-              m_drive.updateProfile(DriveProfiles.kDriveToPoint);
-            }));
 
     m_autoChooser.addOption("Do Nothing", Commands.none());
     m_autoChooser.addOption(

@@ -40,7 +40,6 @@ public class DriveToPoint extends Command {
   public DriveToPoint(Drive drive, Pose2d targetPose) {
     m_drive = drive;
     m_targetPose = targetPose;
-    addRequirements(m_drive);
 
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
 
