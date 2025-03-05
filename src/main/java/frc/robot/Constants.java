@@ -188,6 +188,8 @@ public final class Constants {
     public static final Color kL3 = Color.kYellow;
     public static final Color kL4 = Color.kGreen;
     public static final Color kDisabled = Color.kMagenta;
+    public static final Color kLocationCheckYaw = Color.kDarkGreen;
+    public static final Color kLocationCheckDistance = Color.kLightBlue;
     public static final Color kAlert = Color.kRed;
     public static final Color kFullTuning = Color.kWhite;
   }
@@ -347,18 +349,26 @@ public final class Constants {
           //     Units.inchesToMeters(7.766),
           //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
           //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
-          new Transform3d(),
-          new Transform3d(),
           new Transform3d(
-              Inches.of(10.301),
-              Inches.of(10.933),
-              Inches.of(8.771),
-              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.5), Degrees.of(-19.0))),
+              Inches.of(9.796),
+              Inches.of(10.354),
+              Inches.of(8.746),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(-12.218))),
           new Transform3d(
-              Inches.of(10.301),
-              Inches.of(-10.933),
+              Inches.of(9.796),
+              Inches.of(-10.354),
+              Inches.of(8.746),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
+          new Transform3d(
+              Inches.of(10.484),
+              Inches.of(11.464),
               Inches.of(8.771),
-              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.5), Degrees.of(19.0))),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.43), Degrees.of(-19.0))),
+          new Transform3d(
+              Inches.of(10.484),
+              Inches.of(-11.464),
+              Inches.of(8.771),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.43), Degrees.of(19.0))),
         };
 
     // tolerances for using the vision rotation, temp values
@@ -402,7 +412,7 @@ public final class Constants {
     public static final LoggedTunableNumber kPivotOuttakeAngle =
         new LoggedTunableNumber("Pivot Outtake Angle", 25.0);
     public static final LoggedTunableNumber kPivotCoralIntakeAngle =
-        new LoggedTunableNumber("Pivot Coral Intake Angle", 20.0);
+        new LoggedTunableNumber("Pivot Coral Intake Angle", 25.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
@@ -412,6 +422,8 @@ public final class Constants {
         new LoggedTunableNumber("Intake Roller Hold Voltage", 0.5);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
         new LoggedTunableNumber("Intake Roller Outtake Voltage", -2.0);
+    public static final LoggedTunableNumber kRollerCoralIntakeVoltage =
+        new LoggedTunableNumber("Intake Roller Coral Intake Voltage", -2.0);
 
     // Simulation constants
     public static final DCMotor kPivotSimGearbox = DCMotor.getKrakenX60Foc(1);

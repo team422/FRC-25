@@ -8,8 +8,8 @@
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.5865617766203695,
-        "y": 5.961740089699074
+        "x": 5.689166666666666,
+        "y": 6.2851923076923075
       },
       "isLocked": false,
       "linkedName": null
@@ -20,15 +20,20 @@
         "y": 6.84747384237348
       },
       "prevControl": {
-        "x": 1.8188619810874453,
-        "y": 6.462664338044934
+        "x": 1.9944230769230764,
+        "y": 6.708333333333334
       },
       "nextControl": null,
       "isLocked": false,
       "linkedName": "close coral"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.6912280701754409,
+      "rotationDegrees": -53.074
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -42,7 +47,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -52.85331330197832
+    "rotation": -53.074
   },
   "reversed": false,
   "folder": null,

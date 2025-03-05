@@ -15,6 +15,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.EqualsUtil;
@@ -302,6 +303,11 @@ public class AprilTagVision extends SubsystemBase {
                 / tagPoses.size();
 
         double thetaStandardDeviation = 1;
+        if (RobotState.getInstance().getNumVisionGyroObservations() < 100) {
+          // if we don't have many gyro observations, we need theta measurements
+          useVisionRotation = true;
+        }
+
         if (useVisionRotation) {
           thetaStandardDeviation =
               AprilTagVisionConstants.kThetaStandardDeviationCoefficient.get()
@@ -312,7 +318,8 @@ public class AprilTagVision extends SubsystemBase {
         }
 
         double gyroAccuracyFactor = 1.0;
-        if (RobotState.getInstance().getNumVisionGyroObservations() > 100) {
+        if (RobotState.getInstance().getNumVisionGyroObservations() > 100
+            && !DriverStation.isDisabled()) {
           // Calculate difference between vision and gyro rotation
           Rotation2d visionRotation = robotPose.getRotation();
           Rotation2d gyroRotation = RobotState.getInstance().getRobotPose().getRotation();
@@ -325,6 +332,9 @@ public class AprilTagVision extends SubsystemBase {
           xyStandardDeviation *= gyroAccuracyFactor;
           // this should not change our theta standard deviation as our gyroscope will not correct
           // if we do
+        } else {
+          // if we don't have many gyro observations, we should trust theta more
+          thetaStandardDeviation *= 0.01;
         }
         if (thetaStandardDeviation
             < 0.1) // check if the rotation standard deviation is low, if so add to

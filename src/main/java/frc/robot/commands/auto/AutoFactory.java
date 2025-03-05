@@ -26,7 +26,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class AutoFactory {
   public static final PIDConstants kLinearPID = new PIDConstants(3.0, 0.0, 0.0);
-  public static final PIDConstants kAngularPID = new PIDConstants(1.0, 0.0, 0.05);
+  public static final PIDConstants kAngularPID = new PIDConstants(2.0, 0.0, 0.05);
 
   private final Drive m_drive;
 
@@ -105,7 +105,7 @@ public class AutoFactory {
                 DriveConstants.kMaxLinearSpeed,
                 1.7,
                 DCMotor.getKrakenX60Foc(1),
-                600,
+                900,
                 1),
             Meters.of(DriveConstants.kTrackWidthX)),
         () -> {
@@ -141,14 +141,7 @@ public class AutoFactory {
     return autoCommand;
   }
 
-  public Pose2d getStartingPose(String autoName) {
-    try {
-      return PathPlannerAuto.getPathGroupFromAutoFile(autoName)
-          .get(0)
-          .getStartingHolonomicPose()
-          .get();
-    } catch (Exception e) {
-      return new Pose2d();
-    }
+  public Pose2d getStartingPose(String name) {
+    return new PathPlannerAuto(name).getStartingPose();
   }
 }

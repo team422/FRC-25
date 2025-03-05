@@ -16,17 +16,21 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.hal.HALUtil;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -41,7 +45,6 @@ import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.RobotState;
-import frc.robot.commands.drive.DriveToPoint;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -71,13 +74,25 @@ public class Drive extends SubsystemBase {
   private ChassisSpeeds m_desiredChassisSpeeds = new ChassisSpeeds();
 
   private Rotation2d m_desiredHeading = new Rotation2d();
-  private PIDController m_headingController =
-      new PIDController(
-          DriveConstants.kHeadingP.get(),
-          DriveConstants.kHeadingI.get(),
-          DriveConstants.kHeadingD.get());
 
-  private DriveToPoint m_driveToPointCommand = new DriveToPoint(this, new Pose2d());
+  private ProfiledPIDController m_driveController =
+      new ProfiledPIDController(
+          DriveConstants.kDriveToPointP.get(),
+          DriveConstants.kDriveToPointI.get(),
+          DriveConstants.kDriveToPointD.get(),
+          new TrapezoidProfile.Constraints(
+              DriveConstants.kMaxLinearSpeed, DriveConstants.kMaxLinearAcceleration));
+
+  private ProfiledPIDController m_headingController =
+      new ProfiledPIDController(
+          DriveConstants.kDriveToPointHeadingP.get(),
+          DriveConstants.kDriveToPointHeadingI.get(),
+          DriveConstants.kDriveToPointHeadingD.get(),
+          new TrapezoidProfile.Constraints(
+              DriveConstants.kMaxAngularSpeed, DriveConstants.kMaxAngularAcceleration));
+
+  private double m_ffMinRadius = 0.35, m_ffMaxRadius = 0.8;
+
   private Pose2d m_driveToPointTargetPose = new Pose2d();
 
   private Rotation2d m_rawGyroRotation = new Rotation2d();
@@ -151,6 +166,11 @@ public class Drive extends SubsystemBase {
     m_swerveSetpointGenerator =
         new SwerveSetpointGenerator(
             DriveConstants.kDriveKinematics, DriveConstants.kModuleTranslations);
+
+    m_headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    m_driveController.setTolerance(Units.inchesToMeters(0.5));
+    m_headingController.setTolerance(Units.degreesToRadians(1));
   }
 
   public void periodic() {
@@ -274,7 +294,80 @@ public class Drive extends SubsystemBase {
   }
 
   public void driveToPointPeriodic() {
-    if (m_driveToPointCommand.isFinished()) {
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_driveController.setP(DriveConstants.kDriveToPointP.get());
+          m_driveController.setI(DriveConstants.kDriveToPointI.get());
+          m_driveController.setD(DriveConstants.kDriveToPointD.get());
+          m_headingController.setP(DriveConstants.kDriveToPointHeadingP.get());
+          m_headingController.setI(DriveConstants.kDriveToPointHeadingI.get());
+          m_headingController.setD(DriveConstants.kDriveToPointHeadingD.get());
+        },
+        DriveConstants.kDriveToPointP,
+        DriveConstants.kDriveToPointI,
+        DriveConstants.kDriveToPointD,
+        DriveConstants.kDriveToPointHeadingP,
+        DriveConstants.kDriveToPointHeadingI,
+        DriveConstants.kDriveToPointHeadingD);
+
+    Pose2d currentPose = getPose();
+
+    double currentDistance =
+        currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation());
+    double ffScaler =
+        MathUtil.clamp(
+            (currentDistance - m_ffMinRadius) / (m_ffMaxRadius - m_ffMinRadius), 0.0, 1.0);
+    double driveVelocityScalar =
+        m_driveController.getSetpoint().velocity * ffScaler
+            + m_driveController.calculate(currentDistance, 0.0);
+    if (currentDistance < m_driveController.getPositionTolerance()) {
+      driveVelocityScalar = 0.0;
+    }
+
+    double headingError =
+        currentPose.getRotation().minus(m_driveToPointTargetPose.getRotation()).getRadians();
+    double headingVelocity =
+        m_headingController.getSetpoint().velocity * ffScaler
+            + m_headingController.calculate(
+                currentPose.getRotation().getRadians(),
+                m_driveToPointTargetPose.getRotation().getRadians());
+
+    if (Math.abs(headingError) < m_headingController.getPositionTolerance()) {
+      headingVelocity = 0.0;
+    }
+
+    // evil math
+    // blame 254 for making this because i dont fully understand it
+    // update: i understand it now :)
+    Translation2d driveVelocity =
+        new Pose2d(
+                0.0,
+                0.0,
+                currentPose
+                    .getTranslation()
+                    .minus(m_driveToPointTargetPose.getTranslation())
+                    .getAngle())
+            .transformBy(new Transform2d(driveVelocityScalar, 0.0, new Rotation2d()))
+            .getTranslation();
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            driveVelocity.getX(), driveVelocity.getY(), headingVelocity, currentPose.getRotation());
+    m_desiredChassisSpeeds = speeds;
+
+    Logger.recordOutput("DriveToPoint/TargetPose", m_driveToPointTargetPose);
+    Logger.recordOutput("DriveToPoint/DriveDistance", currentDistance);
+    Logger.recordOutput("DriveToPoint/HeadingError", headingError);
+
+    Logger.recordOutput("DriveToPoint/FFScaler", ffScaler);
+    Logger.recordOutput("DriveToPoint/DriveVelocityScalar", driveVelocityScalar);
+    Logger.recordOutput("DriveToPoint/HeadingVelocity", headingVelocity);
+    Logger.recordOutput("DriveToPoint/DriveVelocityX", driveVelocity.getX());
+    Logger.recordOutput("DriveToPoint/DriveVelocityY", driveVelocity.getY());
+
+    Logger.recordOutput("DriveToPoint/DriveSpeeds", speeds);
+
+    if (m_driveController.atGoal() && m_headingController.atGoal()) {
       updateProfile(DriveProfiles.kDefault);
     }
 
@@ -352,11 +445,9 @@ public class Drive extends SubsystemBase {
 
   public void setTargetPose(Pose2d pose) {
     m_driveToPointTargetPose = pose;
-    m_driveToPointCommand.setTargetPose(pose);
+
     if (m_profiles.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
-      // restart the command if we're in drive to point
-      m_driveToPointCommand.cancel();
-      m_driveToPointCommand.schedule();
+      driveToPointSetup();
     }
   }
 
@@ -462,17 +553,16 @@ public class Drive extends SubsystemBase {
   }
 
   public void updateProfile(DriveProfiles newProfile) {
-    m_driveToPointCommand.cancel(); // cancel if it is already running
 
     if (newProfile == DriveProfiles.kDriveToPoint) {
-      m_driveToPointCommand.schedule();
+      driveToPointSetup();
     }
 
     m_profiles.setCurrentProfile(newProfile);
   }
 
   public boolean headingWithinTolerance() {
-    return Math.abs(m_headingController.getError()) < Units.degreesToRadians(5);
+    return Math.abs(m_headingController.getPositionError()) < Units.degreesToRadians(5);
   }
 
   public void setModuleCurrentLimits(double supplyLimit) {
@@ -513,5 +603,26 @@ public class Drive extends SubsystemBase {
 
   public Rotation2d getGyroRotation() {
     return m_rawGyroRotation;
+  }
+
+  private void driveToPointSetup() {
+    Pose2d currentPose = getPose();
+
+    ChassisSpeeds fieldRelative =
+        ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), currentPose.getRotation());
+    m_driveController.reset(
+        currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation()),
+        Math.min(
+            0.0,
+            -new Translation2d(fieldRelative.vxMetersPerSecond, fieldRelative.vyMetersPerSecond)
+                .rotateBy(
+                    m_driveToPointTargetPose
+                        .getTranslation()
+                        .minus(currentPose.getTranslation())
+                        .getAngle()
+                        .unaryMinus())
+                .getX()));
+    m_headingController.reset(
+        currentPose.getRotation().getRadians(), fieldRelative.omegaRadiansPerSecond);
   }
 }

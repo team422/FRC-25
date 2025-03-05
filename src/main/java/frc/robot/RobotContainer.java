@@ -250,9 +250,6 @@ public class RobotContainer {
             new AprilTagVisionIONorthstar("northstar_1", ""),
             new AprilTagVisionIONorthstar("northstar_2", ""),
             new AprilTagVisionIONorthstar("northstar_3", ""));
-
-    RobotState.startInstance(
-        m_drive, m_intake, m_indexer, m_manipulator, m_climb, m_elevator, m_led, m_aprilTagVision);
   }
 
   /** Configure the commands. */
@@ -275,6 +272,18 @@ public class RobotContainer {
     for (String path : paths) {
       m_autoChooser.addOption(path, m_autoFactory.getAutoCommand(path));
     }
+
+    // we start here so autofactory won't be null
+    RobotState.startInstance(
+        m_drive,
+        m_intake,
+        m_indexer,
+        m_manipulator,
+        m_climb,
+        m_elevator,
+        m_led,
+        m_aprilTagVision,
+        m_autoFactory);
   }
 
   /** Configure the controllers. */
@@ -461,5 +470,9 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return m_autoChooser.get();
+  }
+
+  public String getSelectedAuto() {
+    return m_autoChooser.getSendableChooser().getSelected();
   }
 }

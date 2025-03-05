@@ -144,7 +144,7 @@ public class Intake extends SubsystemBase {
     if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kIntaking) {
       m_pivotIO.setDesiredAngle(
           Rotation2d.fromDegrees(IntakeConstants.kPivotCoralIntakeAngle.get()));
-      m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeVoltage.get());
+      m_rollerIO.setVoltage(IntakeConstants.kRollerCoralIntakeVoltage.get());
     } else {
       m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()));
       m_rollerIO.setVoltage(IntakeConstants.kRollerStowVoltage.get());

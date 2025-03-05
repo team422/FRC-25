@@ -47,6 +47,12 @@
           }
         },
         {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.0
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "HPto4"

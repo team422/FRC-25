@@ -21,6 +21,7 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.commands.auto.AutoFactory;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
@@ -57,6 +58,8 @@ public class RobotState {
   private Elevator m_elevator;
   private Led m_led;
   private AprilTagVision m_aprilTagVision;
+
+  private AutoFactory m_autoFactory;
 
   public enum RobotAction {
     kTeleopDefault,
@@ -116,7 +119,8 @@ public class RobotState {
       Climb climb,
       Elevator elevator,
       Led led,
-      AprilTagVision aprilTagVision) {
+      AprilTagVision aprilTagVision,
+      AutoFactory autoFactory) {
     m_drive = drive;
     m_intake = intake;
     m_indexer = indexer;
@@ -125,6 +129,7 @@ public class RobotState {
     m_elevator = elevator;
     m_led = led;
     m_aprilTagVision = aprilTagVision;
+    m_autoFactory = autoFactory;
 
     Map<RobotAction, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(RobotAction.kTeleopDefault, () -> {});
@@ -163,10 +168,20 @@ public class RobotState {
       Climb climb,
       Elevator elevator,
       Led led,
-      AprilTagVision aprilTagVision) {
+      AprilTagVision aprilTagVision,
+      AutoFactory autoFactory) {
     if (m_instance == null) {
       m_instance =
-          new RobotState(drive, intake, indexer, manipulator, climb, elevator, led, aprilTagVision);
+          new RobotState(
+              drive,
+              intake,
+              indexer,
+              manipulator,
+              climb,
+              elevator,
+              led,
+              aprilTagVision,
+              autoFactory);
     }
     return m_instance;
   }
@@ -349,7 +364,6 @@ public class RobotState {
     DriveProfiles newDriveProfiles = DriveProfiles.kDefault;
     IntakeState newIntakeState = m_intake.getStowOrHold();
     IndexerState newIndexerState = IndexerState.kIdle;
-    ClimbState newClimbState = ClimbState.kStow;
     ElevatorState newElevatorState = ElevatorState.kStow;
     ManipulatorState newManipulatorState = m_manipulator.getStowOrHold();
 
@@ -397,7 +411,6 @@ public class RobotState {
         newDriveProfiles = m_drive.getCurrentProfile();
         newIntakeState = m_intake.getCurrentState();
         newIndexerState = m_indexer.getCurrentState();
-        newClimbState = m_climb.getCurrentState();
         newElevatorState = m_elevator.getCurrentState();
         newManipulatorState = m_manipulator.getCurrentState();
 
@@ -411,7 +424,6 @@ public class RobotState {
         newDriveProfiles = m_drive.getCurrentProfile();
         newIntakeState = m_intake.getCurrentState();
         newIndexerState = m_indexer.getCurrentState();
-        newClimbState = m_climb.getCurrentState();
         newElevatorState = m_elevator.getCurrentState();
         newManipulatorState = m_manipulator.getCurrentState();
 
@@ -460,10 +472,6 @@ public class RobotState {
 
     if (m_indexer.getCurrentState() != newIndexerState) {
       m_indexer.updateState(newIndexerState);
-    }
-
-    if (m_climb.getCurrentState() != newClimbState) {
-      m_climb.updateState(newClimbState);
     }
 
     if (m_elevator.getCurrentState() != newElevatorState) {
@@ -661,7 +669,7 @@ public class RobotState {
       return;
     }
     if (DriverStation.isDisabled()) {
-      m_led.updateState(LedState.kDisabled);
+      m_led.updateState(LedState.kLocationCheck);
       return;
     }
     // if we get here then we're in teleop so we should pick based on what level is selected
@@ -703,6 +711,19 @@ public class RobotState {
     return m_manipulator.atSetpoint();
   }
 
+  private String m_selectedAuto;
+
+  public void setSelectedAuto(String name) {
+    m_selectedAuto = name;
+  }
+
+  public Pose2d getPathPlannerStartPose() {
+    if (m_autoFactory != null && m_selectedAuto != null) {
+      return m_autoFactory.getStartingPose(m_selectedAuto);
+    }
+    return new Pose2d();
+  }
+
   public DriveProfiles getDriveProfile() {
     return m_drive.getCurrentProfile();
   }
@@ -727,7 +748,7 @@ public class RobotState {
     return m_elevator.getCurrentState();
   }
 
-  // public LedState getLedState() {
-  //   return m_led.getCurrentState();
-  // }
+  public LedState getLedState() {
+    return m_led.getCurrentState();
+  }
 }

@@ -28,7 +28,12 @@
       "linkedName": "bottom coral"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.5000000000000004,
+      "rotationDegrees": 55.69
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],

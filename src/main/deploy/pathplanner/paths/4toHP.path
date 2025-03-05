@@ -28,7 +28,12 @@
       "linkedName": "close coral"
     }
   ],
-  "rotationTargets": [],
+  "rotationTargets": [
+    {
+      "waypointRelativePos": 0.7228070175438657,
+      "rotationDegrees": -53.07
+    }
+  ],
   "constraintZones": [],
   "pointTowardsZones": [],
   "eventMarkers": [],
@@ -42,7 +47,7 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -52.85331330197832
+    "rotation": -53.07421396409177
   },
   "reversed": false,
   "folder": null,
