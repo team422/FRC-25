@@ -65,6 +65,7 @@ public class Drive extends SubsystemBase {
 
   public enum DriveProfiles {
     kDefault,
+    kPathplanner,
     kAutoAlign,
     kDriveToPoint,
   }
@@ -72,6 +73,7 @@ public class Drive extends SubsystemBase {
   private SubsystemProfiles<DriveProfiles> m_profiles;
 
   private ChassisSpeeds m_desiredChassisSpeeds = new ChassisSpeeds();
+  private ChassisSpeeds m_desiredAutoChassisSpeeds = new ChassisSpeeds();
 
   private Rotation2d m_desiredHeading = new Rotation2d();
 
@@ -156,6 +158,7 @@ public class Drive extends SubsystemBase {
 
     Map<DriveProfiles, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(DriveProfiles.kDefault, this::defaultPeriodic);
+    periodicHash.put(DriveProfiles.kPathplanner, this::pathplannerPeriodic);
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
     periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
 
@@ -287,6 +290,14 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/EnableChassisSpeeds", m_enableDesiredChassisSpeeds);
   }
 
+  public void pathplannerPeriodic() {
+    m_desiredChassisSpeeds = m_desiredAutoChassisSpeeds;
+
+    m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
+
+    defaultPeriodic();
+  }
+
   public void autoAlignPeriodic() {
     m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
 
@@ -368,7 +379,7 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("DriveToPoint/DriveSpeeds", speeds);
 
     if (m_driveController.atGoal() && m_headingController.atGoal()) {
-      updateProfile(DriveProfiles.kDefault);
+      updateProfile(getDefaultProfile());
     }
 
     defaultPeriodic();
@@ -431,6 +442,10 @@ public class Drive extends SubsystemBase {
     m_desiredChassisSpeeds = speeds;
   }
 
+  public void setDesiredAutoChassisSpeeds(ChassisSpeeds speeds) {
+    m_desiredAutoChassisSpeeds = speeds;
+  }
+
   public ChassisSpeeds getDesiredChassisSpeeds() {
     return m_desiredChassisSpeeds;
   }
@@ -441,6 +456,8 @@ public class Drive extends SubsystemBase {
 
   public void setDesiredHeading(Rotation2d heading) {
     m_desiredHeading = heading;
+
+    driveToPointSetup();
   }
 
   public void setTargetPose(Pose2d pose) {
@@ -553,12 +570,21 @@ public class Drive extends SubsystemBase {
   }
 
   public void updateProfile(DriveProfiles newProfile) {
+    System.out.println("Hello drive " + newProfile);
 
     if (newProfile == DriveProfiles.kDriveToPoint) {
       driveToPointSetup();
     }
 
     m_profiles.setCurrentProfile(newProfile);
+  }
+
+  public DriveProfiles getDefaultProfile() {
+    if (DriverStation.isAutonomous()) {
+      return DriveProfiles.kPathplanner;
+    } else {
+      return DriveProfiles.kDefault;
+    }
   }
 
   public boolean headingWithinTolerance() {

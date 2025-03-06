@@ -5,10 +5,11 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Pounds;
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -154,7 +155,7 @@ public final class Constants {
 
     // these are magic units
     public static final LoggedTunableNumber kClimbStowPos =
-        new LoggedTunableNumber("Climb Stow Angle", 15.0);
+        new LoggedTunableNumber("Climb Stow Angle", -225.0);
     public static final LoggedTunableNumber kClimbMatchPos =
         new LoggedTunableNumber("Climb Match Angle", 300.0);
     public static final LoggedTunableNumber kClimbDeployPos =
@@ -162,7 +163,7 @@ public final class Constants {
 
     public static final double kClimbReduction = (5.0 / 1.0) * (4.0 / 1.0) * (68.0 / 18.0);
 
-    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(-25.0);
+    public static final Rotation2d kMinAngle = Rotation2d.fromDegrees(-350.0);
     public static final Rotation2d kMaxAngle = Rotation2d.fromDegrees(600.0);
 
     // sim constants
@@ -278,20 +279,218 @@ public final class Constants {
   public static final class AprilTagVisionConstants {
     public static final LoggedTunableNumber kUseVision = new LoggedTunableNumber("Use Vision", 1);
 
+    public static final AprilTagFieldLayout kAprilTagLayout;
+
+    static {
+      List<AprilTag> tags = new ArrayList<>();
+
+      tags.add(
+          new AprilTag(
+              1,
+              new Pose3d(
+                  16.687292,
+                  0.628142,
+                  1.4859,
+                  new Rotation3d(new Quaternion(0.4539904997395468, 0, 0, 0.8910065241883678)))));
+      tags.add(
+          new AprilTag(
+              2,
+              new Pose3d(
+                  16.687292,
+                  7.414259999999999,
+                  1.4859,
+                  new Rotation3d(
+                      new Quaternion(-0.45399049973954675, -0.0, 0.0, 0.8910065241883679)))));
+      tags.add(
+          new AprilTag(
+              3,
+              new Pose3d(
+                  11.49096,
+                  8.031733999999998,
+                  1.30175,
+                  new Rotation3d(
+                      new Quaternion(-0.7071067811865475, -0.0, 0.0, 0.7071067811865476)))));
+      // tags.add(
+      //     new AprilTag(
+      //         4,
+      //         new Pose3d(
+      //             9.276079999999999,
+      //             6.132575999999999,
+      //             1.8679160000000001,
+      //             new Rotation3d(
+      //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
+      // tags.add(
+      //     new AprilTag(
+      //         5,
+      //         new Pose3d(
+      //             9.276079999999999,
+      //             1.9098259999999998,
+      //             1.8679160000000001,
+      //             new Rotation3d(
+      //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
+      tags.add(
+          new AprilTag(
+              6,
+              new Pose3d(
+                  13.474446,
+                  3.3012379999999997,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
+      tags.add(
+          new AprilTag(
+              7,
+              new Pose3d(
+                  13.890498,
+                  4.0208200000000005,
+                  0.308102,
+                  new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
+      tags.add(
+          new AprilTag(
+              8,
+              new Pose3d(
+                  13.474446,
+                  4.740402,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
+      tags.add(
+          new AprilTag(
+              9,
+              new Pose3d(
+                  12.643358,
+                  4.740402,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
+      tags.add(
+          new AprilTag(
+              10,
+              new Pose3d(
+                  12.227305999999999,
+                  4.0208200000000005,
+                  0.308102,
+                  new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
+      tags.add(
+          new AprilTag(
+              11,
+              new Pose3d(
+                  12.643358,
+                  3.3012379999999997,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
+      tags.add(
+          new AprilTag(
+              12,
+              new Pose3d(
+                  0.8613139999999999,
+                  0.628142,
+                  1.4859,
+                  new Rotation3d(
+                      new Quaternion(0.8910065241883679, 0.0, 0.0, 0.45399049973954675)))));
+      tags.add(
+          new AprilTag(
+              13,
+              new Pose3d(
+                  0.8613139999999999,
+                  7.414259999999999,
+                  1.4859,
+                  new Rotation3d(
+                      new Quaternion(-0.8910065241883678, -0.0, 0.0, 0.45399049973954686)))));
+      // tags.add(
+      //     new AprilTag(
+      //         14,
+      //         new Pose3d(
+      //             8.272272,
+      //             6.132575999999999,
+      //             1.8679160000000001,
+      //             new Rotation3d(
+      //                 new Quaternion(
+      //                     5.914589856893349e-17,
+      //                     -0.25881904510252074,
+      //                     1.5848095757158825e-17,
+      //                     0.9659258262890683)))));
+      // tags.add(
+      //     new AprilTag(
+      //         15,
+      //         new Pose3d(
+      //             8.272272,
+      //             1.9098259999999998,
+      //             1.8679160000000001,
+      //             new Rotation3d(
+      //                 new Quaternion(
+      //                     5.914589856893349e-17,
+      //                     -0.25881904510252074,
+      //                     1.5848095757158825e-17,
+      //                     0.9659258262890683)))));
+      tags.add(
+          new AprilTag(
+              16,
+              new Pose3d(
+                  6.057646,
+                  0.010667999999999999,
+                  1.30175,
+                  new Rotation3d(
+                      new Quaternion(0.7071067811865476, 0.0, 0.0, 0.7071067811865476)))));
+      tags.add(
+          new AprilTag(
+              17,
+              new Pose3d(
+                  4.073905999999999,
+                  3.3012379999999997,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
+      tags.add(
+          new AprilTag(
+              18,
+              new Pose3d(
+                  3.6576,
+                  4.0208200000000005,
+                  0.308102,
+                  new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
+      tags.add(
+          new AprilTag(
+              19,
+              new Pose3d(
+                  4.073905999999999,
+                  4.740402,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
+      tags.add(
+          new AprilTag(
+              20,
+              new Pose3d(
+                  4.904739999999999,
+                  4.740402,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
+      tags.add(
+          new AprilTag(
+              21,
+              new Pose3d(
+                  5.321046,
+                  4.0208200000000005,
+                  0.308102,
+                  new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
+      tags.add(
+          new AprilTag(
+              22,
+              new Pose3d(
+                  4.904739999999999,
+                  3.3012379999999997,
+                  0.308102,
+                  new Rotation3d(
+                      new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
+
+      kAprilTagLayout = new AprilTagFieldLayout(tags, 17.548, 8.042);
+    }
+
     // public static final AprilTagFieldLayout kAprilTagLayout =
-    //     new AprilTagFieldLayout(
-    //         List.of(
-    //             new AprilTag(
-    //                 7,
-    //                 new Pose3d(
-    //                     13.890498,
-    //                     4.0208200000000005,
-    //                     0.3508375,
-    //                     new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0))))),
-    //         17.548,
-    //         8.042);
-    public static final AprilTagFieldLayout kAprilTagLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+    //     AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
     public static final double kAprilTagWidth = Units.inchesToMeters(6.5);
 
     public static final double kAmbiguityThreshold = 0.4;

@@ -3,13 +3,13 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 1.3367789336845737,
-        "y": 6.84747384237348
+        "x": 1.7054487179487177,
+        "y": 7.121153846153846
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.293717948717948,
-        "y": 6.852820512820513
+        "x": 2.6623877329820917,
+        "y": 7.126500516600879
       },
       "isLocked": false,
       "linkedName": "close coral"
@@ -48,7 +48,7 @@
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": -53.07421396409177
+    "rotation": -54.246112745563224
   },
   "useDefaultConstraints": false
 }

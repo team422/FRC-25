@@ -13,6 +13,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import java.util.Map;
+import org.littletonrobotics.junction.Logger;
 
 public class SetpointGenerator {
   // this is a static class and may not be instantiated
@@ -139,12 +140,20 @@ public class SetpointGenerator {
     int[] diagonalPositive = checkDiagonalPositive(drivePose);
     int[] diagonalNegative = checkDiagonalNegative(drivePose);
 
+    Logger.recordOutput("SetpointGenerator/Vertical", vertical);
+    Logger.recordOutput("SetpointGenerator/DiagonalPositive", diagonalPositive);
+    Logger.recordOutput("SetpointGenerator/DiagonalNegative", diagonalNegative);
+
     // find the common index
     int commonIndex = findCommonElement(vertical, diagonalPositive, diagonalNegative);
 
     // turn the common index into a pair of indices (0-5 becomes 0-11)
     int rightIndex = commonIndex * 2;
     int leftIndex = commonIndex * 2 + 1;
+
+    Logger.recordOutput("SetpointGenerator/CommonIndex", commonIndex);
+    Logger.recordOutput("SetpointGenerator/RightIndex", rightIndex);
+    Logger.recordOutput("SetpointGenerator/LeftIndex", leftIndex);
 
     return new Pair<>(rightIndex, leftIndex);
   }
@@ -178,9 +187,9 @@ public class SetpointGenerator {
       }
     } else {
       if (pose.getX() <= 4.503) {
-        return new int[] {0, 1, 5};
-      } else {
         return new int[] {2, 3, 4};
+      } else {
+        return new int[] {0, 1, 5};
       }
     }
   }
@@ -192,13 +201,13 @@ public class SetpointGenerator {
     double ty = m * pose.getX() + b;
     if (pose.getY() >= ty) {
       if (alliance == Alliance.Red) {
-        return new int[] {3, 4, 5};
+        return new int[] {1, 2, 3};
       } else {
         return new int[] {0, 1, 2};
       }
     } else {
       if (alliance == Alliance.Red) {
-        return new int[] {0, 1, 2};
+        return new int[] {0, 4, 5};
       } else {
         return new int[] {3, 4, 5};
       }
@@ -212,13 +221,13 @@ public class SetpointGenerator {
     double ty = m * pose.getX() + b;
     if (pose.getY() >= ty) {
       if (alliance == Alliance.Red) {
-        return new int[] {0, 4, 5};
+        return new int[] {0, 1, 2};
       } else {
         return new int[] {1, 2, 3};
       }
     } else {
       if (alliance == Alliance.Red) {
-        return new int[] {1, 2, 3};
+        return new int[] {3, 4, 5};
       } else {
         return new int[] {0, 4, 5};
       }

@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -194,6 +195,8 @@ public class AprilTagVision extends SubsystemBase {
               double height2 = Math.abs(robotPose3d2.getZ());
               // double pitch1 = Math.abs(robotPose3d1.getRotation().getY());
               // double pitch2 = Math.abs(robotPose3d2.getRotation().getY());
+              // double roll1 = Math.abs(robotPose3d1.getRotation().getX());
+              // double roll2 = Math.abs(robotPose3d2.getRotation().getX());
               // double yaw1 = Math.abs(robotPose3d1.getRotation().getZ());
               // double yaw2 = Math.abs(robotPose3d2.getRotation().getZ());
               if (height1 < height2) {
@@ -233,6 +236,13 @@ public class AprilTagVision extends SubsystemBase {
                 > FieldConstants.kFieldWidth + AprilTagVisionConstants.kFieldBorderMargin
             || robotPose3d.getZ() < -AprilTagVisionConstants.kZMargin
             || robotPose3d.getZ() > AprilTagVisionConstants.kZMargin) {
+          continue;
+        }
+
+        // Exit if the pitch and roll are cooked (combined >20 degrees)
+        double pitch = Units.radiansToDegrees(Math.abs(robotPose3d.getRotation().getY()));
+        double roll = Units.radiansToDegrees(Math.abs(robotPose3d.getRotation().getX()));
+        if (pitch + roll > 20) {
           continue;
         }
 
@@ -341,6 +351,10 @@ public class AprilTagVision extends SubsystemBase {
         // numVisionGyroObservations
         {
           RobotState.getInstance().incrementNumVisionGyroObservations();
+        }
+
+        if (DriverStation.isDisabled()) {
+          xyStandardDeviation *= 0.1;
         }
 
         Logger.recordOutput(

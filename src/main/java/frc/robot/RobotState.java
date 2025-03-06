@@ -298,7 +298,7 @@ public class RobotState {
     if (m_elevator.atSetpoint()
         && m_manipulator.atSetpoint()
         // when the command finishes, drive will go back to default
-        && m_drive.getCurrentProfile() == DriveProfiles.kDefault) {
+        && m_drive.getCurrentProfile() == m_drive.getDefaultProfile()) {
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }
@@ -361,7 +361,10 @@ public class RobotState {
   }
 
   public void updateRobotAction(RobotAction newAction) {
-    DriveProfiles newDriveProfiles = DriveProfiles.kDefault;
+    for (int i = 0; i < 100; i++) {
+      System.out.println("hello " + newAction);
+    }
+    DriveProfiles newDriveProfiles = m_drive.getDefaultProfile();
     IntakeState newIntakeState = m_intake.getStowOrHold();
     IndexerState newIndexerState = IndexerState.kIdle;
     ElevatorState newElevatorState = ElevatorState.kStow;
@@ -722,6 +725,10 @@ public class RobotState {
       return m_autoFactory.getStartingPose(m_selectedAuto);
     }
     return new Pose2d();
+  }
+
+  public void sendPathplannerTargetPose(Pose2d pose) {
+    // m_drive.setDesiredHeading(pose.getRotation());
   }
 
   public DriveProfiles getDriveProfile() {

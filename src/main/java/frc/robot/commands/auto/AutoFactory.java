@@ -12,6 +12,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,7 +27,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class AutoFactory {
   public static final PIDConstants kLinearPID = new PIDConstants(3.0, 0.0, 0.0);
-  public static final PIDConstants kAngularPID = new PIDConstants(2.0, 0.0, 0.05);
+  public static final PIDConstants kAngularPID = new PIDConstants(2.0, 0.0, 0.00);
 
   private final Drive m_drive;
 
@@ -71,10 +72,12 @@ public class AutoFactory {
     NamedCommands.registerCommand(
         "Autoscore Left",
         Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setReefIndexLeft();
-                })
-            .andThen(new AutoAutoScore()));
+            () -> {
+              RobotState.getInstance().setReefIndexLeft();
+              RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+            }));
+
+    // .andThen(new AutoAutoScore()));
 
     NamedCommands.registerCommand(
         "Autoscore Right",
@@ -85,9 +88,18 @@ public class AutoFactory {
             .andThen(new AutoAutoScore()));
 
     NamedCommands.registerCommand(
-        "Coral Intake",
+        "Coral Intake Left",
         Commands.runOnce(
             () -> {
+              m_drive.setDesiredHeading(Rotation2d.fromDegrees(130));
+              RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+            }));
+
+    NamedCommands.registerCommand(
+        "Coral Intake Right",
+        Commands.runOnce(
+            () -> {
+              m_drive.setDesiredHeading(Rotation2d.fromDegrees(-130));
               RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
             }));
 
@@ -95,7 +107,7 @@ public class AutoFactory {
         m_drive::getPose,
         m_drive::setPose,
         m_drive::getChassisSpeeds,
-        m_drive::setDesiredChassisSpeeds,
+        m_drive::setDesiredAutoChassisSpeeds,
         new PPHolonomicDriveController(kLinearPID, kAngularPID, 0.02),
         new RobotConfig(
             DriveConstants.kRobotMass,
@@ -131,6 +143,7 @@ public class AutoFactory {
         });
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
+          RobotState.getInstance().sendPathplannerTargetPose(targetPose);
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
   }
