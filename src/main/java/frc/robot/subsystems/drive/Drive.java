@@ -14,14 +14,11 @@
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Volts;
-import static frc.lib.littletonUtils.EqualsUtil.epsilonEquals;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -30,8 +27,6 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
@@ -43,6 +38,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.PoseEstimator;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
@@ -52,7 +48,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
-import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.List;
@@ -66,8 +61,7 @@ public class Drive extends SubsystemBase {
   static final Lock m_odometryLock = new ReentrantLock();
   private final GyroIO m_gyroIO;
   public final GyroIOInputsAutoLogged m_gyroInputs = new GyroIOInputsAutoLogged();
-  public final PoseEstimator m_PoseEstimator =
-      new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
+
   private final Module[] m_modules = new Module[4]; // FL, FR, BL, BR
   private final SysIdRoutine m_sysId;
   private Rotation2d lastGyroYaw = new Rotation2d();
@@ -117,9 +111,9 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition(),
         new SwerveModulePosition()
       };
-  private SwerveDrivePoseEstimator m_poseEstimator =
-      new SwerveDrivePoseEstimator(
-          DriveConstants.kDriveKinematics, m_rawGyroRotation, m_lastModulePositions, new Pose2d());
+
+  private final PoseEstimator m_poseEstimator =
+      new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
 
   private SwerveSetpoint m_currSetpoint =
       new SwerveSetpoint(
@@ -268,9 +262,6 @@ public class Drive extends SubsystemBase {
       totalTwist =
           new Twist2d(
               totalTwist.dx + twist.dx, totalTwist.dy + twist.dy, totalTwist.dtheta + twist.dtheta);
-
-      // Apply update
-      m_poseEstimator.updateWithTime(sampleTimestamps[i], m_rawGyroRotation, modulePositions);
     }
 
     if (m_gyroInputs.connected) {
@@ -280,7 +271,7 @@ public class Drive extends SubsystemBase {
       totalTwist.dtheta = m_rawGyroRotation.minus(lastGyroYaw).getRadians();
       lastGyroYaw = m_rawGyroRotation;
     }
-    m_PoseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
+    m_poseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
 
     // lets look for slip
     boolean slip = false;
@@ -369,8 +360,9 @@ public class Drive extends SubsystemBase {
 
     double currentDistance =
         currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation());
-    Logger.recordOutput("Zero target", epsilonEquals(0, m_driveToPointTargetPose.getX()));
-    if (epsilonEquals(0, m_driveToPointTargetPose.getX())) {
+
+    if (EqualsUtil.epsilonEquals(0, m_driveToPointTargetPose.getX())) {
+      Logger.recordOutput("Drive/ZeroTarget", Timer.getFPGATimestamp());
       m_desiredChassisSpeeds = new ChassisSpeeds();
       defaultPeriodic();
 
@@ -392,9 +384,6 @@ public class Drive extends SubsystemBase {
         m_headingController.calculate(
             currentPose.getRotation().getRadians(),
             m_driveToPointTargetPose.getRotation().getRadians());
-
-    // +    m_headingController.getSetpoint().velocity * ffScaler
-    //
 
     if (Math.abs(headingError) < m_headingController.getPositionTolerance()) {
       headingVelocity = 0.0;
@@ -601,6 +590,7 @@ public class Drive extends SubsystemBase {
   }
 
   /** Returns the module positions (turn angles and drive positions) for all of the modules. */
+  @SuppressWarnings("unused")
   private SwerveModulePosition[] getModulePositions() {
     SwerveModulePosition[] states = new SwerveModulePosition[4];
     for (int i = 0; i < 4; i++) {
@@ -612,7 +602,7 @@ public class Drive extends SubsystemBase {
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
-    return m_PoseEstimator.getLatestPose();
+    return m_poseEstimator.getLatestPose();
   }
 
   /** Returns the current odometry rotation. */
@@ -622,38 +612,16 @@ public class Drive extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    // m_poseEstimator.resetPosition(m_rawGyroRotation, getModulePositions(), pose);
-    m_PoseEstimator.resetPose(pose);
-  }
-
-  public void setPoseNoRotation(Pose2d pose) {
-    setPose(new Pose2d(pose.getTranslation(), m_rawGyroRotation));
+    m_poseEstimator.resetPose(pose);
   }
 
   /**
-   * Adds a vision measurement to the pose estimator.
+   * Adds vision observations to the pose estimator.
    *
-   * @param visionPose The pose of the robot as measured by the vision camera.
-   * @param timestamp The timestamp of the vision measurement in seconds.
+   * @param observations The vision observations to add.
    */
-  public void addVisionMeasurement(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {
-    m_poseEstimator.addVisionMeasurement(visionPose, timestamp, stdDevs);
-  }
-
-  /**
-   * Adds a vision measurement to the pose estimator.
-   *
-   * @param observation The VisionObservation object containing the vision data.
-   */
-  public void addVisionObservation(VisionObservation observation) {
-    // m_PoseEstimator.addVisionData(null);
-    addVisionMeasurement(
-        observation.visionPose(), observation.timestamp(), observation.standardDeviations());
-  }
-
   public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
-    m_PoseEstimator.addVisionData(observations);
-    Logger.recordOutput("updated new pose estimator", Timer.getMatchTime());
+    m_poseEstimator.addVisionData(observations);
   }
 
   public void updateProfile(DriveProfiles newProfile) {
@@ -723,7 +691,7 @@ public class Drive extends SubsystemBase {
     ChassisSpeeds fieldRelative =
         ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), currentPose.getRotation());
     if (!(DriverStation.isAutonomous()
-        && RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoDriveToIntake)) {
+        && RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking)) {
       m_driveController.reset(
           currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation()),
           Math.min(

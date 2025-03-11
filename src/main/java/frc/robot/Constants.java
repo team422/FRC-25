@@ -510,49 +510,19 @@ public final class Constants {
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.05);
     public static final LoggedTunableNumber kThetaStandardDeviationCoefficient =
-        new LoggedTunableNumber("thetaStandardDeviationCoefficient", .005);
+        new LoggedTunableNumber("thetaStandardDeviationCoefficient", 0.03);
 
     // transform from center of robot to camera
     public static final Transform3d[] kCameraTransforms =
         new Transform3d[] {
-          // front right (shooter)
-          // new Transform3d(
-          //     Units.inchesToMeters(9.454),
-          //     Units.inchesToMeters(-5.541),
-          //     Units.inchesToMeters(7.766),
-          //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
-          //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(-9.97)))),
-
-          // // back right (intake)
-          // new Transform3d(
-          //     new Translation3d(
-          //         Units.inchesToMeters(-14.620),
-          //         Units.inchesToMeters(4.673),
-          //         Units.inchesToMeters(8.585)),
-          //     new Rotation3d(0.0, Units.degreesToRadians(-35), Units.degreesToRadians(180 -
-          // 10))),
-
-          // // back left (intake)
-          // new Transform3d(
-          //     new Translation3d(
-          //         Units.inchesToMeters(-14.620),
-          //         Units.inchesToMeters(4.673),
-          //         Units.inchesToMeters(8.585)),
-          //     new Rotation3d(0.0, Units.degreesToRadians(-35), Units.degreesToRadians(180 -
-          // 10))),
-
-          // // front left (shooter)
-          // new Transform3d(
-          //     Units.inchesToMeters(9.454),
-          //     Units.inchesToMeters(5.541),
-          //     Units.inchesToMeters(7.766),
-          //     new Rotation3d(0.0, Units.degreesToRadians(-35), 0.0)
-          //         .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(9.97)))),
+          // front left (facing out, currently unused)
           new Transform3d(
               Inches.of(9.796),
               Inches.of(10.354),
               Inches.of(8.746),
               GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(-12.218))),
+
+          // front right (facing out, currently unused)
           new Transform3d(
               Inches.of(9.796),
               Inches.of(-10.354),

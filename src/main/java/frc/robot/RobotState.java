@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
-import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
@@ -25,7 +24,6 @@ import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.commands.auto.AutoFactory;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
-import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
 import frc.robot.subsystems.climb.Climb;
 import frc.robot.subsystems.climb.Climb.ClimbState;
 import frc.robot.subsystems.drive.Drive;
@@ -83,27 +81,20 @@ public class RobotState {
 
     kAutoDefault,
     kAutoAutoScore,
-    kAutoAutoDriveToIntake,
-    kAutoCoralOuttaking,
     kAutoCoralIntaking,
+    kAutoCoralOuttaking,
   }
 
   private SubsystemProfiles<RobotAction> m_profiles;
 
   private Timer m_timer = new Timer();
-  private double m_autoTimer;
 
   private ReefHeight m_desiredReefHeight = ReefHeight.L1;
   private int m_desiredBranchIndex = 0;
-  private RobotSetpoint setpoint =
+  private RobotSetpoint m_setpoint =
       SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
 
   private int m_numVisionGyroObservations = 0;
-
-  // this is scuffed
-  // what it does is reset the odometry to 0,0 when the value is changed
-  // the actual value doesn't matter
-  private LoggedTunableNumber m_resetOdometry = new LoggedTunableNumber("Reset Odometry", 0);
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -150,9 +141,8 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
-    periodicHash.put(RobotAction.kAutoAutoDriveToIntake, this::autoDriveToLoader);
-    periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
     periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
+    periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
   }
@@ -211,15 +201,6 @@ public class RobotState {
 
     updateLED();
 
-    // this is scuffed but it's really funny
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          Logger.recordOutput("WE CHANGED", Timer.getFPGATimestamp());
-          m_drive.setPose(new Pose2d());
-        },
-        m_resetOdometry);
-
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());
 
@@ -239,24 +220,11 @@ public class RobotState {
     }
   }
 
-  public void autoCoralIntakingPeriodic() {
-    coralIntakingPeriodic();
-
-    if (m_manipulator.hasGamePiece()
-        && m_manipulator.getCurrentState() == ManipulatorState.kIndexing
-        && m_manipulator.rollerWithinTolerance()) {
-      setDefaultAction();
-    }
-  }
-
   public void coralOuttakingPeriodic() {
     if (m_timer.hasElapsed(0.4)) {
       // after we release the coral go back to stow
       if (DriverStation.isAutonomous()) {
-        // m_drive.setTargetPose(AllianceFlipUtil.apply(new
-        // Pose2d(.5,0.75,Rotation2d.fromDegrees(127.80))));
-        m_autoTimer = Timer.getTimestamp();
-        updateRobotAction(RobotAction.kAutoAutoDriveToIntake);
+        updateRobotAction(RobotAction.kAutoCoralIntaking);
       } else {
         setDefaultAction();
       }
@@ -277,10 +245,10 @@ public class RobotState {
   }
 
   public void autoScorePeriodic() {
-    setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
-    if (!EqualsUtil.GeomExtensions.epsilonEquals(setpoint.drivePose(), m_drive.getTargetPose())) {
-      m_drive.setTargetPose(setpoint.drivePose());
+    if (!EqualsUtil.GeomExtensions.epsilonEquals(m_setpoint.drivePose(), m_drive.getTargetPose())) {
+      m_drive.setTargetPose(m_setpoint.drivePose());
     }
 
     Logger.recordOutput("AutoScore/BranchIndex", m_desiredBranchIndex);
@@ -288,22 +256,25 @@ public class RobotState {
     Logger.recordOutput(
         "AutoScore/DistanceToSetpoint",
         Units.metersToInches(
-            m_drive.getPose().getTranslation().getDistance(setpoint.drivePose().getTranslation())));
+            m_drive
+                .getPose()
+                .getTranslation()
+                .getDistance(m_setpoint.drivePose().getTranslation())));
 
     // we don't want to deploy elevator or manipulator until we're close to the setpoint
     if (Math.abs(
-            m_drive.getPose().getTranslation().getDistance(setpoint.drivePose().getTranslation()))
+            m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation()))
         < Units.inchesToMeters(6)) {
       Logger.recordOutput("AutoScore/WithinDriveTolerance", Timer.getFPGATimestamp());
-      if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
-        m_elevator.setDesiredHeight(setpoint.elevatorHeight());
+      if (!EqualsUtil.epsilonEquals(m_setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
+        m_elevator.setDesiredHeight(m_setpoint.elevatorHeight());
       }
       // don't deploy manipulator until we're at the elevator setpoint
       if (m_elevator.atSetpoint(10.0)) {
         if (!EqualsUtil.epsilonEquals(
-            setpoint.manipulatorAngle().getRadians(),
+            m_setpoint.manipulatorAngle().getRadians(),
             m_manipulator.getDesiredWristAngle().getRadians())) {
-          m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+          m_manipulator.setDesiredWristAngle(m_setpoint.manipulatorAngle());
         }
       } else {
         m_manipulator.setDesiredWristAngle(
@@ -317,18 +288,18 @@ public class RobotState {
 
     // everything must be within tolerance to run the rollers
     Logger.recordOutput("Auto/ElevRight", m_elevator.atSetpoint());
-    Logger.recordOutput("Auto/ManipRight", m_manipulator.atSetpoint(setpoint.manipulatorAngle()));
-    Logger.recordOutput("Auto/SetpointAngle", setpoint.manipulatorAngle().getDegrees());
-    if (m_elevator.atSetpoint() && m_manipulator.atSetpoint(setpoint.manipulatorAngle())) {
+    Logger.recordOutput("Auto/ManipRight", m_manipulator.atSetpoint(m_setpoint.manipulatorAngle()));
+    Logger.recordOutput("Auto/SetpointAngle", m_setpoint.manipulatorAngle().getDegrees());
+    if (m_elevator.atSetpoint() && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }
 
   private boolean m_left = false;
 
-  public void autoDriveToLoader() {
-    Logger.recordOutput("Timer Auto", Timer.getTimestamp() - m_autoTimer);
-    if (Timer.getTimestamp() - m_autoTimer < 1.0) {
+  public void autoCoralIntakingPeriodic() {
+    // TODO: make auto setpoint generator to make this cleaner
+    if (m_timer.hasElapsed(1.0)) {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_left) {
@@ -366,7 +337,9 @@ public class RobotState {
         }
       }
     }
+
     coralIntakingPeriodic();
+
     if (m_manipulator.hasGamePiece()) {
       RobotState.getInstance().setReefIndexRight();
       updateRobotAction(RobotAction.kAutoAutoScore);
@@ -374,21 +347,21 @@ public class RobotState {
   }
 
   public void manualScorePeriodic() {
-    setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
 
     Logger.recordOutput("ManualScore/BranchIndex", m_desiredBranchIndex);
     Logger.recordOutput("ManualScore/ReefHeight", m_desiredReefHeight);
 
     // only set the setpoints if they're different so we don't reset the motion profile
-    if (!EqualsUtil.epsilonEquals(setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
-      m_elevator.setDesiredHeight(setpoint.elevatorHeight());
+    if (!EqualsUtil.epsilonEquals(m_setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
+      m_elevator.setDesiredHeight(m_setpoint.elevatorHeight());
     }
     // don't deploy manipulator until we're at the elevator setpoint
     if (m_elevator.atSetpoint(10.0)) {
       if (!EqualsUtil.epsilonEquals(
-          setpoint.manipulatorAngle().getRadians(),
+          m_setpoint.manipulatorAngle().getRadians(),
           m_manipulator.getDesiredWristAngle().getRadians())) {
-        m_manipulator.setDesiredWristAngle(setpoint.manipulatorAngle());
+        m_manipulator.setDesiredWristAngle(m_setpoint.manipulatorAngle());
       }
     } else {
       m_manipulator.setDesiredWristAngle(
@@ -458,8 +431,7 @@ public class RobotState {
 
         break;
 
-      case kAutoAutoDriveToIntake:
-        m_drive.setDesiredHeading(AllianceFlipUtil.apply(Rotation2d.fromDegrees(130)));
+      case kAutoCoralIntaking:
         newDriveProfiles = DriveProfiles.kDriveToPoint;
         newIntakeState = IntakeState.kCoralIntaking;
         newElevatorState = ElevatorState.kIntaking;
@@ -471,7 +443,6 @@ public class RobotState {
 
         break;
 
-      case kAutoCoralIntaking:
       case kCoralIntaking:
         newIntakeState = IntakeState.kCoralIntaking;
         newElevatorState = ElevatorState.kIntaking;
@@ -629,18 +600,8 @@ public class RobotState {
 
   public void onDisable() {}
 
-  public void addVisionObservation(VisionObservation observation) {
-    if (!m_usingVision) {
-      Logger.recordOutput("Skipping vision", Timer.getFPGATimestamp());
-      return;
-    }
-    Logger.recordOutput("Got vision", Timer.getFPGATimestamp());
-    // m_drive.addVisionObservation(observation);
-  }
-
   public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
     if (!m_usingVision) {
-      Logger.recordOutput("Skipping vision", Timer.getFPGATimestamp());
       return;
     }
     m_drive.addTimestampedVisionObservations(observations);
@@ -813,10 +774,6 @@ public class RobotState {
       return m_autoFactory.getStartingPose(m_selectedAuto);
     }
     return new Pose2d();
-  }
-
-  public void sendPathplannerTargetPose(Pose2d pose) {
-    // m_drive.setDesiredHeading(pose.getRotation());
   }
 
   public DriveProfiles getDriveProfile() {

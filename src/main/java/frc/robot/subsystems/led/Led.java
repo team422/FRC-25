@@ -37,7 +37,7 @@ public class Led extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // TODO: this does not work because the start pose isn't rotated to match alliance
+    // unnecessary for now but i dont wanna delete the math i did just yet
     // if (m_state == LedState.kLocationCheck) {
     //   locationCheck();
     // }
@@ -69,6 +69,7 @@ public class Led extends SubsystemBase {
     return m_state;
   }
 
+  @SuppressWarnings("unused")
   private void locationCheck() {
     Pose2d robotPose = RobotState.getInstance().getRobotPose();
     Pose2d startPose = RobotState.getInstance().getPathPlannerStartPose();

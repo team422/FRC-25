@@ -27,6 +27,8 @@ import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 
 public class AutoFactory {
+  // TODO: pretty much delete this entire file and just have the auto setup in the robot container
+
   public static final PIDConstants kLinearPID = new PIDConstants(3.0, 0.0, 0.0);
   public static final PIDConstants kAngularPID = new PIDConstants(0.0, 0.0, 0.00);
 
@@ -111,7 +113,6 @@ public class AutoFactory {
               RobotState.getInstance().driveToProcessorPeriodic();
             }));
 
-    // .andThen(new AutoAutoScore()));
     NamedCommands.registerCommand(
         "autoscoreFinish",
         Commands.waitUntil(
@@ -146,7 +147,7 @@ public class AutoFactory {
 
     AutoBuilder.configure(
         m_drive::getPose,
-        m_drive::setPoseNoRotation,
+        (pose) -> {},
         m_drive::getChassisSpeeds,
         m_drive::setDesiredAutoChassisSpeeds,
         new PPHolonomicDriveController(kLinearPID, kAngularPID, 0.02),
@@ -184,7 +185,6 @@ public class AutoFactory {
         });
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
-          RobotState.getInstance().sendPathplannerTargetPose(targetPose);
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
   }

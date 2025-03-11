@@ -68,6 +68,6 @@ public class ClimbIOSim implements ClimbIO {
   }
 
   public boolean atSetpoint() {
-    return true;
+    return m_controller.atSetpoint();
   }
 }

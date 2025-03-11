@@ -14,7 +14,6 @@
 package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.BaseStatusSignal;
-import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -22,9 +21,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 import java.util.Queue;
 
 /** IO implementation for Pigeon2 */
@@ -40,18 +43,22 @@ public class GyroIOPigeon2 implements GyroIO {
   private final StatusSignal<AngularVelocity> m_yawVelocity = m_pigeon.getAngularVelocityZWorld();
   private final StatusSignal<AngularVelocity> m_pitchVelocity = m_pigeon.getAngularVelocityXWorld();
   private final StatusSignal<AngularVelocity> m_rollVelocity = m_pigeon.getAngularVelocityYWorld();
+  private final StatusSignal<Voltage> m_pigeonSupplyVoltage = m_pigeon.getSupplyVoltage();
 
   public GyroIOPigeon2() {
     m_pigeon.getConfigurator().apply(new Pigeon2Configuration());
     m_pigeon.getConfigurator().setYaw(0.0);
 
-    m_yaw.setUpdateFrequency(DriveConstants.kOdometryFrequency);
-    m_pitch.setUpdateFrequency(DriveConstants.kOdometryFrequency);
-    m_roll.setUpdateFrequency(DriveConstants.kOdometryFrequency);
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        DriveConstants.kOdometryFrequency,
+        m_yaw,
+        m_pitch,
+        m_roll,
+        m_yawVelocity,
+        m_pitchVelocity,
+        m_rollVelocity);
 
-    m_yawVelocity.setUpdateFrequency(250.0);
-    m_pitchVelocity.setUpdateFrequency(250.0);
-    m_rollVelocity.setUpdateFrequency(250.0);
+    BaseStatusSignal.setUpdateFrequencyForAll(50.0, m_pigeonSupplyVoltage);
 
     // m_pigeon.optimizeBusUtilization();
 
@@ -59,14 +66,37 @@ public class GyroIOPigeon2 implements GyroIO {
     m_yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getYaw());
     m_pitchPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getPitch());
     m_rollPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getRoll());
+
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_yaw,
+              m_pitch,
+              m_roll,
+              m_yawVelocity,
+              m_pitchVelocity,
+              m_rollVelocity,
+              m_pigeonSupplyVoltage));
+    }
   }
 
   @Override
   public void updateInputs(GyroIOInputs inputs) {
-    inputs.connected =
-        BaseStatusSignal.refreshAll(
-                m_yaw, m_pitch, m_roll, m_yawVelocity, m_pitchVelocity, m_rollVelocity)
-            .equals(StatusCode.OK);
+    if (!Constants.kUseBaseRefreshManager) {
+      BaseStatusSignal.refreshAll(
+          m_yaw,
+          m_pitch,
+          m_roll,
+          m_yawVelocity,
+          m_pitchVelocity,
+          m_rollVelocity,
+          m_pigeonSupplyVoltage);
+    }
+
+    // this is a hack because the pigeon doesn't have a connected motor we can check (obviously)
+    // so basically if we're in sim, the supply voltage is EXACTLY zero
+    // if we connected it'll be something else
+    inputs.connected = m_pigeonSupplyVoltage.getValueAsDouble() != 0.0;
 
     if (RobotBase.isSimulation()) {
       inputs.connected = false;

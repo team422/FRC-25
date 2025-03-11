@@ -47,6 +47,8 @@ import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Ports;
+import frc.robot.util.CtreBaseRefreshManager;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -235,6 +237,23 @@ public class ModuleIOTalonFX implements ModuleIO {
         m_cancoderSupplyVoltage);
     // m_driveTalon.optimizeBusUtilization();
     // m_turnTalon.optimizeBusUtilization();
+
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.addSignals(
+          List.of(
+              m_driveConnectedMotor,
+              m_drivePosition,
+              m_driveVelocity,
+              m_driveAppliedVolts,
+              m_driveCurrent,
+              m_turnConnectedMotor,
+              m_turnAbsolutePosition,
+              m_turnPosition,
+              m_turnVelocity,
+              m_turnAppliedVolts,
+              m_turnCurrent,
+              m_cancoderSupplyVoltage));
+    }
   }
 
   @Override

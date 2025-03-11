@@ -23,5 +23,10 @@ public class WristIOReplay implements WristIO {
   }
 
   @Override
+  public boolean atSetpoint(Rotation2d r) {
+    return false;
+  }
+
+  @Override
   public void setCurrentLimits(double supplyLimit) {}
 }

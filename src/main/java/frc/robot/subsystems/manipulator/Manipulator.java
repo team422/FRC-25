@@ -157,8 +157,7 @@ public class Manipulator extends SubsystemBase {
       // if we are in full tuning mode we don't want to change the state
       return;
     }
-    // TODO: this makes sense but i have the feeling it will cause an issue during testing
-    // DON'T FORGET ABOUT THIS
+
     m_runRollerScoring = false;
     m_runRollerAlgaeDescoring = true;
 

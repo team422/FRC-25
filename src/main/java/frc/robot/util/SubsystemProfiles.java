@@ -42,7 +42,6 @@ public class SubsystemProfiles<T extends Enum<T>> {
     m_lastProfile = m_currentProfile;
     m_currentProfile = profile;
 
-    // TODO: check if this sacrifices performance with JMX
     m_currMessages.add(
         String.format(
             "%s to %s: %.3f",

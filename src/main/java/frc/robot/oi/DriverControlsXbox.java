@@ -27,7 +27,7 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public Trigger resetFieldCentric() {
-    return m_controller.rightStick();
+    return m_controller.rightTrigger();
   }
 
   @Override
@@ -82,7 +82,8 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public Trigger algaeIntakeOuttake() {
-    return m_controller.rightTrigger(0.1);
+    // return m_controller.rightTrigger(0.1);
+    return new Trigger(() -> false);
   }
 
   @Override
@@ -93,5 +94,10 @@ public class DriverControlsXbox implements DriverControls {
   @Override
   public Trigger zeroElevator() {
     return m_controller.back();
+  }
+
+  @Override
+  public Trigger toggleVision() {
+    return m_controller.start();
   }
 }

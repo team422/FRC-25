@@ -42,8 +42,6 @@ public class SetpointGenerator {
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
-  // TODO: THIS NUMBER HAS BEEN MODIFIED! original: 6.469
-  // DURING A PRACTICE MATCH IF LEFT-RIGHT IS OFF THEN CHANGE
   private static final double kDriveYOffset = Units.inchesToMeters(6.469);
 
   // we are considered "close" to a field element (processor, barge) if we're within this distance

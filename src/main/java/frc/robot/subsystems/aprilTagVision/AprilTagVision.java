@@ -2,7 +2,6 @@ package frc.robot.subsystems.aprilTagVision;
 
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.hal.HALUtil;
-import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -10,15 +9,12 @@ import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
@@ -26,7 +22,6 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIO.AprilTagVisionInputs;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +29,6 @@ import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 public class AprilTagVision extends SubsystemBase {
-  public record VisionObservation(
-      Pose2d visionPose, double timestamp, Matrix<N3, N1> standardDeviations) {}
 
   private AprilTagVisionIO[] m_ios;
   private AprilTagVisionInputs[] m_inputs;
@@ -89,7 +82,7 @@ public class AprilTagVision extends SubsystemBase {
     List<Pose3d> allCameraPoses = new ArrayList<>();
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<Pose3d> allRobotPoses3d = new ArrayList<>();
-    List<VisionObservation> allVisionObservations = new ArrayList<>();
+    List<TimestampedVisionUpdate> allVisionUpdates = new ArrayList<>();
     for (int instanceIndex = 0; instanceIndex < m_ios.length; instanceIndex++) {
       for (int frameIndex = 0;
           frameIndex < m_inputs[instanceIndex].timestamps.length;
@@ -113,7 +106,10 @@ public class AprilTagVision extends SubsystemBase {
         Pose3d cameraPose = null;
         Pose3d robotPose3d = null;
         boolean useVisionRotation = false;
+
+        @SuppressWarnings("unused")
         double error = 0;
+
         switch (tagCount) {
           case 0:
             // No tag, do nothing
@@ -163,8 +159,6 @@ public class AprilTagVision extends SubsystemBase {
             double rotationY2 = values[15];
             double rotationZ2 = values[16];
 
-            // TODO: add blacklist TO PI, NOT HERE
-
             Pose3d cameraPose1 =
                 new Pose3d(
                     new Translation3d(translationX1, translationY1, translationZ1),
@@ -188,8 +182,7 @@ public class AprilTagVision extends SubsystemBase {
             // Check for ambiguity
             if (error1 < error2 * AprilTagVisionConstants.kAmbiguityThreshold
                 || error2 < error1 * AprilTagVisionConstants.kAmbiguityThreshold) {
-              // since the cameras have some roll, the false reprojection will be up in the air or
-              // in the ground
+              // since the cameras have some pitch, the false reprojection will be in the air
               // so we can just choose the one that is closer to the floor
               double height1 = Math.abs(robotPose3d1.getZ());
               double height2 = Math.abs(robotPose3d2.getZ());
@@ -300,15 +293,7 @@ public class AprilTagVision extends SubsystemBase {
         // Add observation to list
         double xyStandardDeviation = 1;
         xyStandardDeviation =
-            0.05
-                // evil math
-                // if the error is under the threshold, we make the standard deviation smaller
-                // but if the error is above the threshold, we make the standard deviation larger
-                // i had to use desmos for this
-                // may be added back later but this was causing me some issues
-                // * Math.pow(error + 1 - AprilTagVisionConstants.kErrorStandardDeviationThreshold,
-                // 4)
-
+            AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
                 // back to normal math
                 * Math.pow(averageDistance, 2.0)
                 / tagPoses.size();
@@ -321,11 +306,9 @@ public class AprilTagVision extends SubsystemBase {
 
         if (useVisionRotation) {
           thetaStandardDeviation =
-              // AprilTagVisionConstants.kThetaStandardDeviationCoefficient.get()
-              0.03 * Math.pow(averageDistance, 2.0) / tagPoses.size();
-          Logger.recordOutput("Current Theta deviation", thetaStandardDeviation);
-          Logger.recordOutput("Current Average distance", averageDistance);
-          Logger.recordOutput("Current Tag pose size", tagPoses.size());
+              AprilTagVisionConstants.kThetaStandardDeviationCoefficient.get()
+                  * Math.pow(averageDistance, 2.0)
+                  / tagPoses.size();
         } else {
           thetaStandardDeviation = Double.POSITIVE_INFINITY;
         }
@@ -371,10 +354,10 @@ public class AprilTagVision extends SubsystemBase {
             "AprilTagVision/Inst" + instanceIndex + "/StandardDeviationTheta",
             thetaStandardDeviation);
 
-        allVisionObservations.add(
-            new VisionObservation(
-                robotPose,
+        allVisionUpdates.add(
+            new TimestampedVisionUpdate(
                 timestamp,
+                robotPose,
                 VecBuilder.fill(xyStandardDeviation, xyStandardDeviation, thetaStandardDeviation)));
         allRobotPoses.add(robotPose);
         allRobotPoses3d.add(robotPose3d);
@@ -410,36 +393,17 @@ public class AprilTagVision extends SubsystemBase {
       }
     }
 
-    // Send to RobotState
-    // TODO: mess around
-    int maxObservations = 10;
-    if (allVisionObservations.size() > maxObservations) {
-      allVisionObservations = allVisionObservations.subList(0, maxObservations);
-    }
-    List<TimestampedVisionUpdate> allTimestampedVisionUpdates =
-        new ArrayList<TimestampedVisionUpdate>();
-    allVisionObservations.forEach(
-        (o) -> {
-          allTimestampedVisionUpdates.add(
-              new TimestampedVisionUpdate(o.timestamp(), o.visionPose(), o.standardDeviations()));
-        });
-
     if (m_firstMeasurement) {
-      for (int i = 0; i < allVisionObservations.size(); i++) {
-        var curr = allVisionObservations.get(i);
-        curr = new VisionObservation(curr.visionPose, curr.timestamp, VecBuilder.fill(0, 0, 0));
-        allVisionObservations.set(i, curr);
+      for (int i = 0; i < allVisionUpdates.size(); i++) {
+        var curr = allVisionUpdates.get(i);
+        curr = new TimestampedVisionUpdate(curr.timestamp(), curr.pose(), VecBuilder.fill(0, 0, 0));
+        allVisionUpdates.set(i, curr);
       }
       m_firstMeasurement = false;
     }
 
-    if (EqualsUtil.epsilonEquals(AprilTagVisionConstants.kUseVision.get(), 1.0)) {
-      allVisionObservations.stream()
-          .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
-          .forEach(RobotState.getInstance()::addVisionObservation);
-    }
-
-    RobotState.getInstance().addTimestampedVisionObservations(allTimestampedVisionUpdates);
+    // Send to RobotState
+    RobotState.getInstance().addTimestampedVisionObservations(allVisionUpdates);
 
     if (Constants.kUseAlerts) {
       // change initial to re-enable alerts for inst 0 and 1
