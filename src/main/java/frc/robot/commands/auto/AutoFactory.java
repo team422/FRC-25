@@ -9,6 +9,7 @@ import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.events.EventTrigger;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,7 +28,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class AutoFactory {
   public static final PIDConstants kLinearPID = new PIDConstants(3.0, 0.0, 0.0);
-  public static final PIDConstants kAngularPID = new PIDConstants(2.0, 0.0, 0.00);
+  public static final PIDConstants kAngularPID = new PIDConstants(0.0, 0.0, 0.00);
 
   private final Drive m_drive;
 
@@ -62,12 +63,33 @@ public class AutoFactory {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
             }));
 
-    NamedCommands.registerCommand(
-        "Set Height L4",
-        Commands.runOnce(
-            () -> {
-              RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
-            }));
+    new EventTrigger("Set Height L4")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
+                }));
+
+    new EventTrigger("Set Angle 45")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_drive.setDesiredHeading(Rotation2d.fromDegrees(45));
+                }));
+    new EventTrigger("Set Angle -60")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_drive.setDesiredHeading(Rotation2d.fromDegrees(-60));
+                }));
+
+    new EventTrigger("Autoscore Left")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexLeft();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                }));
 
     NamedCommands.registerCommand(
         "Autoscore Left",
@@ -76,36 +98,55 @@ public class AutoFactory {
               RobotState.getInstance().setReefIndexLeft();
               RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
             }));
+    NamedCommands.registerCommand(
+        "Set Height L4",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setDesiredReefHeight(ReefHeight.L4);
+            }));
+    NamedCommands.registerCommand(
+        "Drive To Loader",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().driveToProcessorPeriodic();
+            }));
 
     // .andThen(new AutoAutoScore()));
-
+    NamedCommands.registerCommand(
+        "autoscoreFinish",
+        Commands.waitUntil(
+            () -> {
+              RobotAction s = RobotState.getInstance().getCurrentAction();
+              return s != RobotAction.kCoralOuttaking && s != RobotAction.kAutoAutoScore;
+            }));
     NamedCommands.registerCommand(
         "Autoscore Right",
         Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setReefIndexRight();
                 })
-            .andThen(new AutoAutoScore()));
+            .andThen(new AutoAutoScore())
+            .andThen(Commands.waitSeconds(2)));
 
-    NamedCommands.registerCommand(
-        "Coral Intake Left",
-        Commands.runOnce(
-            () -> {
-              m_drive.setDesiredHeading(Rotation2d.fromDegrees(130));
-              RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
-            }));
+    new EventTrigger("Coral Intake Left")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+                  m_drive.setDesiredHeading(Rotation2d.fromDegrees(130));
+                }));
 
-    NamedCommands.registerCommand(
-        "Coral Intake Right",
-        Commands.runOnce(
-            () -> {
-              m_drive.setDesiredHeading(Rotation2d.fromDegrees(-130));
-              RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
-            }));
+    new EventTrigger("Coral Intake Right")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+                  m_drive.setDesiredHeading(Rotation2d.fromDegrees(-130));
+                }));
 
     AutoBuilder.configure(
         m_drive::getPose,
-        m_drive::setPose,
+        m_drive::setPoseNoRotation,
         m_drive::getChassisSpeeds,
         m_drive::setDesiredAutoChassisSpeeds,
         new PPHolonomicDriveController(kLinearPID, kAngularPID, 0.02),

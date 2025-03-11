@@ -461,6 +461,14 @@ public class RobotContainer {
                       m_elevator.zeroElevator();
                     })
                 .ignoringDisable(true));
+
+    m_driverControls
+        .toggleVision()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().toggleUsingVision();
+                }));
   }
 
   /**

@@ -120,7 +120,7 @@ public class Led extends SubsystemBase {
         pattern = LEDPattern.solid(convertColor(LedConstants.kL4));
         break;
       case kAlert:
-        pattern = LEDPattern.solid(convertColor(LedConstants.kAlert));
+        pattern = LEDPattern.rainbow(255, 255);
         break;
       case kFullTuning:
         pattern = LEDPattern.solid(convertColor(LedConstants.kFullTuning));

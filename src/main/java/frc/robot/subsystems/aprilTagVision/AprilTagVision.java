@@ -7,7 +7,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Quaternion;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -20,6 +19,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.EqualsUtil;
+import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
 import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.FieldConstants;
@@ -281,10 +281,11 @@ public class AprilTagVision extends SubsystemBase {
           Pose3d tagPose = tagPoses.get(0);
           double distance = tagPose.getTranslation().getDistance(cameraPose.getTranslation());
           ChassisSpeeds speeds = RobotState.getInstance().getRobotSpeeds();
-          if (error < AprilTagVisionConstants.kRotationErrorThreshold
-              && distance < AprilTagVisionConstants.kRotationDistanceThreshold
-              && speeds.vxMetersPerSecond < AprilTagVisionConstants.kRotationSpeedThreshold
-              && speeds.vyMetersPerSecond < AprilTagVisionConstants.kRotationSpeedThreshold) {
+          if (distance < AprilTagVisionConstants.kRotationDistanceThreshold
+              && Math.abs(speeds.vxMetersPerSecond)
+                  < AprilTagVisionConstants.kRotationSpeedThreshold
+              && Math.abs(speeds.vyMetersPerSecond)
+                  < AprilTagVisionConstants.kRotationSpeedThreshold) {
             useVisionRotation = true;
           }
         }
@@ -299,7 +300,7 @@ public class AprilTagVision extends SubsystemBase {
         // Add observation to list
         double xyStandardDeviation = 1;
         xyStandardDeviation =
-            AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
+            0.05
                 // evil math
                 // if the error is under the threshold, we make the standard deviation smaller
                 // but if the error is above the threshold, we make the standard deviation larger
@@ -320,32 +321,35 @@ public class AprilTagVision extends SubsystemBase {
 
         if (useVisionRotation) {
           thetaStandardDeviation =
-              AprilTagVisionConstants.kThetaStandardDeviationCoefficient.get()
-                  * Math.pow(averageDistance, 2.0)
-                  / tagPoses.size();
+              // AprilTagVisionConstants.kThetaStandardDeviationCoefficient.get()
+              0.03 * Math.pow(averageDistance, 2.0) / tagPoses.size();
+          Logger.recordOutput("Current Theta deviation", thetaStandardDeviation);
+          Logger.recordOutput("Current Average distance", averageDistance);
+          Logger.recordOutput("Current Tag pose size", tagPoses.size());
         } else {
           thetaStandardDeviation = Double.POSITIVE_INFINITY;
         }
 
-        double gyroAccuracyFactor = 1.0;
-        if (RobotState.getInstance().getNumVisionGyroObservations() > 100
-            && !DriverStation.isDisabled()) {
-          // Calculate difference between vision and gyro rotation
-          Rotation2d visionRotation = robotPose.getRotation();
-          Rotation2d gyroRotation = RobotState.getInstance().getRobotPose().getRotation();
-          double angleDifference = Math.abs(visionRotation.minus(gyroRotation).getDegrees());
-          // if we are more than 1 degree off, reduce accuracy
-          // now we don't just wanna 100% trust it if it has the same rotation
-          gyroAccuracyFactor =
-              Math.max(0.3, angleDifference * AprilTagVisionConstants.kGyroAccurary);
-          // if it is 2 degrees off, we are increasing our standard deviation by 2
-          xyStandardDeviation *= gyroAccuracyFactor;
-          // this should not change our theta standard deviation as our gyroscope will not correct
-          // if we do
-        } else {
-          // if we don't have many gyro observations, we should trust theta more
-          thetaStandardDeviation *= 0.01;
-        }
+        // double gyroAccuracyFactor = 1.0;
+        // if (RobotState.getInstance().getNumVisionGyroObservations() > 100) {
+        //   // Calculate difference between vision and gyro rotation
+        //   Rotation2d visionRotation = robotPose.getRotation();
+        //   Rotation2d gyroRotation = RobotState.getInstance().getRobotPose().getRotation();
+        //   double angleDifference = Math.abs(visionRotation.minus(gyroRotation).getDegrees());
+        //   // if we are more than 1 degree off, reduce accuracy
+        //   // now we don't just wanna 100% trust it if it has the same rotation
+        //   gyroAccuracyFactor =
+        //       Math.max(0.3, angleDifference * AprilTagVisionConstants.kGyroAccurary);
+        //   // if it is 2 degrees off, we are increasing our standard deviation by 2
+        //   xyStandardDeviation *= gyroAccuracyFactor;
+        //   // this should not change our theta standard deviation as our gyroscope will not
+        // correct
+        //   // if we do
+        // }
+        // else {
+        //   // if we don't have many gyro observations, we should trust theta more
+        //   thetaStandardDeviation *= 0.01;
+        // }
         if (thetaStandardDeviation
             < 0.1) // check if the rotation standard deviation is low, if so add to
         // numVisionGyroObservations
@@ -354,7 +358,7 @@ public class AprilTagVision extends SubsystemBase {
         }
 
         if (DriverStation.isDisabled()) {
-          xyStandardDeviation *= 0.1;
+          // xyStandardDeviation *= 0.1;
         }
 
         Logger.recordOutput(
@@ -372,7 +376,6 @@ public class AprilTagVision extends SubsystemBase {
                 robotPose,
                 timestamp,
                 VecBuilder.fill(xyStandardDeviation, xyStandardDeviation, thetaStandardDeviation)));
-
         allRobotPoses.add(robotPose);
         allRobotPoses3d.add(robotPose3d);
 
@@ -413,6 +416,13 @@ public class AprilTagVision extends SubsystemBase {
     if (allVisionObservations.size() > maxObservations) {
       allVisionObservations = allVisionObservations.subList(0, maxObservations);
     }
+    List<TimestampedVisionUpdate> allTimestampedVisionUpdates =
+        new ArrayList<TimestampedVisionUpdate>();
+    allVisionObservations.forEach(
+        (o) -> {
+          allTimestampedVisionUpdates.add(
+              new TimestampedVisionUpdate(o.timestamp(), o.visionPose(), o.standardDeviations()));
+        });
 
     if (m_firstMeasurement) {
       for (int i = 0; i < allVisionObservations.size(); i++) {
@@ -429,8 +439,11 @@ public class AprilTagVision extends SubsystemBase {
           .forEach(RobotState.getInstance()::addVisionObservation);
     }
 
+    RobotState.getInstance().addTimestampedVisionObservations(allTimestampedVisionUpdates);
+
     if (Constants.kUseAlerts) {
-      for (int i = 0; i < m_noReadingsAlerts.length; i++) {
+      // change initial to re-enable alerts for inst 0 and 1
+      for (int i = 2; i < m_noReadingsAlerts.length; i++) {
         double lastTime = m_lastFrameTimes.get(i);
         double elapsed = Timer.getFPGATimestamp() - lastTime;
         if (elapsed > AprilTagVisionConstants.kDisconnectTimeout) {

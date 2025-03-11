@@ -27,5 +27,12 @@ public interface WristIO {
 
   public boolean atSetpoint();
 
+  // public default boolean atScoringSetpoint() {return true;};
+
+  public default boolean atSetpoint(Rotation2d r) {
+    return true;
+  }
+  ;
+
   public void setCurrentLimits(double supplyLimit);
 }

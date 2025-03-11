@@ -27,7 +27,7 @@ public class SetpointGenerator {
           ReefHeight.L1, new LoggedTunableNumber("Elevator L1 Height", 9.5),
           ReefHeight.L2, new LoggedTunableNumber("Elevator L2 Height", 27.0),
           ReefHeight.L3, new LoggedTunableNumber("Elevator L3 Height", 43.25),
-          ReefHeight.L4, new LoggedTunableNumber("Elevator L4 Height", 70.0));
+          ReefHeight.L4, new LoggedTunableNumber("Elevator L4 Height", 71.0));
 
   private static final Map<ReefHeight, LoggedTunableNumber> kManipulatorAngles =
       Map.of(
@@ -187,9 +187,9 @@ public class SetpointGenerator {
       }
     } else {
       if (pose.getX() <= 4.503) {
-        return new int[] {2, 3, 4};
-      } else {
         return new int[] {0, 1, 5};
+      } else {
+        return new int[] {2, 3, 4};
       }
     }
   }

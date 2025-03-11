@@ -14,8 +14,10 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
@@ -81,18 +83,20 @@ public class RobotState {
 
     kAutoDefault,
     kAutoAutoScore,
+    kAutoAutoDriveToIntake,
     kAutoCoralOuttaking,
     kAutoCoralIntaking,
   }
 
-  private LedState currentLedState = LedState.kOff;
-
   private SubsystemProfiles<RobotAction> m_profiles;
 
   private Timer m_timer = new Timer();
+  private double m_autoTimer;
 
   private ReefHeight m_desiredReefHeight = ReefHeight.L1;
   private int m_desiredBranchIndex = 0;
+  private RobotSetpoint setpoint =
+      SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
 
   private int m_numVisionGyroObservations = 0;
 
@@ -146,6 +150,7 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
+    periodicHash.put(RobotAction.kAutoAutoDriveToIntake, this::autoDriveToLoader);
     periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
     periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
 
@@ -157,7 +162,16 @@ public class RobotState {
   }
 
   public void triggerAlert() {
-    currentLedState = LedState.kAlert;
+    m_led.updateState(LedState.kAlert);
+  }
+
+  public boolean getClimbAtSetpoint() {
+    return m_climb.atSetpoint();
+  }
+
+  public boolean getWristAtScoringSetpoint() {
+
+    return m_manipulator.atSetpoint();
   }
 
   public static RobotState startInstance(
@@ -238,7 +252,14 @@ public class RobotState {
   public void coralOuttakingPeriodic() {
     if (m_timer.hasElapsed(0.4)) {
       // after we release the coral go back to stow
-      setDefaultAction();
+      if (DriverStation.isAutonomous()) {
+        // m_drive.setTargetPose(AllianceFlipUtil.apply(new
+        // Pose2d(.5,0.75,Rotation2d.fromDegrees(127.80))));
+        m_autoTimer = Timer.getTimestamp();
+        updateRobotAction(RobotAction.kAutoAutoDriveToIntake);
+      } else {
+        setDefaultAction();
+      }
     }
     if (m_manipulator.hasGamePiece() || !m_timer.isRunning()) {
       m_timer.restart();
@@ -256,7 +277,7 @@ public class RobotState {
   }
 
   public void autoScorePeriodic() {
-    RobotSetpoint setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
     if (!EqualsUtil.GeomExtensions.epsilonEquals(setpoint.drivePose(), m_drive.getTargetPose())) {
       m_drive.setTargetPose(setpoint.drivePose());
@@ -295,16 +316,65 @@ public class RobotState {
     autoScorePeriodic();
 
     // everything must be within tolerance to run the rollers
-    if (m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint()
-        // when the command finishes, drive will go back to default
-        && m_drive.getCurrentProfile() == m_drive.getDefaultProfile()) {
+    Logger.recordOutput("Auto/ElevRight", m_elevator.atSetpoint());
+    Logger.recordOutput("Auto/ManipRight", m_manipulator.atSetpoint(setpoint.manipulatorAngle()));
+    Logger.recordOutput("Auto/SetpointAngle", setpoint.manipulatorAngle().getDegrees());
+    if (m_elevator.atSetpoint() && m_manipulator.atSetpoint(setpoint.manipulatorAngle())) {
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }
 
+  private boolean m_left = false;
+
+  public void autoDriveToLoader() {
+    Logger.recordOutput("Timer Auto", Timer.getTimestamp() - m_autoTimer);
+    if (Timer.getTimestamp() - m_autoTimer < 1.0) {
+      if (AllianceFlipUtil.shouldFlip()) {
+        // we are on red
+        if (m_left) {
+          m_drive.setTargetPose(new Pose2d(12.85, 1.56, m_drive.getRotation()));
+        } else {
+          m_drive.setTargetPose(new Pose2d(12.85, 6.39, m_drive.getRotation()));
+        }
+      } else {
+        // we are on blue
+        if (m_left) {
+          m_drive.setTargetPose(new Pose2d(4.00, 6.39, m_drive.getRotation()));
+        } else {
+          m_drive.setTargetPose(new Pose2d(4.00, 1.56, m_drive.getRotation()));
+        }
+      }
+    } else {
+      if (AllianceFlipUtil.shouldFlip()) {
+        // we are on red
+        if (m_left) {
+          m_drive.setTargetPose(new Pose2d(16.12, 0.57, Rotation2d.fromDegrees(130)));
+        } else {
+          // I HATE MATH
+          m_drive.setTargetPose(
+              new Pose2d(
+                  16.12, 6.99, Rotation2d.fromDegrees(50).plus(Rotation2d.fromDegrees(180))));
+        }
+      } else {
+        // we are on blue
+        if (m_left) {
+          m_drive.setTargetPose(new Pose2d(1.05, 6.99, Rotation2d.fromDegrees(-50)));
+        } else {
+          m_drive.setTargetPose(
+              new Pose2d(
+                  1.05, 0.57, Rotation2d.fromDegrees(-130).plus(Rotation2d.fromDegrees(180))));
+        }
+      }
+    }
+    coralIntakingPeriodic();
+    if (m_manipulator.hasGamePiece()) {
+      RobotState.getInstance().setReefIndexRight();
+      updateRobotAction(RobotAction.kAutoAutoScore);
+    }
+  }
+
   public void manualScorePeriodic() {
-    RobotSetpoint setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
 
     Logger.recordOutput("ManualScore/BranchIndex", m_desiredBranchIndex);
     Logger.recordOutput("ManualScore/ReefHeight", m_desiredReefHeight);
@@ -361,9 +431,6 @@ public class RobotState {
   }
 
   public void updateRobotAction(RobotAction newAction) {
-    for (int i = 0; i < 100; i++) {
-      System.out.println("hello " + newAction);
-    }
     DriveProfiles newDriveProfiles = m_drive.getDefaultProfile();
     IntakeState newIntakeState = m_intake.getStowOrHold();
     IndexerState newIndexerState = IndexerState.kIdle;
@@ -389,6 +456,14 @@ public class RobotState {
         newElevatorState = ElevatorState.kScoring;
         newManipulatorState = ManipulatorState.kScoring;
 
+        break;
+
+      case kAutoAutoDriveToIntake:
+        m_drive.setDesiredHeading(AllianceFlipUtil.apply(Rotation2d.fromDegrees(130)));
+        newDriveProfiles = DriveProfiles.kDriveToPoint;
+        newIntakeState = IntakeState.kCoralIntaking;
+        newElevatorState = ElevatorState.kIntaking;
+        newManipulatorState = ManipulatorState.kIntaking;
         break;
 
       case kDriveToProcessor:
@@ -555,7 +630,20 @@ public class RobotState {
   public void onDisable() {}
 
   public void addVisionObservation(VisionObservation observation) {
-    m_drive.addVisionObservation(observation);
+    if (!m_usingVision) {
+      Logger.recordOutput("Skipping vision", Timer.getFPGATimestamp());
+      return;
+    }
+    Logger.recordOutput("Got vision", Timer.getFPGATimestamp());
+    // m_drive.addVisionObservation(observation);
+  }
+
+  public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
+    if (!m_usingVision) {
+      Logger.recordOutput("Skipping vision", Timer.getFPGATimestamp());
+      return;
+    }
+    m_drive.addTimestampedVisionObservations(observations);
   }
 
   public void setDesiredReefHeight(ReefHeight height) {

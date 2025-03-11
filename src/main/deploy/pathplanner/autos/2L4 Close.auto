@@ -11,39 +11,21 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "autoscoreFinish"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "New New New Path"
           }
         },
         {
-          "type": "named",
-          "data": {
-            "name": "Coral Intake"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 0
-          }
-        },
-        {
           "type": "path",
           "data": {
             "pathName": "HPto2"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Set Height L4"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "Autoscore Left"
           }
         }
       ]

@@ -508,9 +508,9 @@ public final class Constants {
     public static final double kDisconnectTimeout = 20.0;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
-        new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.45);
+        new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.05);
     public static final LoggedTunableNumber kThetaStandardDeviationCoefficient =
-        new LoggedTunableNumber("thetaStandardDeviationCoefficient", 10.0);
+        new LoggedTunableNumber("thetaStandardDeviationCoefficient", .005);
 
     // transform from center of robot to camera
     public static final Transform3d[] kCameraTransforms =
@@ -558,11 +558,15 @@ public final class Constants {
               Inches.of(-10.354),
               Inches.of(8.746),
               GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
+
+          // front left (facing in)
           new Transform3d(
               Inches.of(10.484),
               Inches.of(11.464),
               Inches.of(8.771),
               GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-17.43), Degrees.of(-19.0))),
+
+          // front right (facing in)
           new Transform3d(
               Inches.of(10.484),
               Inches.of(-11.464),
@@ -589,7 +593,7 @@ public final class Constants {
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees(-80.96 * kPivotAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees(-54.32 * kPivotAbsoluteEncoderGearRatio);
 
     public static final double kRollerCurrentGamepieceThreshold =
         30; // amps to be considered holding a gamepiece, temp value

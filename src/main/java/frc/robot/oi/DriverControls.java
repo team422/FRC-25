@@ -41,4 +41,9 @@ public interface DriverControls {
   }
 
   public Trigger zeroElevator();
+
+  public default Trigger toggleVision() {
+    return new Trigger(() -> false);
+  }
+  ;
 }

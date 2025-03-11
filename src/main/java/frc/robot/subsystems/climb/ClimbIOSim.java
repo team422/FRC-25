@@ -66,4 +66,8 @@ public class ClimbIOSim implements ClimbIO {
   public Rotation2d getCurrPosition() {
     return Rotation2d.fromRadians(m_sim.getAngleRads());
   }
+
+  public boolean atSetpoint() {
+    return true;
+  }
 }

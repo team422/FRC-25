@@ -18,4 +18,9 @@ public class ClimbIOReplay implements ClimbIO {
 
   @Override
   public void zeroEncoder() {}
+
+  @Deprecated
+  public boolean atSetpoint() {
+    return true;
+  }
 }

@@ -279,6 +279,10 @@ public class Manipulator extends SubsystemBase {
     return m_wristIO.atSetpoint() || m_profiles.getCurrentProfile() == ManipulatorState.kAlgaeHold;
   }
 
+  public boolean atSetpoint(Rotation2d r) {
+    return m_wristIO.atSetpoint(r);
+  }
+
   public boolean hasGamePiece() {
     return m_coralDetectorIO.hasGamePiece();
   }

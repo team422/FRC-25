@@ -187,6 +187,12 @@ public class WristIOKraken implements WristIO {
   }
 
   @Override
+  public boolean atSetpoint(Rotation2d r) {
+    return Math.abs(r.getDegrees() - getCurrAngle().getDegrees())
+        < ManipulatorConstants.kWristTolerance;
+  }
+
+  @Override
   public void setCurrentLimits(double supplyLimit) {
     m_motor
         .getConfigurator()

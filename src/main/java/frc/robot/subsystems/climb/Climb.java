@@ -51,6 +51,10 @@ public class Climb extends SubsystemBase {
     zeroEncoder();
   }
 
+  public boolean atSetpoint() {
+    return m_io.atSetpoint();
+  }
+
   @Override
   public void periodic() {
     double start = HALUtil.getFPGATime();
