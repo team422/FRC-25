@@ -2,10 +2,11 @@ import java.text.SimpleDateFormat
 
 plugins {
     id "java"
-    id "edu.wpi.first.GradleRIO" version "2025.1.1"
+    id "edu.wpi.first.GradleRIO" version "2025.3.1"
     id "com.peterabeles.gversion" version "1.10"
     id "com.diffplug.spotless" version "6.12.0"
     id "org.ajoberstar.grgit" version "5.2.1"
+    id "io.freefair.lombok" version "8.4"
 }
 
 java {
@@ -51,7 +52,7 @@ deploy {
                     directory = '/home/lvuser/deploy'
                     // Change to true to delete files on roboRIO that no
                     // longer exist in deploy directory on roboRIO
-                    deleteOldFiles = false
+                    deleteOldFiles = true
                 }
             }
         }
@@ -144,39 +145,6 @@ gversion {
     timeZone     = "America/New_York"
     indent       = "  "
 }
-
-// Create commit with working changes on event branches
-task(eventDeploy) {
-    doLast {
-        if (project.gradle.startParameter.taskNames.any({ it.toLowerCase().contains("deploy") })) {
-            def branchPrefix = "event"
-            def branch = 'git branch --show-current'.execute().text.trim()
-            def commitMessage = "Update at '${new Date().toString()}'"
-
-            if (branch.startsWith(branchPrefix)) {
-                exec {
-                    workingDir(projectDir)
-                    executable 'git'
-                    args 'add', '-A'
-                }
-                exec {
-                    workingDir(projectDir)
-                    executable 'git'
-                    args 'commit', '-m', commitMessage
-                    ignoreExitValue = true
-                }
-
-                println "Committed to branch: '$branch'"
-                println "Commit message: '$commitMessage'"
-            } else {
-                println "Not on an event branch, skipping commit"
-            }
-        } else {
-            println "Not running deploy task, skipping commit"
-        }
-    }
-}
-createVersionFile.dependsOn(eventDeploy)
 
 // Spotless formatting
 project.compileJava.dependsOn(spotlessApply)

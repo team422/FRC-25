@@ -20,7 +20,12 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
   private static final int cameraResolutionHeight = 1200;
   private static final int cameraAutoExposure = 1;
   private static final int cameraExposure = 30;
-  private static final int cameraGain = 50;
+  private static final int cameraGain = 30;
+  private static final int cameraBrightness = 30;
+  private static final int cameraContrast = 47;
+  private static final int cameraGamma = 10;
+  // all non-ground tags
+  private static final long[] tagIDBlacklist = new long[] {1, 2, 3, 4, 5, 12, 13, 14, 15, 16};
 
   private final DoubleArraySubscriber observationSubscriber;
   private final DoubleArraySubscriber demoObservationSubscriber;
@@ -36,10 +41,15 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
     configTable.getIntegerTopic("camera_auto_exposure").publish().set(cameraAutoExposure);
     configTable.getIntegerTopic("camera_exposure").publish().set(cameraExposure);
     configTable.getIntegerTopic("camera_gain").publish().set(cameraGain);
+    configTable.getIntegerTopic("camera_brightness").publish().set(cameraBrightness);
+    configTable.getIntegerTopic("camera_contrast").publish().set(cameraContrast);
+    configTable.getIntegerTopic("camera_gamma").publish().set(cameraGamma);
     configTable
         .getDoubleTopic("fiducial_size_m")
         .publish()
         .set(AprilTagVisionConstants.kAprilTagWidth);
+    configTable.getIntegerArrayTopic("tag_id_blacklist").publish().set(tagIDBlacklist);
+
     try {
       configTable
           .getStringTopic("tag_layout")

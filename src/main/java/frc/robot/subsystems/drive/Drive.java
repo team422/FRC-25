@@ -15,27 +15,42 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.hal.HALUtil;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.lib.utils.LoggedTunableNumber;
+import frc.lib.littletonUtils.EqualsUtil;
+import frc.lib.littletonUtils.LoggedTunableNumber;
+import frc.lib.littletonUtils.PoseEstimator;
+import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
+import frc.lib.littletonUtils.SwerveSetpointGenerator;
+import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.subsystems.aprilTagVision.AprilTagVision.VisionObservation;
+import frc.robot.RobotState;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -46,25 +61,47 @@ public class Drive extends SubsystemBase {
   static final Lock m_odometryLock = new ReentrantLock();
   private final GyroIO m_gyroIO;
   public final GyroIOInputsAutoLogged m_gyroInputs = new GyroIOInputsAutoLogged();
+
   private final Module[] m_modules = new Module[4]; // FL, FR, BL, BR
   private final SysIdRoutine m_sysId;
+  private Rotation2d lastGyroYaw = new Rotation2d();
+
+  private Alert m_gyroDisconnectedAlert = new Alert("Gyro Disconnected", AlertType.kError);
 
   public enum DriveProfiles {
     kDefault,
+    kPathplanner,
     kAutoAlign,
-    kAmpLineup
+    kDriveToPoint,
+    kStop
   }
 
   private SubsystemProfiles<DriveProfiles> m_profiles;
 
   private ChassisSpeeds m_desiredChassisSpeeds = new ChassisSpeeds();
+  private ChassisSpeeds m_desiredAutoChassisSpeeds = null;
 
   private Rotation2d m_desiredHeading = new Rotation2d();
-  private PIDController m_headingController =
-      new PIDController(
-          DriveConstants.kHeadingP.get(),
-          DriveConstants.kHeadingI.get(),
-          DriveConstants.kHeadingD.get());
+
+  private ProfiledPIDController m_driveController =
+      new ProfiledPIDController(
+          DriveConstants.kDriveToPointP.get(),
+          DriveConstants.kDriveToPointI.get(),
+          DriveConstants.kDriveToPointD.get(),
+          new TrapezoidProfile.Constraints(
+              DriveConstants.kMaxLinearSpeed, DriveConstants.kMaxLinearAcceleration));
+
+  private ProfiledPIDController m_headingController =
+      new ProfiledPIDController(
+          DriveConstants.kDriveToPointHeadingP.get(),
+          DriveConstants.kDriveToPointHeadingI.get(),
+          DriveConstants.kDriveToPointHeadingD.get(),
+          new TrapezoidProfile.Constraints(
+              DriveConstants.kMaxAngularSpeed, DriveConstants.kMaxAngularAcceleration));
+
+  private double m_ffMinRadius = 0.35, m_ffMaxRadius = 0.8;
+
+  private Pose2d m_driveToPointTargetPose = new Pose2d();
 
   private Rotation2d m_rawGyroRotation = new Rotation2d();
   private SwerveModulePosition[] m_lastModulePositions = // For delta tracking
@@ -74,11 +111,24 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition(),
         new SwerveModulePosition()
       };
-  private SwerveDrivePoseEstimator m_poseEstimator =
-      new SwerveDrivePoseEstimator(
-          DriveConstants.kDriveKinematics, m_rawGyroRotation, m_lastModulePositions, new Pose2d());
 
-  private int m_withinToleranceFrames = 0;
+  private final PoseEstimator m_poseEstimator =
+      new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
+
+  private SwerveSetpoint m_currSetpoint =
+      new SwerveSetpoint(
+          new ChassisSpeeds(),
+          new SwerveModuleState[] {
+            new SwerveModuleState(),
+            new SwerveModuleState(),
+            new SwerveModuleState(),
+            new SwerveModuleState()
+          });
+  private SwerveSetpointGenerator m_swerveSetpointGenerator;
+
+  private boolean m_enableDesiredChassisSpeeds =
+      true; // when we run characterization we want to disable all chassis speeds calculations until
+  // complete
 
   public Drive(
       GyroIO gyroIO,
@@ -114,16 +164,27 @@ public class Drive extends SubsystemBase {
 
     Map<DriveProfiles, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(DriveProfiles.kDefault, this::defaultPeriodic);
+    periodicHash.put(DriveProfiles.kPathplanner, this::pathplannerPeriodic);
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
-    periodicHash.put(DriveProfiles.kAmpLineup, this::ampLineupPeriodic);
+    periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
+    periodicHash.put(DriveProfiles.kStop, this::stopPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, DriveProfiles.kDefault);
 
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    m_swerveSetpointGenerator =
+        new SwerveSetpointGenerator(
+            DriveConstants.kDriveKinematics, DriveConstants.kModuleTranslations);
+
+    m_headingController.enableContinuousInput(-Math.PI, Math.PI);
+
+    m_driveController.setTolerance(Units.inchesToMeters(0.5));
+    m_headingController.setTolerance(Units.degreesToRadians(1));
   }
 
   public void periodic() {
-    double start = Timer.getFPGATimestamp();
+    double start = HALUtil.getFPGATime();
 
     m_odometryLock.lock(); // Prevents odometry updates while reading data
     m_gyroIO.updateInputs(m_gyroInputs);
@@ -166,12 +227,13 @@ public class Drive extends SubsystemBase {
     double[] sampleTimestamps =
         m_modules[0].getOdometryTimestamps(); // All signals are sampled together
     int sampleCount = sampleTimestamps.length;
+    Twist2d totalTwist = new Twist2d();
     for (int i = 0; i < sampleCount; i++) {
       // Read wheel positions and deltas from each module
       SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
       SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
       for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = m_modules[moduleIndex].getM_odometryPositions()[i];
+        modulePositions[moduleIndex] = m_modules[moduleIndex].getOdometryPositions()[i];
         moduleDeltas[moduleIndex] =
             new SwerveModulePosition(
                 modulePositions[moduleIndex].distanceMeters
@@ -189,22 +251,81 @@ public class Drive extends SubsystemBase {
         Twist2d twist = DriveConstants.kDriveKinematics.toTwist2d(moduleDeltas);
         m_rawGyroRotation = m_rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
-
-      // Apply update
-      m_poseEstimator.updateWithTime(sampleTimestamps[i], m_rawGyroRotation, modulePositions);
+      Rotation2d deltaYaw;
+      if (i == 0) {
+        deltaYaw = m_rawGyroRotation.minus(lastGyroYaw);
+      } else {
+        deltaYaw = m_rawGyroRotation.minus(m_gyroInputs.odometryYawPositions[i - 1]);
+      }
+      var twist = DriveConstants.kDriveKinematics.toTwist2d(moduleDeltas);
+      twist = new Twist2d(twist.dx, twist.dy, deltaYaw.getRadians());
+      totalTwist =
+          new Twist2d(
+              totalTwist.dx + twist.dx, totalTwist.dy + twist.dy, totalTwist.dtheta + twist.dtheta);
     }
+
+    if (m_gyroInputs.connected) {
+      totalTwist.dtheta = m_gyroInputs.yawPosition.minus(lastGyroYaw).getRadians();
+      lastGyroYaw = m_gyroInputs.yawPosition;
+    } else {
+      totalTwist.dtheta = m_rawGyroRotation.minus(lastGyroYaw).getRadians();
+      lastGyroYaw = m_rawGyroRotation;
+    }
+    m_poseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
+
+    // lets look for slip
+    boolean slip = false;
+    for (int i = 0; i < m_modules.length; i++) {
+      double accel = m_modules[i].getDriveAcceleration();
+      double current = m_modules[i].getDriveCurrent();
+      if (current > 1) {
+        Logger.recordOutput("ModuleOutputs/Module" + i + "/AmpsPerRotation", accel / current);
+      } else {
+        Logger.recordOutput("ModuleOutputs/Module" + i + "/AmpsPerRotation", 0.0);
+      }
+      if (Math.abs(accel * m_modules[i].getDriveVelocity()) > DriveConstants.kSlipThreshold.get()) {
+        slip = true;
+      }
+      Logger.recordOutput("ModuleOutputs/Module" + i + "/curAccelRate", accel);
+      Logger.recordOutput(
+          "ModuleOutputs/Module" + i + "/curAccelRateTimesSpeed",
+          Math.abs(accel * m_modules[i].getDriveVelocity()));
+    }
+
+    Logger.recordOutput("Drive/Slip", slip);
 
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
 
-    Logger.recordOutput("PeriodicTime/Drive", Timer.getFPGATimestamp() - start);
+    if (Constants.kUseAlerts && !m_gyroInputs.connected) {
+      m_gyroDisconnectedAlert.set(true);
+      RobotState.getInstance().triggerAlert();
+    }
+
+    Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void defaultPeriodic() {
-    runVelocity(m_desiredChassisSpeeds);
+    if (m_enableDesiredChassisSpeeds) {
+      runVelocity(m_desiredChassisSpeeds);
+    }
 
     Logger.recordOutput("Drive/DesiredHeading", m_desiredHeading.getDegrees());
     Logger.recordOutput("Drive/CurrentHeading", getPose().getRotation().getDegrees());
     Logger.recordOutput("Drive/DesiredSpeeds", m_desiredChassisSpeeds);
+    Logger.recordOutput("Drive/EnableChassisSpeeds", m_enableDesiredChassisSpeeds);
+  }
+
+  public void pathplannerPeriodic() {
+    m_desiredChassisSpeeds = m_desiredAutoChassisSpeeds;
+    if (m_desiredAutoChassisSpeeds == null) {
+      m_desiredChassisSpeeds = new ChassisSpeeds();
+      defaultPeriodic();
+      return;
+    }
+
+    m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
+
+    defaultPeriodic();
   }
 
   public void autoAlignPeriodic() {
@@ -213,23 +334,124 @@ public class Drive extends SubsystemBase {
     defaultPeriodic();
   }
 
-  public void ampLineupPeriodic() {
-    m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
-    if (Math.abs(m_headingController.getPositionError()) < Units.degreesToRadians(5)) {
-      m_withinToleranceFrames++;
-      if (m_withinToleranceFrames > 10) {
-        // if we reach the setpoint switch back to default
-        updateProfile(DriveProfiles.kDefault);
-        m_desiredChassisSpeeds.omegaRadiansPerSecond = 0;
+  public void stopPeriodic() {
+    runVelocity(new ChassisSpeeds());
+  }
+
+  public void driveToPointPeriodic() {
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_driveController.setP(DriveConstants.kDriveToPointP.get());
+          m_driveController.setI(DriveConstants.kDriveToPointI.get());
+          m_driveController.setD(DriveConstants.kDriveToPointD.get());
+          m_headingController.setP(DriveConstants.kDriveToPointHeadingP.get());
+          m_headingController.setI(DriveConstants.kDriveToPointHeadingI.get());
+          m_headingController.setD(DriveConstants.kDriveToPointHeadingD.get());
+        },
+        DriveConstants.kDriveToPointP,
+        DriveConstants.kDriveToPointI,
+        DriveConstants.kDriveToPointD,
+        DriveConstants.kDriveToPointHeadingP,
+        DriveConstants.kDriveToPointHeadingI,
+        DriveConstants.kDriveToPointHeadingD);
+
+    Pose2d currentPose = getPose();
+
+    double currentDistance =
+        currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation());
+
+    if (EqualsUtil.epsilonEquals(0, m_driveToPointTargetPose.getX())) {
+      Logger.recordOutput("Drive/ZeroTarget", Timer.getFPGATimestamp());
+      m_desiredChassisSpeeds = new ChassisSpeeds();
+      defaultPeriodic();
+
+      return;
+    }
+    double ffScaler =
+        MathUtil.clamp(
+            (currentDistance - m_ffMinRadius) / (m_ffMaxRadius - m_ffMinRadius), 0.0, 1.0);
+    double driveVelocityScalar =
+        m_driveController.getSetpoint().velocity * ffScaler
+            + m_driveController.calculate(currentDistance, 0.0);
+    if (currentDistance < m_driveController.getPositionTolerance()) {
+      driveVelocityScalar = 0.0;
+    }
+
+    double headingError =
+        currentPose.getRotation().minus(m_driveToPointTargetPose.getRotation()).getRadians();
+    double headingVelocity =
+        m_headingController.calculate(
+            currentPose.getRotation().getRadians(),
+            m_driveToPointTargetPose.getRotation().getRadians());
+
+    if (Math.abs(headingError) < m_headingController.getPositionTolerance()) {
+      headingVelocity = 0.0;
+    }
+
+    // evil math
+    // blame 254 for making this because i dont fully understand it
+    // update: i understand it now :)
+    Translation2d driveVelocity =
+        new Pose2d(
+                0.0,
+                0.0,
+                currentPose
+                    .getTranslation()
+                    .minus(m_driveToPointTargetPose.getTranslation())
+                    .getAngle())
+            .transformBy(new Transform2d(driveVelocityScalar, 0.0, new Rotation2d()))
+            .getTranslation();
+    ChassisSpeeds speeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            driveVelocity.getX(), driveVelocity.getY(), headingVelocity, currentPose.getRotation());
+    m_desiredChassisSpeeds = speeds;
+
+    Logger.recordOutput("DriveToPoint/TargetPose", m_driveToPointTargetPose);
+    Logger.recordOutput("DriveToPoint/DriveDistance", currentDistance);
+    Logger.recordOutput("DriveToPoint/HeadingError", headingError);
+
+    Logger.recordOutput("DriveToPoint/FFScaler", ffScaler);
+    Logger.recordOutput("DriveToPoint/DriveVelocityScalar", driveVelocityScalar);
+    Logger.recordOutput("DriveToPoint/HeadingVelocity", headingVelocity);
+    Logger.recordOutput("DriveToPoint/DriveVelocityX", driveVelocity.getX());
+    Logger.recordOutput("DriveToPoint/DriveVelocityY", driveVelocity.getY());
+
+    Logger.recordOutput("DriveToPoint/DriveSpeeds", speeds);
+
+    if (!DriverStation.isAutonomous()) {
+      if (m_driveController.atGoal() && m_headingController.atGoal()) {
+        updateProfile(getDefaultProfile());
       }
     } else {
-      m_withinToleranceFrames = 0;
+      if (m_driveController.atGoal() && m_headingController.atGoal()) {
+        Commands.runOnce(
+                () -> {
+                  updateProfile(DriveProfiles.kStop);
+                })
+            .andThen(
+                Commands.waitUntil(
+                    () -> {
+                      RobotAction s = RobotState.getInstance().getCurrentAction();
+                      return s != RobotAction.kAutoCoralOuttaking
+                          && s != RobotAction.kAutoAutoScore;
+                    }))
+            .andThen(
+                Commands.runOnce(
+                    () -> {
+                      updateProfile(DriveProfiles.kDriveToPoint);
+                    }))
+            .schedule();
+        ;
+      }
     }
+
     defaultPeriodic();
   }
 
   public ChassisSpeeds calculateAutoAlignSpeeds() {
     if (m_desiredHeading != null) {
+      Logger.recordOutput("AutoAlignHeading", m_desiredHeading);
       double output =
           m_headingController.calculate(
               getPose().getRotation().getRadians(), m_desiredHeading.getRadians());
@@ -264,22 +486,29 @@ public class Drive extends SubsystemBase {
 
     SwerveModuleState[] setpointStates =
         DriveConstants.kDriveKinematics.toSwerveModuleStates(discreteSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, DriveConstants.kMaxLinearSpeed);
 
-    // Send setpoints to modules
-    SwerveModuleState[] optimizedSetpointStates = new SwerveModuleState[4];
+    m_currSetpoint =
+        m_swerveSetpointGenerator.generateSetpoint(
+            DriveConstants.kModuleLimitsFree, m_currSetpoint, discreteSpeeds, 0.02);
+    SwerveModuleState[] setpointStatesOptimized = m_currSetpoint.moduleStates();
+
     for (int i = 0; i < 4; i++) {
-      // The module returns the optimized state, useful for logging
-      optimizedSetpointStates[i] = m_modules[i].runSetpoint(setpointStates[i]);
+      m_modules[i].runSetpoint(setpointStates[i]);
     }
 
     // Log setpoint states
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-    Logger.recordOutput("SwerveStates/SetpointsOptimized", optimizedSetpointStates);
+    Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStatesOptimized);
+    Logger.recordOutput("Drive/ChassisSpeedsSetpoint", m_currSetpoint.chassisSpeeds());
   }
 
   public void setDesiredChassisSpeeds(ChassisSpeeds speeds) {
+    m_enableDesiredChassisSpeeds = true;
     m_desiredChassisSpeeds = speeds;
+  }
+
+  public void setDesiredAutoChassisSpeeds(ChassisSpeeds speeds) {
+    m_desiredAutoChassisSpeeds = speeds;
   }
 
   public ChassisSpeeds getDesiredChassisSpeeds() {
@@ -292,11 +521,26 @@ public class Drive extends SubsystemBase {
 
   public void setDesiredHeading(Rotation2d heading) {
     m_desiredHeading = heading;
+
+    // driveToPointSetup();
+  }
+
+  public void setTargetPose(Pose2d pose) {
+    m_driveToPointTargetPose = pose;
+
+    if (m_profiles.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
+      driveToPointSetup();
+    }
+  }
+
+  public Pose2d getTargetPose() {
+    return m_driveToPointTargetPose;
   }
 
   /** Stops the drive. */
   public void stop() {
-    runVelocity(new ChassisSpeeds());
+    m_enableDesiredChassisSpeeds = false;
+    // runVelocity(new ChassisSpeeds());
   }
 
   public void setCoast() {
@@ -316,6 +560,7 @@ public class Drive extends SubsystemBase {
    * return to their normal orientations the next time a nonzero velocity is requested.
    */
   public void stopWithX() {
+    m_enableDesiredChassisSpeeds = false;
     Rotation2d[] headings = new Rotation2d[4];
     for (int i = 0; i < 4; i++) {
       headings[i] = DriveConstants.kModuleTranslations[i].getAngle();
@@ -345,6 +590,7 @@ public class Drive extends SubsystemBase {
   }
 
   /** Returns the module positions (turn angles and drive positions) for all of the modules. */
+  @SuppressWarnings("unused")
   private SwerveModulePosition[] getModulePositions() {
     SwerveModulePosition[] states = new SwerveModulePosition[4];
     for (int i = 0; i < 4; i++) {
@@ -356,7 +602,7 @@ public class Drive extends SubsystemBase {
   /** Returns the current odometry pose. */
   @AutoLogOutput(key = "Odometry/Robot")
   public Pose2d getPose() {
-    return m_poseEstimator.getEstimatedPosition();
+    return m_poseEstimator.getLatestPose();
   }
 
   /** Returns the current odometry rotation. */
@@ -366,33 +612,101 @@ public class Drive extends SubsystemBase {
 
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
-    m_poseEstimator.resetPosition(m_rawGyroRotation, getModulePositions(), pose);
+    m_poseEstimator.resetPose(pose);
   }
 
   /**
-   * Adds a vision measurement to the pose estimator.
+   * Adds vision observations to the pose estimator.
    *
-   * @param visionPose The pose of the robot as measured by the vision camera.
-   * @param timestamp The timestamp of the vision measurement in seconds.
+   * @param observations The vision observations to add.
    */
-  public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
-    m_poseEstimator.addVisionMeasurement(visionPose, timestamp);
-  }
-
-  /**
-   * Adds a vision measurement to the pose estimator.
-   *
-   * @param observation The VisionObservation object containing the vision data.
-   */
-  public void addVisionObservation(VisionObservation observation) {
-    addVisionMeasurement(observation.visionPose(), observation.timestamp());
+  public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
+    m_poseEstimator.addVisionData(observations);
   }
 
   public void updateProfile(DriveProfiles newProfile) {
+
+    if (newProfile == DriveProfiles.kDriveToPoint) {
+      driveToPointSetup();
+    }
+
     m_profiles.setCurrentProfile(newProfile);
+  }
+
+  public DriveProfiles getDefaultProfile() {
+    if (DriverStation.isAutonomous()) {
+      return DriveProfiles.kPathplanner;
+    } else {
+      return DriveProfiles.kDefault;
+    }
   }
 
   public boolean headingWithinTolerance() {
     return Math.abs(m_headingController.getPositionError()) < Units.degreesToRadians(5);
+  }
+
+  public void setModuleCurrentLimits(double supplyLimit) {
+    for (var module : m_modules) {
+      module.setCurrentLimits(supplyLimit);
+    }
+  }
+
+  public DriveProfiles getCurrentProfile() {
+    return m_profiles.getCurrentProfile();
+  }
+
+  /** Runs the drive in a straight line with the specified drive output. */
+  public void runCharacterization(double output) {
+    m_enableDesiredChassisSpeeds = false;
+    for (int i = 0; i < 4; i++) {
+      m_modules[i].runCharacterization(output);
+    }
+  }
+
+  /** Returns the average velocity of the modules in radians/sec. */
+  public double getFFCharacterizationVelocity() {
+    double output = 0.0;
+    for (int i = 0; i < 4; i++) {
+      output += m_modules[i].getDriveVelocity() / 4.0;
+    }
+    return output;
+  }
+
+  /** Returns the position of each module in radians. */
+  public double[] getWheelRadiusCharacterizationPositions() {
+    double[] values = new double[4];
+    for (int i = 0; i < 4; i++) {
+      values[i] = m_modules[i].getWheelRadiusCharacterizationPosition();
+    }
+    return values;
+  }
+
+  public Rotation2d getGyroRotation() {
+    return m_rawGyroRotation;
+  }
+
+  private void driveToPointSetup() {
+    Pose2d currentPose = getPose();
+
+    ChassisSpeeds fieldRelative =
+        ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), currentPose.getRotation());
+    if (!(DriverStation.isAutonomous()
+        && RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking)) {
+      m_driveController.reset(
+          currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation()),
+          Math.min(
+              0.0,
+              -new Translation2d(fieldRelative.vxMetersPerSecond, fieldRelative.vyMetersPerSecond)
+                  .rotateBy(
+                      m_driveToPointTargetPose
+                          .getTranslation()
+                          .minus(currentPose.getTranslation())
+                          .getAngle()
+                          .unaryMinus())
+                  .getX()));
+      m_desiredHeading = m_driveToPointTargetPose.getRotation();
+      m_headingController.reset(
+          currentPose.getRotation().getRadians(), fieldRelative.omegaRadiansPerSecond);
+    }
   }
 }

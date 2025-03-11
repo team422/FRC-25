@@ -1,5 +1,8 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.CtreBaseRefreshManager;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -14,6 +17,9 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  * project.
  */
 public class Robot extends LoggedRobot {
+  private RobotContainer m_robotContainer;
+  private Command m_autonomousCommand;
+
   public Robot() {
     // Record metadata
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
@@ -36,6 +42,7 @@ public class Robot extends LoggedRobot {
     // Set up data receivers & replay source
     switch (Constants.kCurrentMode) {
       case REAL:
+      case PROTO:
         // Running on a real robot, log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());
@@ -57,12 +64,21 @@ public class Robot extends LoggedRobot {
 
     // Start AdvantageKit logger
     Logger.start();
+
+    // Set up robot container
+    m_robotContainer = new RobotContainer();
   }
 
   /** This function is called periodically during all modes. */
   @Override
   public void robotPeriodic() {
+    if (Constants.kUseBaseRefreshManager) {
+      CtreBaseRefreshManager.updateAll();
+    }
+
     RobotState.getInstance().updateRobotState();
+
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once when the robot is disabled. */
@@ -73,12 +89,19 @@ public class Robot extends LoggedRobot {
 
   /** This function is called periodically when disabled. */
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    RobotState.getInstance().setSelectedAuto(m_robotContainer.getSelectedAuto());
+  }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
     RobotState.getInstance().onEnable();
+
+    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.schedule();
+    }
   }
 
   /** This function is called periodically during autonomous. */
@@ -88,6 +111,10 @@ public class Robot extends LoggedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
+    if (m_autonomousCommand != null) {
+      m_autonomousCommand.cancel();
+    }
+
     RobotState.getInstance().onEnable();
   }
 
@@ -98,6 +125,8 @@ public class Robot extends LoggedRobot {
   /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
+    CommandScheduler.getInstance().cancelAll();
+
     RobotState.getInstance().onEnable();
   }
 
