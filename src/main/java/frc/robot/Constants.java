@@ -696,8 +696,14 @@ public final class Constants {
         SingleJointedArmSim.estimateMOI(kWristArmLength, kWristArmMass);
     public static final Rotation2d kWristMinAngle = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kWristMaxAngle = Rotation2d.fromDegrees(130.0);
-    public static final boolean kSimSimulateGravity = true;
-    public static final Rotation2d kSimStartingAngle = kWristMinAngle;
+    public static final boolean kSimSimulateGravity = false;
+    public static final Rotation2d kSimStartingAngle = Rotation2d.fromDegrees(Math.random() * 130);
+    public static final double kSimRollerP = 0.01;
+    public static final double kSimRollerI = 0.0;
+    public static final double kSimRollerD = 0.0;
+    public static final double kSimWristP = 0.150000;
+    public static final double kSimWristI = 0.0;
+    public static final double kSimWristD = 0.0;
 
     public static final DCMotor kRollerSimGearbox = DCMotor.getKrakenX60Foc(1);
     public static final double kRollerSimGearing = kRollerGearRatio;

@@ -9,9 +9,7 @@ import frc.robot.Constants.IntakeConstants;
 
 public class PivotIOSim implements PivotIO {
   private SingleJointedArmSim m_sim;
-  private PIDController m_controller =
-      new PIDController(
-          IntakeConstants.kPivotSimP, IntakeConstants.kPivotSimI, IntakeConstants.kPivotSimD);
+  private PIDController m_controller = new PIDController(0, 0, 0);
   private double m_kG = 0.0;
 
   public PivotIOSim() {

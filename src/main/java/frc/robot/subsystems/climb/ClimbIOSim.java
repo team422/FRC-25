@@ -9,9 +9,7 @@ import frc.robot.Constants.ClimbConstants;
 public class ClimbIOSim implements ClimbIO {
 
   private SingleJointedArmSim m_sim; // We choose to simulate the climb arm as a single-jointed arm
-  private PIDController m_controller =
-      new PIDController(
-          ClimbConstants.kSimClimbP, ClimbConstants.kSimClimbI, ClimbConstants.kSimClimbD);
+  private PIDController m_controller = new PIDController(0, 0, 0);
 
   public ClimbIOSim() {
     m_sim =
