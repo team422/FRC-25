@@ -295,7 +295,7 @@ public class AprilTagVision extends SubsystemBase {
         xyStandardDeviation =
             AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
                 // back to normal math
-                * Math.pow(averageDistance, 2.0)
+                * Math.pow(averageDistance, 3.0)
                 / tagPoses.size();
 
         double thetaStandardDeviation = 1;

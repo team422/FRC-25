@@ -27,7 +27,7 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger resetFieldCentric() {
-    return m_controller.R2();
+    return m_controller.touchpad();
   }
 
   @Override
@@ -83,8 +83,7 @@ public class DriverControlsPS5 implements DriverControls {
   @Override
   public Trigger algaeIntakeOuttake() {
     // TODO: re-enable later
-    // return m_controller.R2();
-    return new Trigger(() -> false);
+    return m_controller.R2();
   }
 
   @Override
@@ -99,6 +98,6 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger toggleVision() {
-    return m_controller.touchpad();
+    return m_controller.PS();
   }
 }

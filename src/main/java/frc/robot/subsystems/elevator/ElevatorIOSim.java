@@ -117,6 +117,11 @@ public class ElevatorIOSim implements ElevatorIO {
   }
 
   @Override
+  public boolean atSetpoint(double tolerance) {
+    return Math.abs(m_controller.getSetpoint() - m_sim.getPositionMeters()) <= tolerance;
+  }
+
+  @Override
   public double getCurrHeight() {
     return m_sim.getPositionMeters();
   }

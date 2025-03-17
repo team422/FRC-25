@@ -39,6 +39,7 @@ public class Manipulator extends SubsystemBase {
   private Rotation2d m_desiredWristAngle = new Rotation2d();
   private boolean m_runRollerScoring = false;
   private boolean m_runRollerAlgaeDescoring = false;
+  private boolean m_runRollerBargeScoring = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -160,6 +161,7 @@ public class Manipulator extends SubsystemBase {
 
     m_runRollerScoring = false;
     m_runRollerAlgaeDescoring = true;
+    m_runRollerBargeScoring = false;
 
     if (state == ManipulatorState.kIndexing) {
       // set it some amount forward
@@ -235,7 +237,11 @@ public class Manipulator extends SubsystemBase {
   public void algaeHoldPeriodic() {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeHoldAngle.get()));
-    m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
+    if (m_runRollerBargeScoring) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerBargeVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
+    }
   }
 
   public void algaeOuttakePeriodic() {
@@ -264,6 +270,14 @@ public class Manipulator extends SubsystemBase {
 
   public void stopRollerAlgaeDescoring() {
     m_runRollerAlgaeDescoring = false;
+  }
+
+  public void runRollerBargeScoring() {
+    m_runRollerBargeScoring = true;
+  }
+
+  public void stopRollerBargeScoring() {
+    m_runRollerBargeScoring = false;
   }
 
   public ManipulatorState getStowOrHold() {

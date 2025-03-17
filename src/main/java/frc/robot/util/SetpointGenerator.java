@@ -4,6 +4,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -40,12 +41,17 @@ public class SetpointGenerator {
   private static final double kDriveXOffset =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
 
+  private static final double kDriveXOffsetFinalAlgae =
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(20.0);
+
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
   private static final double kDriveYOffset = Units.inchesToMeters(6.469);
 
+  private static final double kDriveYL1Offset = Units.inchesToMeters(15.469);
+
   // we are considered "close" to a field element (processor, barge) if we're within this distance
-  private static final double kDistanceThreshold = Units.inchesToMeters(24.0);
+  private static final double kDistanceThreshold = Units.inchesToMeters(36.0);
 
   /**
    * Generates a setpoint for the robot to score on the reef.
@@ -73,7 +79,10 @@ public class SetpointGenerator {
             new Transform2d(
                 kDriveXOffset,
                 // move to left or right depending on the reef index
-                (reefIndex % 2 == 0) ? kDriveYOffset : -kDriveYOffset,
+                // if L1 then use L1
+                (reefHeight == ReefHeight.L1)
+                    ? kDriveYL1Offset * ((reefIndex % 2 == 0) ? 1 : -1)
+                    : kDriveYOffset * ((reefIndex % 2 == 0) ? 1 : -1),
                 Rotation2d.fromDegrees(180)));
 
     var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
@@ -234,10 +243,15 @@ public class SetpointGenerator {
 
   public static boolean isNearProcessor(Pose2d drivePose) {
     // no need for abs because of distance formula
-    return drivePose
-            .getTranslation()
-            .getDistance(
-                AllianceFlipUtil.apply(FieldConstants.Processor.kCenterFace.getTranslation()))
+    Pose2d processorPose = FieldConstants.Processor.kCenterFace;
+    processorPose =
+        AllianceFlipUtil.shouldFlip()
+            ? processorPose.rotateAround(
+                new Translation2d(
+                    FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+                Rotation2d.fromDegrees(180))
+            : processorPose;
+    return drivePose.getTranslation().getDistance(processorPose.getTranslation())
         < kDistanceThreshold;
   }
 
@@ -264,5 +278,38 @@ public class SetpointGenerator {
     // now we determine if the algae is at L2 or L3
     ReefHeight algaeHeight = closestIndex % 2 == 0 ? ReefHeight.L3 : ReefHeight.L2;
     return algaeHeight;
+  }
+
+  public static Pose2d generateAlgae(int algaeIndex) {
+    Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
+    // we need to move away from the center of the reef (regardless of angle)
+    var drivePoseFinal =
+        centerFacePose.transformBy(
+            new Transform2d(kDriveXOffset, 0.0, Rotation2d.fromDegrees(180)));
+    return drivePoseFinal;
+  }
+
+  public static Pose2d generateAlgaeFinal(int algaeIndex) {
+    Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
+    // we need to move away from the center of the reef (regardless of angle)
+    var drivePoseFinal =
+        centerFacePose.transformBy(
+            new Transform2d(kDriveXOffsetFinalAlgae, 0.0, Rotation2d.fromDegrees(180)));
+    return drivePoseFinal;
+  }
+
+  public static int getAlgaeIndex(Pose2d drivePose) {
+    int[] vertical = checkVertical(drivePose);
+    int[] diagonalPositive = checkDiagonalPositive(drivePose);
+    int[] diagonalNegative = checkDiagonalNegative(drivePose);
+
+    Logger.recordOutput("SetpointGenerator/Vertical", vertical);
+    Logger.recordOutput("SetpointGenerator/DiagonalPositive", diagonalPositive);
+    Logger.recordOutput("SetpointGenerator/DiagonalNegative", diagonalNegative);
+
+    // find the common index
+    int commonIndex = findCommonElement(vertical, diagonalPositive, diagonalNegative);
+
+    return commonIndex;
   }
 }

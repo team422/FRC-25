@@ -6,6 +6,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LedConstants;
@@ -138,6 +139,9 @@ public class Led extends SubsystemBase {
   }
 
   private static Color convertColor(Color color) {
+    if (RobotBase.isSimulation()) {
+      return color;
+    }
     // for some reason green and red are swapped on the LEDs
     return new Color(color.green, color.red, color.blue);
   }

@@ -13,10 +13,13 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -46,11 +49,11 @@ public class Module {
     // Switch constants based on mode (the physics simulator is treated as a
     // separate robot with different tuning)
     if (RobotBase.isReal()) {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.229, 0.138);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.229, 0.138, 0.138);
       m_io.setDrivePID(1.0, 0.0, 0.0);
       m_io.setTurnPID(300.0, 0.0, 0.0);
     } else {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13, 0.13);
       m_io.setDrivePID(0.1, 0.0, 0.0);
       m_io.setTurnPID(10.0, 0.0, 0.0);
     }
@@ -112,6 +115,21 @@ public class Module {
     double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.kWheelRadius;
 
     m_io.setDriveVelocity(speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec));
+    m_io.setTurnPosition(state.angle);
+  }
+
+  /** */
+  public void runSetpoint(SwerveModuleState state, LinearAcceleration accel) {
+    state.optimize(getAngle());
+
+    double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.kWheelRadius;
+    double accelRadPerSec =
+        Math.signum(speedRadPerSec)
+            * accel.in(MetersPerSecondPerSecond)
+            / DriveConstants.kWheelRadius;
+
+    m_io.setDriveVelocity(
+        speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec, accelRadPerSec));
     m_io.setTurnPosition(state.angle);
   }
 
