@@ -255,8 +255,12 @@ public final class Constants {
     public static final double kSimMOI = .001;
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
     public static final double kMinHeight = 0;
-    public static final double kMaxHeight = 71.5;
+    public static final double kMaxHeight = 72.5;
     public static final double kHeightTolerance = 0.25;
+    public static final double kSimElevatorP = 0.5;
+    public static final double kSimElevatorI = 0.0;
+    public static final double kSimElevatorD = 0.0;
+    public static final double kSimElevatorkG = 0.0;
   }
 
   public static final class FullTuningConstants {

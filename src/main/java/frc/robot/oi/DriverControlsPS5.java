@@ -52,17 +52,17 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger setLocationL3() {
-    return m_controller.povUp();
+    return m_controller.button(2);
   }
 
   @Override
   public Trigger setLocationL4() {
-    return m_controller.povRight();
+    return m_controller.button(3);
   }
 
   @Override
   public Trigger autoscoreLeft() {
-    return m_controller.square();
+    return m_controller.triangle();
   }
 
   @Override
@@ -72,12 +72,12 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger manualScore() {
-    return m_controller.triangle();
+    return m_controller.button(1);
   }
 
   @Override
   public Trigger climb() {
-    return m_controller.cross();
+    return m_controller.triangle();
   }
 
   @Override
