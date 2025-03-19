@@ -183,8 +183,8 @@ public final class Constants {
     public static final int kStripLength = 60;
 
     public static final Color kOff = Color.kBlack;
-    public static final Color kL1 = Color.kRed;
-    public static final Color kL2 = Color.kOrangeRed;
+    public static final Color kL1 = Color.kBlue;
+    public static final Color kL2 = Color.kRed;
     public static final Color kL3 = Color.kYellow;
     public static final Color kL4 = Color.kGreen;
     public static final Color kDisabled = Color.kMagenta;
