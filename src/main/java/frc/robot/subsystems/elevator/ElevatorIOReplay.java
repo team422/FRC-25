@@ -27,6 +27,11 @@ public class ElevatorIOReplay implements ElevatorIO {
   }
 
   @Override
+  public boolean atSetpoint(double tolerance) {
+    return false;
+  }
+
+  @Override
   public double getCurrHeight() {
     return 0.0;
   }

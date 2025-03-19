@@ -9,6 +9,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -17,6 +19,7 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
@@ -77,6 +80,7 @@ public class RobotState {
     kAlgaeDescoringInitial,
     kAlgaeDescoringDeployManipulator,
     kAlgaeDescoringMoveUp,
+    kAlgaeDescoringDriveAway,
     kAlgaeDescoringFinal,
 
     kAutoDefault,
@@ -94,6 +98,8 @@ public class RobotState {
   private RobotSetpoint m_setpoint =
       SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
 
+  private int m_desiredAlgaeIndex = 0;
+
   private int m_numVisionGyroObservations = 0;
 
   private final List<RobotAction> kAlgaeDescoreSequence =
@@ -101,6 +107,7 @@ public class RobotState {
           RobotAction.kAlgaeDescoringInitial,
           RobotAction.kAlgaeDescoringDeployManipulator,
           RobotAction.kAlgaeDescoringMoveUp,
+          RobotAction.kAlgaeDescoringDriveAway,
           RobotAction.kAlgaeDescoringFinal);
 
   // Singleton logic
@@ -136,9 +143,11 @@ public class RobotState {
     periodicHash.put(RobotAction.kDriveToProcessor, this::driveToProcessorPeriodic);
     periodicHash.put(RobotAction.kCoralOuttaking, this::coralOuttakingPeriodic);
     periodicHash.put(RobotAction.kProcessorOuttake, () -> {});
+    periodicHash.put(RobotAction.kBargeScore, this::bargeScorePeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
+    periodicHash.put(RobotAction.kAlgaeDescoringDriveAway, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
     periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
@@ -281,10 +290,53 @@ public class RobotState {
             Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
       }
     }
+
+    // everything must be within tolerance to run the rollers
+    Logger.recordOutput("Auto/ElevRight", m_elevator.atSetpoint());
+    Logger.recordOutput("Auto/ManipRight", m_manipulator.atSetpoint(m_setpoint.manipulatorAngle()));
+    Logger.recordOutput("Auto/SetpointAngle", m_setpoint.manipulatorAngle().getDegrees());
+    if (m_elevator.atSetpoint() && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
+      updateRobotAction(RobotAction.kCoralOuttaking);
+    }
   }
 
   public void autoAutoScorePeriodic() {
-    autoScorePeriodic();
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    // only set the setpoints if they're different so we don't reset the motion profile or drive pid
+    if (!EqualsUtil.GeomExtensions.epsilonEquals(m_setpoint.drivePose(), m_drive.getTargetPose())) {
+      m_drive.setTargetPose(m_setpoint.drivePose());
+    }
+
+    Logger.recordOutput("AutoScore/BranchIndex", m_desiredBranchIndex);
+    Logger.recordOutput("AutoScore/ReefHeight", m_desiredReefHeight);
+    Logger.recordOutput(
+        "AutoScore/DistanceToSetpoint",
+        Units.metersToInches(
+            m_drive
+                .getPose()
+                .getTranslation()
+                .getDistance(m_setpoint.drivePose().getTranslation())));
+
+    // we don't want to deploy elevator or manipulator until we're close to the setpoint
+    if (Math.abs(
+            m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation()))
+        < Units.inchesToMeters(6)) {
+      Logger.recordOutput("AutoScore/WithinDriveTolerance", Timer.getFPGATimestamp());
+      if (!EqualsUtil.epsilonEquals(m_setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
+        m_elevator.setDesiredHeight(m_setpoint.elevatorHeight());
+      }
+      // don't deploy manipulator until we're at the elevator setpoint
+      if (m_elevator.atSetpoint(10.0)) {
+        if (!EqualsUtil.epsilonEquals(
+            m_setpoint.manipulatorAngle().getRadians(),
+            m_manipulator.getDesiredWristAngle().getRadians())) {
+          m_manipulator.setDesiredWristAngle(m_setpoint.manipulatorAngle());
+        }
+      } else {
+        m_manipulator.setDesiredWristAngle(
+            Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
+      }
+    }
 
     // everything must be within tolerance to run the rollers
     Logger.recordOutput("Auto/ElevRight", m_elevator.atSetpoint());
@@ -371,31 +423,72 @@ public class RobotState {
   }
 
   public void driveToProcessorPeriodic() {
+    if (m_drive.getCurrentProfile() != DriveProfiles.kDriveToPoint) {
+      updateRobotAction(RobotAction.kProcessorOuttake);
+    }
+
     Pose2d processorPose = FieldConstants.Processor.kCenterFace;
+    processorPose =
+        AllianceFlipUtil.shouldFlip()
+            ? processorPose.rotateAround(
+                new Translation2d(
+                    FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+                Rotation2d.fromDegrees(180))
+            : processorPose;
+    processorPose =
+        processorPose.transformBy(
+            new Transform2d(
+                Meters.of(DriveConstants.kTrackWidthX / 2).plus(Inches.of(10.0)),
+                Inches.zero(),
+                Rotation2d.fromDegrees(180)));
     if (!EqualsUtil.GeomExtensions.epsilonEquals(processorPose, m_drive.getTargetPose())) {
       m_drive.setTargetPose(processorPose);
     }
   }
 
   public void bargeScorePeriodic() {
-    // TODO: when we trust the vision more we will add full auto score (rollers decide when to go)
+    if (!m_hasRunASingleCycle) {
+      m_hasRunASingleCycle = true;
+      return;
+    }
+
+    if (m_elevator.atSetpoint(ElevatorConstants.kBargeThrowHeight.get())) {
+      m_manipulator.runRollerBargeScoring();
+    }
   }
 
   // this is a hack but trust
   private boolean m_hasRunASingleCycle = false;
 
   public void algaeDescoringPeriodic() {
+    if (getUsingVision()) {
+      if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringFinal
+          || m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
+        m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
+      } else {
+        m_drive.setTargetPose(SetpointGenerator.generateAlgae(m_desiredAlgaeIndex));
+      }
+    }
+
     // each step in the sequence is identical in terms of whether to advance to the next step
     int index = kAlgaeDescoreSequence.indexOf(m_profiles.getCurrentProfile());
     Logger.recordOutput("AlgaeDescore/ElevatorAtSetpoint", m_elevator.atSetpoint());
     Logger.recordOutput("AlgaeDescore/ManipulatorAtSetpoint", m_manipulator.atSetpoint());
     Logger.recordOutput("AlgaeDescore/Index", index);
+
     if (m_elevator.atSetpoint()
         && m_manipulator.atSetpoint()
-        && index < kAlgaeDescoreSequence.size() - 2
+        && m_drive.driveToPointWithinTolerance(Meters.of(0.1), null)
         && m_hasRunASingleCycle) {
-      Logger.recordOutput("AlgaeDescore/TransitionTime", Timer.getFPGATimestamp());
-      updateRobotAction(kAlgaeDescoreSequence.get(index + 1));
+      if (index < kAlgaeDescoreSequence.size() - 3) {
+        Logger.recordOutput("AlgaeDescore/TransitionTime", Timer.getFPGATimestamp());
+        updateRobotAction(kAlgaeDescoreSequence.get(index + 1));
+      } else if (index != kAlgaeDescoreSequence.size() - 3) {
+        // if we're on the last step then we want to go back to stow
+        m_manipulator.updateState(ManipulatorState.kAlgaeHold);
+        setDefaultAction();
+      }
+      // if we're on the second to last step then don't advance and wait for controller input
     }
 
     if (!m_hasRunASingleCycle) {
@@ -480,6 +573,9 @@ public class RobotState {
         break;
 
       case kBargeScore:
+        newElevatorState = ElevatorState.kBargeScore;
+        newManipulatorState = ManipulatorState.kAlgaeHold;
+
         break;
 
       case kProcessorOuttake:
@@ -488,25 +584,51 @@ public class RobotState {
         break;
 
       case kAlgaeDescoringInitial:
+        if (getUsingVision()) {
+          newDriveProfiles = DriveProfiles.kDriveToPoint;
+          m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+        }
         newElevatorState = ElevatorState.kAlgaeDescoringInitial;
 
         break;
 
       case kAlgaeDescoringDeployManipulator:
+        if (getUsingVision()) {
+          newDriveProfiles = DriveProfiles.kDriveToPoint;
+          m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+        }
         newElevatorState = ElevatorState.kAlgaeDescoringInitial;
         newManipulatorState = ManipulatorState.kAlgaeDescoring;
 
         break;
 
       case kAlgaeDescoringMoveUp:
+        if (getUsingVision()) {
+          newDriveProfiles = DriveProfiles.kDriveToPoint;
+          m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+        }
         newElevatorState = ElevatorState.kAlgaeDescoringFinal;
         newManipulatorState = ManipulatorState.kAlgaeDescoring;
 
         break;
 
+      case kAlgaeDescoringDriveAway:
+        if (getUsingVision()) {
+          newDriveProfiles = DriveProfiles.kDriveToPoint;
+          m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+          m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
+        }
+        newElevatorState = ElevatorState.kAlgaeDescoringFinal;
+        newManipulatorState = ManipulatorState.kAlgaeHold;
+
+        break;
+
       case kAlgaeDescoringFinal:
-        newManipulatorState = ManipulatorState.kAlgaeDescoring;
-        m_manipulator.stopRollerAlgaeDescoring();
+        if (getUsingVision()) {
+          newDriveProfiles = DriveProfiles.kDriveToPoint;
+          m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+        }
+        newManipulatorState = ManipulatorState.kAlgaeHold;
 
         break;
     }
@@ -568,29 +690,40 @@ public class RobotState {
     // if we're at the processor then kDriveToProcessor
     // if we're near the barge then kBargeScore
     // and if we're near the reef then kAutoScore
-    if (SetpointGenerator.isNearProcessor(m_drive.getPose())) {
-      updateRobotAction(RobotAction.kDriveToProcessor);
-    } else if (SetpointGenerator.isNearBarge(m_drive.getPose())) {
-      updateRobotAction(RobotAction.kBargeScore);
-    } else {
-      updateRobotAction(RobotAction.kAutoScore);
-    }
+    // if (SetpointGenerator.isNearProcessor(m_drive.getPose())) {
+    //   updateRobotAction(RobotAction.kDriveToProcessor);
+    // } else if (SetpointGenerator.isNearBarge(m_drive.getPose())) {
+    //   updateRobotAction(RobotAction.kBargeScore);
+    // } else {
+    updateRobotAction(RobotAction.kAutoScore);
+    // }
   }
 
   public void manageCoralOuttakePressed() {
     // this button will score coral but also score algae if we're at the barge
-    if (m_profiles.getCurrentProfile() == RobotAction.kBargeScore) {
-      updateRobotAction(RobotAction.kBargeOuttaking);
-    } else {
-      updateRobotAction(RobotAction.kCoralOuttaking);
-    }
+
+    updateRobotAction(RobotAction.kCoralOuttaking);
   }
 
   public void manageAlgaeIntake() {
     if (m_manipulator.getCurrentState() == ManipulatorState.kAlgaeHold) {
-      updateRobotAction(RobotAction.kProcessorOuttake);
+      // if we're near the processor then initiate a drive to point
+      if (getUsingVision() && SetpointGenerator.isNearProcessor(m_drive.getPose())) {
+        updateRobotAction(RobotAction.kDriveToProcessor);
+      } else {
+        updateRobotAction(RobotAction.kProcessorOuttake);
+      }
     } else {
       updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
+    }
+  }
+
+  public void manageAlgaeDescoreRelease() {
+    if (m_profiles.getCurrentProfile()
+        == kAlgaeDescoreSequence.get(kAlgaeDescoreSequence.size() - 3)) {
+      updateRobotAction(RobotAction.kAlgaeDescoringDriveAway);
+    } else {
+      setDefaultAction();
     }
   }
 

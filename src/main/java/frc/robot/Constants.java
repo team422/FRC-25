@@ -5,11 +5,10 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.KilogramSquareMeters;
 import static edu.wpi.first.units.Units.Pounds;
 
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -78,6 +77,8 @@ public final class Constants {
     public static final LoggedTunableNumber kTeleopRotationSpeed =
         new LoggedTunableNumber("Teleop Rotation Speed", 10.0);
 
+    public static final double kVisionSpeedConstantK = 0.5;
+
     // the exponent to raise the input to
     // ex 1.0 is linear, 2.0 is squared, etc
     public static final LoggedTunableNumber kDriveControlsExponent =
@@ -110,13 +111,6 @@ public final class Constants {
     public static final double kTurnSimGearRatio = kTurnGearRatio;
     public static final double kTurnSimMOI = 0.004;
 
-    public static final LoggedTunableNumber kHeadingP =
-        new LoggedTunableNumber("Drive Heading P", 4.0);
-    public static final LoggedTunableNumber kHeadingI =
-        new LoggedTunableNumber("Drive Heading I", 0.0);
-    public static final LoggedTunableNumber kHeadingD =
-        new LoggedTunableNumber("Drive Heading D", 0.05);
-
     // universal reversals for drive (aka the big negative sign)
     public static final boolean kRealReversed = false;
     public static final boolean kSimReversed = false;
@@ -129,11 +123,18 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint D", 0.0);
 
     public static final LoggedTunableNumber kDriveToPointHeadingP =
-        new LoggedTunableNumber("DriveToPoint Heading P", 3.0);
+        new LoggedTunableNumber("DriveToPoint Heading P", 4.0);
     public static final LoggedTunableNumber kDriveToPointHeadingI =
         new LoggedTunableNumber("DriveToPoint Heading I", 0.0);
     public static final LoggedTunableNumber kDriveToPointHeadingD =
-        new LoggedTunableNumber("DriveToPoint Heading D", 0.0);
+        new LoggedTunableNumber("DriveToPoint Heading D", 0.05);
+
+    public static final LoggedTunableNumber kDriveToPointMaxVelocity =
+        new LoggedTunableNumber("DriveToPoint Max Velocity", 3.8);
+    public static final LoggedTunableNumber kDriveToPointMaxAcceleration =
+        new LoggedTunableNumber("DriveToPoint Max Acceleration", 7.6);
+    public static final LoggedTunableNumber kDriveToPointMaxDeceleration =
+        new LoggedTunableNumber("DriveToPoint Max Deceleration", 5.7);
 
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =
@@ -230,11 +231,14 @@ public final class Constants {
     public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL3 =
         new LoggedTunableNumber("Elevator Algae Descore Final Height L3", 42.0);
     public static final LoggedTunableNumber kBargeScoreHeight =
-        new LoggedTunableNumber("Elevator Barge Score Height", 0.0);
+        new LoggedTunableNumber("Elevator Barge Score Height", 73.5);
     public static final LoggedTunableNumber kAlgaeHoldHeight =
         new LoggedTunableNumber("Elevator Algae Hold Height", 5.0);
     public static final LoggedTunableNumber kAlgaeOuttakeHeight =
         new LoggedTunableNumber("Elevator Algae Outtake Height", 3.5);
+
+    public static final LoggedTunableNumber kBargeThrowHeight =
+        new LoggedTunableNumber("Elevator Barge Throw Height", 30.0);
 
     public static final double kDiameter = 2.256; // inches
     public static final double kGearRatio = 54.0 / 12.0;
@@ -255,7 +259,7 @@ public final class Constants {
     public static final double kSimMOI = .001;
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(2);
     public static final double kMinHeight = 0;
-    public static final double kMaxHeight = 72.5;
+    public static final double kMaxHeight = 73.5;
     public static final double kHeightTolerance = 0.25;
     public static final double kSimElevatorP = 0.5;
     public static final double kSimElevatorI = 0.0;
@@ -281,218 +285,218 @@ public final class Constants {
   public static final class AprilTagVisionConstants {
     public static final LoggedTunableNumber kUseVision = new LoggedTunableNumber("Use Vision", 1);
 
-    public static final AprilTagFieldLayout kAprilTagLayout;
+    // public static final AprilTagFieldLayout kAprilTagLayout;
 
-    static {
-      List<AprilTag> tags = new ArrayList<>();
+    // static {
+    // List<AprilTag> tags = new ArrayList<>();
 
-      tags.add(
-          new AprilTag(
-              1,
-              new Pose3d(
-                  16.687292,
-                  0.628142,
-                  1.4859,
-                  new Rotation3d(new Quaternion(0.4539904997395468, 0, 0, 0.8910065241883678)))));
-      tags.add(
-          new AprilTag(
-              2,
-              new Pose3d(
-                  16.687292,
-                  7.414259999999999,
-                  1.4859,
-                  new Rotation3d(
-                      new Quaternion(-0.45399049973954675, -0.0, 0.0, 0.8910065241883679)))));
-      tags.add(
-          new AprilTag(
-              3,
-              new Pose3d(
-                  11.49096,
-                  8.031733999999998,
-                  1.30175,
-                  new Rotation3d(
-                      new Quaternion(-0.7071067811865475, -0.0, 0.0, 0.7071067811865476)))));
-      // tags.add(
-      //     new AprilTag(
-      //         4,
-      //         new Pose3d(
-      //             9.276079999999999,
-      //             6.132575999999999,
-      //             1.8679160000000001,
-      //             new Rotation3d(
-      //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
-      // tags.add(
-      //     new AprilTag(
-      //         5,
-      //         new Pose3d(
-      //             9.276079999999999,
-      //             1.9098259999999998,
-      //             1.8679160000000001,
-      //             new Rotation3d(
-      //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
-      tags.add(
-          new AprilTag(
-              6,
-              new Pose3d(
-                  13.474446,
-                  3.3012379999999997,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
-      tags.add(
-          new AprilTag(
-              7,
-              new Pose3d(
-                  13.890498,
-                  4.0208200000000005,
-                  0.308102,
-                  new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
-      tags.add(
-          new AprilTag(
-              8,
-              new Pose3d(
-                  13.474446,
-                  4.740402,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
-      tags.add(
-          new AprilTag(
-              9,
-              new Pose3d(
-                  12.643358,
-                  4.740402,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
-      tags.add(
-          new AprilTag(
-              10,
-              new Pose3d(
-                  12.227305999999999,
-                  4.0208200000000005,
-                  0.308102,
-                  new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
-      tags.add(
-          new AprilTag(
-              11,
-              new Pose3d(
-                  12.643358,
-                  3.3012379999999997,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
-      tags.add(
-          new AprilTag(
-              12,
-              new Pose3d(
-                  0.8613139999999999,
-                  0.628142,
-                  1.4859,
-                  new Rotation3d(
-                      new Quaternion(0.8910065241883679, 0.0, 0.0, 0.45399049973954675)))));
-      tags.add(
-          new AprilTag(
-              13,
-              new Pose3d(
-                  0.8613139999999999,
-                  7.414259999999999,
-                  1.4859,
-                  new Rotation3d(
-                      new Quaternion(-0.8910065241883678, -0.0, 0.0, 0.45399049973954686)))));
-      // tags.add(
-      //     new AprilTag(
-      //         14,
-      //         new Pose3d(
-      //             8.272272,
-      //             6.132575999999999,
-      //             1.8679160000000001,
-      //             new Rotation3d(
-      //                 new Quaternion(
-      //                     5.914589856893349e-17,
-      //                     -0.25881904510252074,
-      //                     1.5848095757158825e-17,
-      //                     0.9659258262890683)))));
-      // tags.add(
-      //     new AprilTag(
-      //         15,
-      //         new Pose3d(
-      //             8.272272,
-      //             1.9098259999999998,
-      //             1.8679160000000001,
-      //             new Rotation3d(
-      //                 new Quaternion(
-      //                     5.914589856893349e-17,
-      //                     -0.25881904510252074,
-      //                     1.5848095757158825e-17,
-      //                     0.9659258262890683)))));
-      tags.add(
-          new AprilTag(
-              16,
-              new Pose3d(
-                  6.057646,
-                  0.010667999999999999,
-                  1.30175,
-                  new Rotation3d(
-                      new Quaternion(0.7071067811865476, 0.0, 0.0, 0.7071067811865476)))));
-      tags.add(
-          new AprilTag(
-              17,
-              new Pose3d(
-                  4.073905999999999,
-                  3.3012379999999997,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
-      tags.add(
-          new AprilTag(
-              18,
-              new Pose3d(
-                  3.6576,
-                  4.0208200000000005,
-                  0.308102,
-                  new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
-      tags.add(
-          new AprilTag(
-              19,
-              new Pose3d(
-                  4.073905999999999,
-                  4.740402,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
-      tags.add(
-          new AprilTag(
-              20,
-              new Pose3d(
-                  4.904739999999999,
-                  4.740402,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
-      tags.add(
-          new AprilTag(
-              21,
-              new Pose3d(
-                  5.321046,
-                  4.0208200000000005,
-                  0.308102,
-                  new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
-      tags.add(
-          new AprilTag(
-              22,
-              new Pose3d(
-                  4.904739999999999,
-                  3.3012379999999997,
-                  0.308102,
-                  new Rotation3d(
-                      new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
+    // tags.add(
+    //     new AprilTag(
+    //         1,
+    //         new Pose3d(
+    //             16.687292,
+    //             0.628142,
+    //             1.4859,
+    //             new Rotation3d(new Quaternion(0.4539904997395468, 0, 0, 0.8910065241883678)))));
+    // tags.add(
+    //     new AprilTag(
+    //         2,
+    //         new Pose3d(
+    //             16.687292,
+    //             7.414259999999999,
+    //             1.4859,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.45399049973954675, -0.0, 0.0, 0.8910065241883679)))));
+    // tags.add(
+    //     new AprilTag(
+    //         3,
+    //         new Pose3d(
+    //             11.49096,
+    //             8.031733999999998,
+    //             1.30175,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.7071067811865475, -0.0, 0.0, 0.7071067811865476)))));
+    // // tags.add(
+    // //     new AprilTag(
+    // //         4,
+    // //         new Pose3d(
+    // //             9.276079999999999,
+    // //             6.132575999999999,
+    // //             1.8679160000000001,
+    // //             new Rotation3d(
+    // //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
+    // // tags.add(
+    // //     new AprilTag(
+    // //         5,
+    // //         new Pose3d(
+    // //             9.276079999999999,
+    // //             1.9098259999999998,
+    // //             1.8679160000000001,
+    // //             new Rotation3d(
+    // //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
+    // tags.add(
+    //     new AprilTag(
+    //         6,
+    //         new Pose3d(
+    //             13.474446,
+    //             3.3012379999999997,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
+    // tags.add(
+    //     new AprilTag(
+    //         7,
+    //         new Pose3d(
+    //             13.890498,
+    //             4.0208200000000005,
+    //             0.308102,
+    //             new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
+    // tags.add(
+    //     new AprilTag(
+    //         8,
+    //         new Pose3d(
+    //             13.474446,
+    //             4.740402,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
+    // tags.add(
+    //     new AprilTag(
+    //         9,
+    //         new Pose3d(
+    //             12.643358,
+    //             4.740402,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
+    // tags.add(
+    //     new AprilTag(
+    //         10,
+    //         new Pose3d(
+    //             12.227305999999999,
+    //             4.0208200000000005,
+    //             0.308102,
+    //             new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
+    // tags.add(
+    //     new AprilTag(
+    //         11,
+    //         new Pose3d(
+    //             12.643358,
+    //             3.3012379999999997,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
+    // tags.add(
+    //     new AprilTag(
+    //         12,
+    //         new Pose3d(
+    //             0.8613139999999999,
+    //             0.628142,
+    //             1.4859,
+    //             new Rotation3d(
+    //                 new Quaternion(0.8910065241883679, 0.0, 0.0, 0.45399049973954675)))));
+    // tags.add(
+    //     new AprilTag(
+    //         13,
+    //         new Pose3d(
+    //             0.8613139999999999,
+    //             7.414259999999999,
+    //             1.4859,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.8910065241883678, -0.0, 0.0, 0.45399049973954686)))));
+    // // tags.add(
+    // //     new AprilTag(
+    // //         14,
+    // //         new Pose3d(
+    // //             8.272272,
+    // //             6.132575999999999,
+    // //             1.8679160000000001,
+    // //             new Rotation3d(
+    // //                 new Quaternion(
+    // //                     5.914589856893349e-17,
+    // //                     -0.25881904510252074,
+    // //                     1.5848095757158825e-17,
+    // //                     0.9659258262890683)))));
+    // // tags.add(
+    // //     new AprilTag(
+    // //         15,
+    // //         new Pose3d(
+    // //             8.272272,
+    // //             1.9098259999999998,
+    // //             1.8679160000000001,
+    // //             new Rotation3d(
+    // //                 new Quaternion(
+    // //                     5.914589856893349e-17,
+    // //                     -0.25881904510252074,
+    // //                     1.5848095757158825e-17,
+    // //                     0.9659258262890683)))));
+    // tags.add(
+    //     new AprilTag(
+    //         16,
+    //         new Pose3d(
+    //             6.057646,
+    //             0.010667999999999999,
+    //             1.30175,
+    //             new Rotation3d(
+    //                 new Quaternion(0.7071067811865476, 0.0, 0.0, 0.7071067811865476)))));
+    // tags.add(
+    //     new AprilTag(
+    //         17,
+    //         new Pose3d(
+    //             4.073905999999999,
+    //             3.3012379999999997,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
+    // tags.add(
+    //     new AprilTag(
+    //         18,
+    //         new Pose3d(
+    //             3.6576,
+    //             4.0208200000000005,
+    //             0.308102,
+    //             new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
+    // tags.add(
+    //     new AprilTag(
+    //         19,
+    //         new Pose3d(
+    //             4.073905999999999,
+    //             4.740402,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
+    // tags.add(
+    //     new AprilTag(
+    //         20,
+    //         new Pose3d(
+    //             4.904739999999999,
+    //             4.740402,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
+    // tags.add(
+    //     new AprilTag(
+    //         21,
+    //         new Pose3d(
+    //             5.321046,
+    //             4.0208200000000005,
+    //             0.308102,
+    //             new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
+    // tags.add(
+    //     new AprilTag(
+    //         22,
+    //         new Pose3d(
+    //             4.904739999999999,
+    //             3.3012379999999997,
+    //             0.308102,
+    //             new Rotation3d(
+    //                 new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
 
-      kAprilTagLayout = new AprilTagFieldLayout(tags, 17.548, 8.042);
-    }
+    // kAprilTagLayout = new AprilTagFieldLayout(tags, 17.548, 8.042);
+    // }
 
-    // public static final AprilTagFieldLayout kAprilTagLayout =
-    //     AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+    public static final AprilTagFieldLayout kAprilTagLayout =
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
     public static final double kAprilTagWidth = Units.inchesToMeters(6.5);
 
     public static final double kAmbiguityThreshold = 0.4;
@@ -507,7 +511,7 @@ public final class Constants {
         3.0; // higher numbers means the less we trust the vision/gyro sensor fusion
 
     // how long (sec) before we are considered disconnected
-    public static final double kDisconnectTimeout = 20.0;
+    public static final double kDisconnectTimeout = 5.0;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.05);
@@ -568,9 +572,9 @@ public final class Constants {
         Rotation2d.fromDegrees(-54.32 * kPivotAbsoluteEncoderGearRatio);
 
     public static final double kRollerCurrentGamepieceThreshold =
-        30; // amps to be considered holding a gamepiece, temp value
+        999; // amps to be considered holding a gamepiece, temp value
     public static final double kRollerAccelGamepieceThreshold =
-        -15; // rotations per second squared to be considered holding a gamepiece, temp value
+        -999; // rotations per second squared to be considered holding a gamepiece, temp value
 
     public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 40.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
@@ -634,7 +638,7 @@ public final class Constants {
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
     public static final Rotation2d kWristOffset =
-        Rotation2d.fromDegrees(-40.34 * kWristAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees(-33.57 * kWristAbsoluteEncoderGearRatio);
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
     public static final double kRollerPositionTolerance = 10.0; // degrees
@@ -658,7 +662,7 @@ public final class Constants {
     public static final LoggedTunableNumber kWristAlgaeDescoringAngle =
         new LoggedTunableNumber("Wrist Algae Descoring Angle", 5.0);
     public static final LoggedTunableNumber kWristAlgaeHoldAngle =
-        new LoggedTunableNumber("Wrist Algae Hold Angle", 25.0);
+        new LoggedTunableNumber("Wrist Algae Hold Angle", 40.0);
     public static final LoggedTunableNumber kWristAlgaeOuttakeAngle =
         new LoggedTunableNumber("Wrist Algae Outtake Angle", 0.0);
 
@@ -678,9 +682,11 @@ public final class Constants {
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", 3.0);
     public static final LoggedTunableNumber kRollerAlgaeHoldVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 1.0);
+        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 0.5);
     public static final LoggedTunableNumber kRollerAlgaeOuttakeVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Outtake Voltage", -4.0);
+    public static final LoggedTunableNumber kRollerBargeVoltage =
+        new LoggedTunableNumber("Manipulator Roller Barge Voltage", -12.0);
 
     public static final LoggedTunableNumber kRollerP =
         new LoggedTunableNumber("Manipulator Roller P", 20.0);

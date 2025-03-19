@@ -93,6 +93,13 @@ public class RobotContainer {
 
   /** Configure the subsystems. */
   private void configureSubsystems() {
+    m_aprilTagVision =
+        new AprilTagVision(
+            new AprilTagVisionIONorthstar("northstar_0", ""),
+            new AprilTagVisionIONorthstar("northstar_1", ""),
+            new AprilTagVisionIONorthstar("northstar_2", ""),
+            new AprilTagVisionIONorthstar("northstar_3", ""));
+
     switch (Constants.kCurrentMode) {
       case REAL:
         m_drive =
@@ -243,13 +250,6 @@ public class RobotContainer {
     }
 
     m_led = new Led(Ports.kLed, LedConstants.kStripLength);
-
-    m_aprilTagVision =
-        new AprilTagVision(
-            new AprilTagVisionIONorthstar("northstar_0", ""),
-            new AprilTagVisionIONorthstar("northstar_1", ""),
-            new AprilTagVisionIONorthstar("northstar_2", ""),
-            new AprilTagVisionIONorthstar("northstar_3", ""));
   }
 
   /** Configure the commands. */
@@ -408,7 +408,12 @@ public class RobotContainer {
                   if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore) {
                     RobotState.getInstance().setDefaultAction();
                   } else {
-                    RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
+                    if (RobotState.getInstance().getManipulatorState()
+                        == ManipulatorState.kAlgaeHold) {
+                      RobotState.getInstance().updateRobotAction(RobotAction.kBargeScore);
+                    } else {
+                      RobotState.getInstance().updateRobotAction(RobotAction.kManualScore);
+                    }
                   }
                 }));
 
@@ -449,8 +454,7 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   // we just assume that we have an algae until something else cancels it
-                  m_manipulator.updateState(ManipulatorState.kAlgaeHold);
-                  RobotState.getInstance().setDefaultAction();
+                  RobotState.getInstance().manageAlgaeDescoreRelease();
                 }));
 
     m_driverControls

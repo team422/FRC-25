@@ -55,7 +55,8 @@ public class Robot extends LoggedRobot {
 
       case REPLAY:
         // Replaying a log, set up replay source
-        setUseTiming(false); // Run as fast as possible
+        // setUseTiming(false); // Run as fast as possible
+        setUseTiming(true);
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
@@ -76,9 +77,9 @@ public class Robot extends LoggedRobot {
       CtreBaseRefreshManager.updateAll();
     }
 
-    RobotState.getInstance().updateRobotState();
-
     CommandScheduler.getInstance().run();
+
+    RobotState.getInstance().updateRobotState();
   }
 
   /** This function is called once when the robot is disabled. */

@@ -90,7 +90,6 @@ public class DriveCommands {
                   linearVelocity.getX() * DriveConstants.kMaxLinearSpeed,
                   linearVelocity.getY() * DriveConstants.kMaxLinearSpeed,
                   omega * DriveConstants.kTeleopRotationSpeed.get());
-
           drive.setDesiredChassisSpeeds(
               robotRelative
                   ? speeds

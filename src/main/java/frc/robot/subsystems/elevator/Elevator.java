@@ -14,6 +14,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -293,12 +294,9 @@ public class Elevator extends SubsystemBase {
   }
 
   public void algaeDescoringInitialPeriodic() {
-    // ReefHeight currHeight =
-    //     SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     ReefHeight currHeight;
     if (RobotState.getInstance().getUsingVision()) {
-      // currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
-      currHeight = RobotState.getInstance().getDesiredReefHeight();
+      currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     } else {
       currHeight = RobotState.getInstance().getDesiredReefHeight();
     }
@@ -314,8 +312,7 @@ public class Elevator extends SubsystemBase {
     //     SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     ReefHeight currHeight;
     if (RobotState.getInstance().getUsingVision()) {
-      // currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
-      currHeight = RobotState.getInstance().getDesiredReefHeight();
+      currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     } else {
       currHeight = RobotState.getInstance().getDesiredReefHeight();
     }
@@ -348,7 +345,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean atSetpoint(double tolerance) {
-    return Math.abs(m_io.getCurrHeight() - m_desiredHeight) < tolerance;
+    return m_io.atSetpoint(tolerance);
   }
 
   public void zeroElevator() {
