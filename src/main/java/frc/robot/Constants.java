@@ -171,14 +171,12 @@ public final class Constants {
     public static final double kSimGearing = 1.0;
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60(1);
     public static final double kSimClimbArmLengthMeters = 0.25;
-    public static final double kSimMOI =
-        SingleJointedArmSim.estimateMOI(kSimClimbArmLengthMeters, 5.5);
-    public static final double kSimMinAngleRad =
-        Units.degreesToRadians(
-            -30); // vertical is 0deg, pos deg is towards outside of robot in position to grab cage
-    public static final double kSimMaxAngleRad = Units.degreesToRadians(360);
+    public static final double kSimMOI = 2.0;
     public static final double kSimStartingAngleRad = Units.degreesToRadians(0);
     public static final boolean kSimGravity = false;
+    public static final double kSimClimbP = 0.5;
+    public static final double kSimClimbI = 0.0;
+    public static final double kSimClimbD = 0.35;
   }
 
   public static final class LedConstants {
@@ -263,6 +261,10 @@ public final class Constants {
     public static final double kMinHeight = 0;
     public static final double kMaxHeight = 73.5;
     public static final double kHeightTolerance = 0.25;
+    public static final double kSimElevatorP = 0.5;
+    public static final double kSimElevatorI = 0.0;
+    public static final double kSimElevatorD = 0.0;
+    public static final double kSimElevatorkG = 0.0;
   }
 
   public static final class FullTuningConstants {
@@ -610,13 +612,17 @@ public final class Constants {
     public static final double kPivotSimMOI =
         SingleJointedArmSim.estimateMOI(kPivotArmLength, kPivotArmMass);
     public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(0.0);
-    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(65);
-    public static final boolean kSimSimulateGravity = true;
-    public static final Rotation2d kSimStartingAngle = kPivotMinAngle;
+    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(65.0);
+    public static final boolean kSimSimulateGravity = false;
+    public static final Rotation2d kSimStartingAngle = Rotation2d.fromDegrees(Math.random() * 65);
 
     public static final DCMotor kRollerSimGearbox = DCMotor.getKrakenX60Foc(1);
     public static final double kRollerSimGearing = kRollerGearRatio;
     public static final double kRollerSimMOI = 0.004;
+
+    public static final double kPivotSimP = .15;
+    public static final double kPivotSimI = 0.0;
+    public static final double kPivotSimD = 0.0;
   }
 
   public static final class ManipulatorConstants {
@@ -700,8 +706,14 @@ public final class Constants {
         SingleJointedArmSim.estimateMOI(kWristArmLength, kWristArmMass);
     public static final Rotation2d kWristMinAngle = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kWristMaxAngle = Rotation2d.fromDegrees(130.0);
-    public static final boolean kSimSimulateGravity = true;
-    public static final Rotation2d kSimStartingAngle = kWristMinAngle;
+    public static final boolean kSimSimulateGravity = false;
+    public static final Rotation2d kSimStartingAngle = Rotation2d.fromDegrees(Math.random() * 130);
+    public static final double kSimRollerP = 0.01;
+    public static final double kSimRollerI = 0.0;
+    public static final double kSimRollerD = 0.0;
+    public static final double kSimWristP = 0.150000;
+    public static final double kSimWristI = 0.0;
+    public static final double kSimWristD = 0.0;
 
     public static final DCMotor kRollerSimGearbox = DCMotor.getKrakenX60Foc(1);
     public static final double kRollerSimGearing = kRollerGearRatio;

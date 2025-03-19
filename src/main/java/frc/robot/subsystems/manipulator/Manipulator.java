@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -76,19 +77,33 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kAlgaeOuttake, this::algaeOuttakePeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
+    if (RobotBase.isReal()) {
+      m_wristIO.setPIDFF(
+          ManipulatorConstants.kWristP.get(),
+          ManipulatorConstants.kWristI.get(),
+          ManipulatorConstants.kWristD.get(),
+          ManipulatorConstants.kWristKS.get(),
+          ManipulatorConstants.kWristKG.get());
 
-    m_wristIO.setPIDFF(
-        ManipulatorConstants.kWristP.get(),
-        ManipulatorConstants.kWristI.get(),
-        ManipulatorConstants.kWristD.get(),
-        ManipulatorConstants.kWristKS.get(),
-        ManipulatorConstants.kWristKG.get());
+      m_rollerIO.setPositionPID(
+          ManipulatorConstants.kRollerP.get(),
+          ManipulatorConstants.kRollerI.get(),
+          ManipulatorConstants.kRollerD.get(),
+          ManipulatorConstants.kRollerKS.get());
+    } else {
+      m_wristIO.setPIDFF(
+          ManipulatorConstants.kWristP.get(),
+          ManipulatorConstants.kWristI.get(),
+          ManipulatorConstants.kWristD.get(),
+          ManipulatorConstants.kWristKS.get(),
+          ManipulatorConstants.kWristKG.get());
 
-    m_rollerIO.setPositionPID(
-        ManipulatorConstants.kRollerP.get(),
-        ManipulatorConstants.kRollerI.get(),
-        ManipulatorConstants.kRollerD.get(),
-        ManipulatorConstants.kRollerKS.get());
+      m_rollerIO.setPositionPID(
+          ManipulatorConstants.kSimRollerP,
+          ManipulatorConstants.kSimRollerI,
+          ManipulatorConstants.kSimRollerD,
+          0.0);
+    }
   }
 
   @Override
@@ -98,12 +113,21 @@ public class Manipulator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_wristIO.setPIDFF(
-              ManipulatorConstants.kWristP.get(),
-              ManipulatorConstants.kWristI.get(),
-              ManipulatorConstants.kWristD.get(),
-              ManipulatorConstants.kWristKS.get(),
-              ManipulatorConstants.kWristKG.get());
+          if (RobotBase.isReal()) {
+            m_wristIO.setPIDFF(
+                ManipulatorConstants.kWristP.get(),
+                ManipulatorConstants.kWristI.get(),
+                ManipulatorConstants.kWristD.get(),
+                ManipulatorConstants.kWristKS.get(),
+                ManipulatorConstants.kWristKG.get());
+          } else {
+            m_wristIO.setPIDFF(
+                ManipulatorConstants.kSimWristP,
+                ManipulatorConstants.kSimWristI,
+                ManipulatorConstants.kSimWristD,
+                0.0,
+                0.0);
+          }
         },
         ManipulatorConstants.kWristP,
         ManipulatorConstants.kWristI,
@@ -114,11 +138,19 @@ public class Manipulator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_rollerIO.setPositionPID(
-              ManipulatorConstants.kRollerP.get(),
-              ManipulatorConstants.kRollerI.get(),
-              ManipulatorConstants.kRollerD.get(),
-              ManipulatorConstants.kRollerKS.get());
+          if (RobotBase.isReal()) {
+            m_rollerIO.setPositionPID(
+                ManipulatorConstants.kRollerP.get(),
+                ManipulatorConstants.kRollerI.get(),
+                ManipulatorConstants.kRollerD.get(),
+                ManipulatorConstants.kRollerKS.get());
+          } else {
+            m_rollerIO.setPositionPID(
+                ManipulatorConstants.kSimRollerP,
+                ManipulatorConstants.kSimRollerI,
+                ManipulatorConstants.kSimRollerD,
+                0.0);
+          }
         },
         ManipulatorConstants.kRollerP,
         ManipulatorConstants.kRollerI,

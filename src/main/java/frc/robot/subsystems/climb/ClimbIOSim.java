@@ -18,8 +18,8 @@ public class ClimbIOSim implements ClimbIO {
             ClimbConstants.kSimGearing,
             ClimbConstants.kSimMOI,
             ClimbConstants.kSimClimbArmLengthMeters,
-            ClimbConstants.kSimMinAngleRad,
-            ClimbConstants.kSimMaxAngleRad,
+            ClimbConstants.kMinAngle.getRadians(),
+            ClimbConstants.kMaxAngle.getRadians(),
             ClimbConstants.kSimGravity,
             ClimbConstants.kSimStartingAngleRad); // init angle 90 deg
     m_controller.setTolerance(ClimbConstants.kClimbTolerance);

@@ -4,6 +4,7 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
@@ -60,35 +61,47 @@ public class Elevator extends SubsystemBase {
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
-    m_io.setPIDFF(
-        0,
-        ElevatorConstants.kP0.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV0.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG0.getAsDouble());
+    if (RobotBase.isReal()) {
+      m_io.setPIDFF(
+          0,
+          ElevatorConstants.kP0.getAsDouble(),
+          ElevatorConstants.kI.getAsDouble(),
+          ElevatorConstants.kD.getAsDouble(),
+          ElevatorConstants.kKS.getAsDouble(),
+          ElevatorConstants.kKV0.getAsDouble(),
+          ElevatorConstants.kKA.getAsDouble(),
+          ElevatorConstants.kKG0.getAsDouble());
 
-    m_io.setPIDFF(
-        1,
-        ElevatorConstants.kP1.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV1.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG1.getAsDouble());
+      m_io.setPIDFF(
+          1,
+          ElevatorConstants.kP1.getAsDouble(),
+          ElevatorConstants.kI.getAsDouble(),
+          ElevatorConstants.kD.getAsDouble(),
+          ElevatorConstants.kKS.getAsDouble(),
+          ElevatorConstants.kKV1.getAsDouble(),
+          ElevatorConstants.kKA.getAsDouble(),
+          ElevatorConstants.kKG1.getAsDouble());
 
-    m_io.setPIDFF(
-        2,
-        ElevatorConstants.kP2.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV2.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG2.getAsDouble());
+      m_io.setPIDFF(
+          2,
+          ElevatorConstants.kP2.getAsDouble(),
+          ElevatorConstants.kI.getAsDouble(),
+          ElevatorConstants.kD.getAsDouble(),
+          ElevatorConstants.kKS.getAsDouble(),
+          ElevatorConstants.kKV2.getAsDouble(),
+          ElevatorConstants.kKA.getAsDouble(),
+          ElevatorConstants.kKG2.getAsDouble());
+    } else {
+      m_io.setPIDFF(
+          0,
+          ElevatorConstants.kSimElevatorP,
+          ElevatorConstants.kSimElevatorI,
+          ElevatorConstants.kSimElevatorD,
+          0,
+          0,
+          0,
+          ElevatorConstants.kSimElevatorkG);
+    }
 
     // to set the setpoint
     updateState(ElevatorState.kStow);
@@ -110,35 +123,47 @@ public class Elevator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_io.setPIDFF(
-              0,
-              ElevatorConstants.kP0.getAsDouble(),
-              ElevatorConstants.kI.getAsDouble(),
-              ElevatorConstants.kD.getAsDouble(),
-              ElevatorConstants.kKS.getAsDouble(),
-              ElevatorConstants.kKV0.getAsDouble(),
-              ElevatorConstants.kKA.getAsDouble(),
-              ElevatorConstants.kKG0.getAsDouble());
+          if (RobotBase.isReal()) {
+            m_io.setPIDFF(
+                0,
+                ElevatorConstants.kP0.getAsDouble(),
+                ElevatorConstants.kI.getAsDouble(),
+                ElevatorConstants.kD.getAsDouble(),
+                ElevatorConstants.kKS.getAsDouble(),
+                ElevatorConstants.kKV0.getAsDouble(),
+                ElevatorConstants.kKA.getAsDouble(),
+                ElevatorConstants.kKG0.getAsDouble());
 
-          m_io.setPIDFF(
-              1,
-              ElevatorConstants.kP1.getAsDouble(),
-              ElevatorConstants.kI.getAsDouble(),
-              ElevatorConstants.kD.getAsDouble(),
-              ElevatorConstants.kKS.getAsDouble(),
-              ElevatorConstants.kKV1.getAsDouble(),
-              ElevatorConstants.kKA.getAsDouble(),
-              ElevatorConstants.kKG1.getAsDouble());
+            m_io.setPIDFF(
+                1,
+                ElevatorConstants.kP1.getAsDouble(),
+                ElevatorConstants.kI.getAsDouble(),
+                ElevatorConstants.kD.getAsDouble(),
+                ElevatorConstants.kKS.getAsDouble(),
+                ElevatorConstants.kKV1.getAsDouble(),
+                ElevatorConstants.kKA.getAsDouble(),
+                ElevatorConstants.kKG1.getAsDouble());
 
-          m_io.setPIDFF(
-              2,
-              ElevatorConstants.kP2.getAsDouble(),
-              ElevatorConstants.kI.getAsDouble(),
-              ElevatorConstants.kD.getAsDouble(),
-              ElevatorConstants.kKS.getAsDouble(),
-              ElevatorConstants.kKV2.getAsDouble(),
-              ElevatorConstants.kKA.getAsDouble(),
-              ElevatorConstants.kKG2.getAsDouble());
+            m_io.setPIDFF(
+                2,
+                ElevatorConstants.kP2.getAsDouble(),
+                ElevatorConstants.kI.getAsDouble(),
+                ElevatorConstants.kD.getAsDouble(),
+                ElevatorConstants.kKS.getAsDouble(),
+                ElevatorConstants.kKV2.getAsDouble(),
+                ElevatorConstants.kKA.getAsDouble(),
+                ElevatorConstants.kKG2.getAsDouble());
+          } else {
+            m_io.setPIDFF(
+                0,
+                ElevatorConstants.kSimElevatorP,
+                ElevatorConstants.kSimElevatorI,
+                ElevatorConstants.kSimElevatorD,
+                0.0,
+                0.0,
+                0.0,
+                ElevatorConstants.kSimElevatorkG);
+          }
         },
         ElevatorConstants.kP0,
         ElevatorConstants.kP1,
