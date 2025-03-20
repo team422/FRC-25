@@ -13,6 +13,8 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
@@ -21,6 +23,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.Constants;
@@ -43,6 +46,9 @@ public class GyroIOPigeon2 implements GyroIO {
   private final StatusSignal<AngularVelocity> m_yawVelocity = m_pigeon.getAngularVelocityZWorld();
   private final StatusSignal<AngularVelocity> m_pitchVelocity = m_pigeon.getAngularVelocityXWorld();
   private final StatusSignal<AngularVelocity> m_rollVelocity = m_pigeon.getAngularVelocityYWorld();
+  private final StatusSignal<LinearAcceleration> m_xAcceleration = m_pigeon.getAccelerationX();
+  private final StatusSignal<LinearAcceleration> m_yAcceleration = m_pigeon.getAccelerationY();
+  private final StatusSignal<LinearAcceleration> m_zAcceleration = m_pigeon.getAccelerationZ();
   private final StatusSignal<Voltage> m_pigeonSupplyVoltage = m_pigeon.getSupplyVoltage();
 
   public GyroIOPigeon2() {
@@ -56,7 +62,10 @@ public class GyroIOPigeon2 implements GyroIO {
         m_roll,
         m_yawVelocity,
         m_pitchVelocity,
-        m_rollVelocity);
+        m_rollVelocity,
+        m_xAcceleration,
+        m_yAcceleration,
+        m_zAcceleration);
 
     BaseStatusSignal.setUpdateFrequencyForAll(50.0, m_pigeonSupplyVoltage);
 
@@ -90,6 +99,9 @@ public class GyroIOPigeon2 implements GyroIO {
           m_yawVelocity,
           m_pitchVelocity,
           m_rollVelocity,
+          m_xAcceleration,
+          m_yAcceleration,
+          m_zAcceleration,
           m_pigeonSupplyVoltage);
     }
 
@@ -108,6 +120,9 @@ public class GyroIOPigeon2 implements GyroIO {
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(m_yawVelocity.getValueAsDouble());
     inputs.pitchVelocityRadPerSec = Units.degreesToRadians(m_pitchVelocity.getValueAsDouble());
     inputs.rollVelocityRadPerSec = Units.degreesToRadians(m_rollVelocity.getValueAsDouble());
+    inputs.xAcceleration = m_xAcceleration.getValue().in(MetersPerSecondPerSecond);
+    inputs.yAcceleration = m_yAcceleration.getValue().in(MetersPerSecondPerSecond);
+    inputs.zAcceleration = m_zAcceleration.getValue().in(MetersPerSecondPerSecond);
 
     inputs.odometryTimestamps =
         m_timestampQueue.stream().mapToDouble((Double value) -> value).toArray();

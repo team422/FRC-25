@@ -45,6 +45,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.PoseEstimator;
@@ -53,6 +54,7 @@ import frc.lib.littletonUtils.SwerveSetpointGenerator;
 import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.util.BasicTrapezoid;
@@ -98,6 +100,12 @@ public class Drive extends SubsystemBase {
           DriveConstants.kDriveToPointI.get(),
           DriveConstants.kDriveToPointD.get());
 
+  private PIDController m_autoDriveController =
+      new PIDController(
+          DriveConstants.kDriveToPointAutoP.get(),
+          DriveConstants.kDriveToPointAutoI.get(),
+          DriveConstants.kDriveToPointAutoD.get());
+
   private BasicTrapezoid m_driveTrapezoid =
       new BasicTrapezoid(
           MetersPerSecond.of(DriveConstants.kDriveToPointMaxVelocity.get()),
@@ -110,8 +118,12 @@ public class Drive extends SubsystemBase {
           DriveConstants.kDriveToPointHeadingI.get(),
           DriveConstants.kDriveToPointHeadingD.get());
 
-  private LoggedTunableNumber m_ffMinRadius = new LoggedTunableNumber("Min FF Radius", 0.6);
-  private LoggedTunableNumber m_ffMaxRadius = new LoggedTunableNumber("Max FF Radius", 1.0);
+  private LoggedTunableNumber m_ffMinRadiusTeleop = new LoggedTunableNumber("Min FF Radius", 0.6);
+  private LoggedTunableNumber m_ffMaxRadiusTeleop = new LoggedTunableNumber("Max FF Radius", 1.2);
+  private LoggedTunableNumber m_ffMinRadiusAuto =
+      new LoggedTunableNumber("Min FF Radius Auto", 0.8);
+  private LoggedTunableNumber m_ffMaxRadiusAuto =
+      new LoggedTunableNumber("Max FF Radius Auto", 1.4);
 
   private double m_desiredAcceleration = 0.0;
 
@@ -193,6 +205,7 @@ public class Drive extends SubsystemBase {
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     m_driveController.setTolerance(Units.inchesToMeters(0.5));
+    m_autoDriveController.setTolerance(Units.inchesToMeters(0.5));
     m_headingController.setTolerance(Units.degreesToRadians(1));
   }
 
@@ -227,6 +240,17 @@ public class Drive extends SubsystemBase {
         DriveConstants.kDriveToPointP,
         DriveConstants.kDriveToPointI,
         DriveConstants.kDriveToPointD);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_autoDriveController.setP(DriveConstants.kDriveToPointAutoP.get());
+          m_autoDriveController.setI(DriveConstants.kDriveToPointAutoI.get());
+          m_autoDriveController.setD(DriveConstants.kDriveToPointAutoD.get());
+        },
+        DriveConstants.kDriveToPointAutoP,
+        DriveConstants.kDriveToPointAutoI,
+        DriveConstants.kDriveToPointAutoD);
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -387,24 +411,9 @@ public class Drive extends SubsystemBase {
     runVelocity(new ChassisSpeeds());
   }
 
-  public void driveToPointPeriodic() {
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          m_driveController.setP(DriveConstants.kDriveToPointP.get());
-          m_driveController.setI(DriveConstants.kDriveToPointI.get());
-          m_driveController.setD(DriveConstants.kDriveToPointD.get());
-          m_headingController.setP(DriveConstants.kDriveToPointHeadingP.get());
-          m_headingController.setI(DriveConstants.kDriveToPointHeadingI.get());
-          m_headingController.setD(DriveConstants.kDriveToPointHeadingD.get());
-        },
-        DriveConstants.kDriveToPointP,
-        DriveConstants.kDriveToPointI,
-        DriveConstants.kDriveToPointD,
-        DriveConstants.kDriveToPointHeadingP,
-        DriveConstants.kDriveToPointHeadingI,
-        DriveConstants.kDriveToPointHeadingD);
+  private boolean m_hasNewTarget = false;
 
+  public void driveToPointPeriodic() {
     Pose2d currentPose = getPose();
 
     double currentDistance =
@@ -420,11 +429,13 @@ public class Drive extends SubsystemBase {
     ChassisSpeeds currSpeeds = getChassisSpeeds();
     double currVelocity = Math.hypot(currSpeeds.vxMetersPerSecond, currSpeeds.vyMetersPerSecond);
 
+    double ffMinRadius =
+        DriverStation.isAutonomous() ? m_ffMinRadiusAuto.get() : m_ffMinRadiusTeleop.get();
+    double ffMaxRadius =
+        DriverStation.isAutonomous() ? m_ffMaxRadiusAuto.get() : m_ffMaxRadiusTeleop.get();
+
     double ffScaler =
-        MathUtil.clamp(
-            (currentDistance - m_ffMinRadius.get()) / (m_ffMaxRadius.get() - m_ffMinRadius.get()),
-            0.0,
-            1.0);
+        MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);
 
     var state =
         m_driveTrapezoid.calculate(Meters.of(currentDistance), MetersPerSecond.of(currVelocity));
@@ -433,10 +444,13 @@ public class Drive extends SubsystemBase {
 
     m_desiredAcceleration = trapAccel * ffScaler;
 
+    PIDController driveController =
+        DriverStation.isAutonomous() ? m_autoDriveController : m_driveController;
+
     double driveVelocityScalar = -1 * trapVelocity * ffScaler;
-    double pidVelocity = m_driveController.calculate(currentDistance, 0.0) * (1 - ffScaler);
+    double pidVelocity = driveController.calculate(currentDistance, 0.0) * (1 - ffScaler);
     driveVelocityScalar += pidVelocity;
-    if (currentDistance < m_driveController.getErrorTolerance()) {
+    if (currentDistance < driveController.getErrorTolerance()) {
       driveVelocityScalar = 0.0;
     }
 
@@ -489,11 +503,20 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("DriveToPoint/DriveSpeeds", speeds);
 
     if (!DriverStation.isAutonomous()) {
-      if (m_driveController.atSetpoint() && m_headingController.atSetpoint()) {
+      if (driveToPointWithinTolerance()) {
         updateProfile(getDefaultProfile());
       }
     } else {
-      if (m_driveController.atSetpoint() && m_headingController.atSetpoint()) {
+      // TODO: hardcoded, debug later
+      if (driveToPointWithinTolerance()
+          && m_hasNewTarget
+          && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore
+              || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralOuttaking)
+          && getPose()
+                  .getTranslation()
+                  .getDistance(AllianceFlipUtil.apply(FieldConstants.Reef.kCenter))
+              < Units.inchesToMeters(72)) {
+        m_hasNewTarget = false;
         Commands.runOnce(
                 () -> {
                   updateProfile(DriveProfiles.kStop);
@@ -605,6 +628,7 @@ public class Drive extends SubsystemBase {
   }
 
   public void setTargetPose(Pose2d pose) {
+    m_hasNewTarget = true;
     m_driveToPointTargetPose = pose;
   }
 
@@ -761,9 +785,17 @@ public class Drive extends SubsystemBase {
     return m_rawGyroRotation;
   }
 
+  public boolean driveToPointWithinTolerance() {
+    return driveToPointWithinTolerance(null, null);
+  }
+
   public boolean driveToPointWithinTolerance(Distance linearTolerance, Angle headingTolerance) {
     if (linearTolerance == null) {
-      linearTolerance = Meters.of(m_driveController.getErrorTolerance());
+      linearTolerance =
+          Meters.of(
+              DriverStation.isAutonomous()
+                  ? m_autoDriveController.getErrorTolerance()
+                  : m_driveController.getErrorTolerance());
     }
     if (headingTolerance == null) {
       headingTolerance = Radians.of(m_headingController.getErrorTolerance());
@@ -771,7 +803,11 @@ public class Drive extends SubsystemBase {
     return m_profiles.getCurrentProfile() != DriveProfiles.kDriveToPoint
         || (m_driveToPointTargetPose.getTranslation().getDistance(getPose().getTranslation())
                 < linearTolerance.in(Meters)
-            && Math.abs(m_driveToPointTargetPose.getRotation().minus(getRotation()).getDegrees())
+            && m_driveToPointTargetPose.getRotation().minus(getRotation()).getMeasure().abs(Degrees)
                 < headingTolerance.in(Degrees));
+  }
+
+  public double getYawVelocity() {
+    return m_gyroInputs.yawVelocityRadPerSec;
   }
 }

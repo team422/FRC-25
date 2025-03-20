@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.ctre.phoenix6.unmanaged.Unmanaged;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.CtreBaseRefreshManager;
@@ -55,8 +56,8 @@ public class Robot extends LoggedRobot {
 
       case REPLAY:
         // Replaying a log, set up replay source
-        // setUseTiming(false); // Run as fast as possible
-        setUseTiming(true);
+        setUseTiming(false); // Run as fast as possible
+        // setUseTiming(true);
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
@@ -65,6 +66,10 @@ public class Robot extends LoggedRobot {
 
     // Start AdvantageKit logger
     Logger.start();
+
+    if (!Constants.kUsePhoenixDiagnosticServer) {
+      Unmanaged.setPhoenixDiagnosticsStartTime(-1);
+    }
 
     // Set up robot container
     m_robotContainer = new RobotContainer();
@@ -77,9 +82,9 @@ public class Robot extends LoggedRobot {
       CtreBaseRefreshManager.updateAll();
     }
 
-    CommandScheduler.getInstance().run();
-
     RobotState.getInstance().updateRobotState();
+
+    CommandScheduler.getInstance().run();
   }
 
   /** This function is called once when the robot is disabled. */

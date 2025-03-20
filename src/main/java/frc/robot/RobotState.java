@@ -49,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
-@SuppressWarnings("unused")
 public class RobotState {
 
   // Subsystems
@@ -254,6 +253,8 @@ public class RobotState {
   }
 
   public void autoScorePeriodic() {
+    m_drive.updateProfile(DriveProfiles.kDriveToPoint);
+
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
     if (!EqualsUtil.GeomExtensions.epsilonEquals(m_setpoint.drivePose(), m_drive.getTargetPose())) {
@@ -307,6 +308,9 @@ public class RobotState {
       m_drive.setTargetPose(m_setpoint.drivePose());
     }
 
+    Logger.recordOutput("AutoScore/DriveTarget", m_drive.getTargetPose());
+    Logger.recordOutput("AutoScore/DrivePose", m_setpoint.drivePose());
+
     Logger.recordOutput("AutoScore/BranchIndex", m_desiredBranchIndex);
     Logger.recordOutput("AutoScore/ReefHeight", m_desiredReefHeight);
     Logger.recordOutput(
@@ -316,6 +320,27 @@ public class RobotState {
                 .getPose()
                 .getTranslation()
                 .getDistance(m_setpoint.drivePose().getTranslation())));
+
+    if (!m_manipulator.hasGamePiece()) {
+      // we need to wait for the game piece to index
+      if (!m_timer.isRunning()) {
+        m_timer.restart();
+      }
+
+      m_manipulator.updateState(ManipulatorState.kIntaking);
+      m_elevator.updateState(ElevatorState.kIntaking);
+
+      coralIntakingPeriodic();
+
+      if (m_timer.hasElapsed(8.0)) {
+        // we give up and accept that we don't have a game piece
+        updateRobotAction(RobotAction.kAutoCoralIntaking);
+      }
+      return;
+    } else {
+      m_manipulator.updateState(ManipulatorState.kScoring);
+      m_elevator.updateState(ElevatorState.kScoring);
+    }
 
     // we don't want to deploy elevator or manipulator until we're close to the setpoint
     if (Math.abs(
@@ -343,35 +368,42 @@ public class RobotState {
     Logger.recordOutput("Auto/ManipRight", m_manipulator.atSetpoint(m_setpoint.manipulatorAngle()));
     Logger.recordOutput("Auto/SetpointAngle", m_setpoint.manipulatorAngle().getDegrees());
     if (m_elevator.atSetpoint() && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
+      m_numGamePiecesScoredAuto++;
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
   }
 
-  private boolean m_left = false;
+  private boolean m_left = true;
+  private Timer m_loaderStationTimer = new Timer();
+  private int m_numGamePiecesScoredAuto = 0;
 
   public void autoCoralIntakingPeriodic() {
     // TODO: make auto setpoint generator to make this cleaner
-    if (m_timer.hasElapsed(1.0)) {
+    if (!m_timer.isRunning()) {
+      m_timer.restart();
+    }
+
+    if (m_timer.get() < 0.25 && m_numGamePiecesScoredAuto < 2) {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_left) {
-          m_drive.setTargetPose(new Pose2d(12.85, 1.56, m_drive.getRotation()));
+          m_drive.setTargetPose(new Pose2d(12.92, 1.96, m_drive.getRotation()));
         } else {
-          m_drive.setTargetPose(new Pose2d(12.85, 6.39, m_drive.getRotation()));
+          m_drive.setTargetPose(new Pose2d(12.92, 5.99, m_drive.getRotation()));
         }
       } else {
         // we are on blue
         if (m_left) {
-          m_drive.setTargetPose(new Pose2d(4.00, 6.39, m_drive.getRotation()));
+          m_drive.setTargetPose(new Pose2d(4.00, 5.89, m_drive.getRotation()));
         } else {
-          m_drive.setTargetPose(new Pose2d(4.00, 1.56, m_drive.getRotation()));
+          m_drive.setTargetPose(new Pose2d(4.00, 2.06, m_drive.getRotation()));
         }
       }
     } else {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_left) {
-          m_drive.setTargetPose(new Pose2d(16.12, 0.57, Rotation2d.fromDegrees(130)));
+          m_drive.setTargetPose(new Pose2d(15.96, 0.73, Rotation2d.fromDegrees(130)));
         } else {
           // I HATE MATH
           m_drive.setTargetPose(
@@ -393,8 +425,27 @@ public class RobotState {
     coralIntakingPeriodic();
 
     if (m_manipulator.hasGamePiece()) {
-      RobotState.getInstance().setReefIndexRight();
+      if (m_numGamePiecesScoredAuto < 2) {
+        RobotState.getInstance().setReefIndexLeft();
+      } else {
+        RobotState.getInstance().setReefIndexRight();
+      }
       updateRobotAction(RobotAction.kAutoAutoScore);
+      return;
+    }
+
+    if (m_drive.driveToPointWithinTolerance(Inches.of(3.0), null)) {
+      if (!m_loaderStationTimer.isRunning()) {
+        m_loaderStationTimer.restart();
+      } else if (m_loaderStationTimer.hasElapsed(0.5)) {
+        if (m_numGamePiecesScoredAuto < 2) {
+          RobotState.getInstance().setReefIndexLeft();
+        } else {
+          RobotState.getInstance().setReefIndexRight();
+        }
+        updateRobotAction(RobotAction.kAutoAutoScore);
+      }
+      Logger.recordOutput("AutoCoralIntake/LoaderStationTimer", m_loaderStationTimer.get());
     }
   }
 
@@ -423,7 +474,7 @@ public class RobotState {
   }
 
   public void driveToProcessorPeriodic() {
-    if (m_drive.getCurrentProfile() != DriveProfiles.kDriveToPoint) {
+    if (m_drive.driveToPointWithinTolerance()) {
       updateRobotAction(RobotAction.kProcessorOuttake);
     }
 
@@ -659,7 +710,12 @@ public class RobotState {
     m_timer.stop();
     m_timer.reset();
 
+    m_loaderStationTimer.stop();
+    m_loaderStationTimer.reset();
+
     m_hasRunASingleCycle = false;
+
+    m_aprilTagVision.resetAutoAutoScoreMeasurements();
 
     // reset the scoring angles
     if (newAction != RobotAction.kCoralOuttaking && newAction != RobotAction.kAutoCoralOuttaking) {
@@ -729,6 +785,8 @@ public class RobotState {
 
   public void onEnable() {
     setDefaultAction();
+
+    m_numGamePiecesScoredAuto = 0;
   }
 
   public void onDisable() {}
@@ -802,7 +860,7 @@ public class RobotState {
             new Translation3d(-0.31, 0, 0.19),
             new Rotation3d(
                 Degrees.of(0),
-                Degrees.of(-120 + m_intake.getRotation().getDegrees()),
+                Degrees.of(-150).plus(m_intake.getRotation().getMeasure()),
                 Degrees.of(180)));
     Pose3d elevatorStage2Pose =
         new Pose3d(
@@ -835,7 +893,7 @@ public class RobotState {
     Pose3d climbPose =
         new Pose3d( // static for now
             new Translation3d(0, -0.336, 0.405),
-            new Rotation3d(Degrees.of(-90 + 0), Degrees.of(0), Degrees.of(0)));
+            new Rotation3d(Degrees.of(-90), Degrees.of(0), Degrees.of(0)));
     Logger.recordOutput(
         "FieldSimulation/FinalComponentPoses",
         new Pose3d[] {
@@ -855,6 +913,15 @@ public class RobotState {
     }
     if (DriverStation.isDisabled()) {
       m_led.updateState(LedState.kLocationCheck);
+      return;
+    }
+    if (DriverStation.isAutonomous()
+        && m_profiles.getCurrentProfile() == RobotAction.kAutoAutoScore) {
+      if (m_aprilTagVision.getAutoAutoScoreMeasurements() > 30) {
+        m_led.updateState(LedState.kAutoscoreMeasurementsGood);
+      } else {
+        m_led.updateState(LedState.kAutoscoreMeasurementsBad);
+      }
       return;
     }
     // if we get here then we're in teleop so we should pick based on what level is selected
@@ -894,6 +961,14 @@ public class RobotState {
 
   public boolean manipulatorAtSetpoint() {
     return m_manipulator.atSetpoint();
+  }
+
+  public double getYawVelocity() {
+    return m_drive.getYawVelocity();
+  }
+
+  public void setDrivePose(Pose2d pose) {
+    m_drive.setPose(pose);
   }
 
   private String m_selectedAuto;

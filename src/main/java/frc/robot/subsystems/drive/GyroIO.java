@@ -30,6 +30,9 @@ public interface GyroIO {
     public double yawVelocityRadPerSec = 0.0;
     public double pitchVelocityRadPerSec = 0.0;
     public double rollVelocityRadPerSec = 0.0;
+    public double xAcceleration = 0.0;
+    public double yAcceleration = 0.0;
+    public double zAcceleration = 0.0;
   }
 
   public void updateInputs(GyroIOInputs inputs);

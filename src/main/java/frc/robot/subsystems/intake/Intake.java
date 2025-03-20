@@ -102,7 +102,7 @@ public class Intake extends SubsystemBase {
             m_pivotIO.setPIDFF(
                 IntakeConstants.kPivotSimP,
                 IntakeConstants.kPivotSimI,
-                IntakeConstants.kPivotSimP,
+                IntakeConstants.kPivotSimD,
                 0.0,
                 0.0);
           }

@@ -26,6 +26,8 @@ public class Led extends SubsystemBase {
     kL4,
     kAlert,
     kFullTuning,
+    kAutoscoreMeasurementsBad,
+    kAutoscoreMeasurementsGood,
     kOff
   }
 
@@ -126,6 +128,12 @@ public class Led extends SubsystemBase {
         break;
       case kFullTuning:
         pattern = LEDPattern.solid(convertColor(LedConstants.kFullTuning));
+        break;
+      case kAutoscoreMeasurementsBad:
+        pattern = LEDPattern.solid(convertColor(LedConstants.kAutoscoreMeasurementsBad));
+        break;
+      case kAutoscoreMeasurementsGood:
+        pattern = LEDPattern.solid(convertColor(LedConstants.kAutoscoreMeasurementsGood));
         break;
       case kOff:
       default:

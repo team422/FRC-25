@@ -43,6 +43,8 @@ public final class Constants {
   public static final Mode kSimMode = Mode.SIM;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
+  public static final boolean kUsePhoenixDiagnosticServer = false;
+
   // set to false to disable the base refresh manager
   public static final boolean kUseBaseRefreshManager = false;
 
@@ -122,6 +124,13 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointD =
         new LoggedTunableNumber("DriveToPoint D", 0.0);
 
+    public static final LoggedTunableNumber kDriveToPointAutoP =
+        new LoggedTunableNumber("DriveToPoint Auto P", 2.0);
+    public static final LoggedTunableNumber kDriveToPointAutoI =
+        new LoggedTunableNumber("DriveToPoint Auto I", 0.0);
+    public static final LoggedTunableNumber kDriveToPointAutoD =
+        new LoggedTunableNumber("DriveToPoint Auto D", 0.0);
+
     public static final LoggedTunableNumber kDriveToPointHeadingP =
         new LoggedTunableNumber("DriveToPoint Heading P", 4.0);
     public static final LoggedTunableNumber kDriveToPointHeadingI =
@@ -130,11 +139,11 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Heading D", 0.05);
 
     public static final LoggedTunableNumber kDriveToPointMaxVelocity =
-        new LoggedTunableNumber("DriveToPoint Max Velocity", 3.8);
+        new LoggedTunableNumber("DriveToPoint Max Velocity", 3.0);
     public static final LoggedTunableNumber kDriveToPointMaxAcceleration =
-        new LoggedTunableNumber("DriveToPoint Max Acceleration", 7.6);
+        new LoggedTunableNumber("DriveToPoint Max Acceleration", 4.0);
     public static final LoggedTunableNumber kDriveToPointMaxDeceleration =
-        new LoggedTunableNumber("DriveToPoint Max Deceleration", 5.7);
+        new LoggedTunableNumber("DriveToPoint Max Deceleration", 3.0);
 
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =
@@ -192,6 +201,8 @@ public final class Constants {
     public static final Color kLocationCheckDistance = Color.kLightBlue;
     public static final Color kAlert = Color.kRed;
     public static final Color kFullTuning = Color.kWhite;
+    public static final Color kAutoscoreMeasurementsBad = Color.kOrange;
+    public static final Color kAutoscoreMeasurementsGood = Color.kDarkOliveGreen;
   }
 
   public static final class ElevatorConstants {
@@ -225,20 +236,20 @@ public final class Constants {
     public static final LoggedTunableNumber kAlgaeDescoringIntialHeightL2 =
         new LoggedTunableNumber("Elevator Algae Descore Initial Height L2", 19.0);
     public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL2 =
-        new LoggedTunableNumber("Elevator Algae Descore Final Height L2", 26.0);
+        new LoggedTunableNumber("Elevator Algae Descore Final Height L2", 23.5);
     public static final LoggedTunableNumber kAlgaeDescoringIntialHeightL3 =
-        new LoggedTunableNumber("Elevator Algae Descore Initial Height L3", 32.0);
+        new LoggedTunableNumber("Elevator Algae Descore Initial Height L3", 29.5);
     public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL3 =
-        new LoggedTunableNumber("Elevator Algae Descore Final Height L3", 42.0);
+        new LoggedTunableNumber("Elevator Algae Descore Final Height L3", 38.5);
     public static final LoggedTunableNumber kBargeScoreHeight =
         new LoggedTunableNumber("Elevator Barge Score Height", 73.5);
     public static final LoggedTunableNumber kAlgaeHoldHeight =
-        new LoggedTunableNumber("Elevator Algae Hold Height", 5.0);
+        new LoggedTunableNumber("Elevator Algae Hold Height", 12.5);
     public static final LoggedTunableNumber kAlgaeOuttakeHeight =
         new LoggedTunableNumber("Elevator Algae Outtake Height", 3.5);
 
     public static final LoggedTunableNumber kBargeThrowHeight =
-        new LoggedTunableNumber("Elevator Barge Throw Height", 30.0);
+        new LoggedTunableNumber("Elevator Barge Throw Height", 20.0);
 
     public static final double kDiameter = 2.256; // inches
     public static final double kGearRatio = 54.0 / 12.0;
@@ -514,7 +525,7 @@ public final class Constants {
     public static final double kDisconnectTimeout = 5.0;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
-        new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.05);
+        new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.01);
     public static final LoggedTunableNumber kThetaStandardDeviationCoefficient =
         new LoggedTunableNumber("thetaStandardDeviationCoefficient", 0.03);
 
@@ -526,14 +537,14 @@ public final class Constants {
               Inches.of(9.796),
               Inches.of(10.354),
               Inches.of(8.746),
-              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(-12.218))),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
 
           // front right (facing out, currently unused)
           new Transform3d(
               Inches.of(9.796),
               Inches.of(-10.354),
               Inches.of(8.746),
-              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(-12.218))),
 
           // front left (facing in)
           new Transform3d(
@@ -567,9 +578,9 @@ public final class Constants {
     // the offset needs to be so that it starts at 90 degrees (top)
     // public static final Rotation2d kPivotOffset =
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
-    // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
-    public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees(-54.32 * kPivotAbsoluteEncoderGearRatio);
+    public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
+    // public static final Rotation2d kPivotOffset =
+    //     Rotation2d.fromDegrees(52.73 * kPivotAbsoluteEncoderGearRatio);
 
     public static final double kRollerCurrentGamepieceThreshold =
         999; // amps to be considered holding a gamepiece, temp value
@@ -660,9 +671,9 @@ public final class Constants {
     public static final LoggedTunableNumber kWristScoringOffset =
         new LoggedTunableNumber("Wrist Scoring Offset", 0.0);
     public static final LoggedTunableNumber kWristAlgaeDescoringAngle =
-        new LoggedTunableNumber("Wrist Algae Descoring Angle", 5.0);
+        new LoggedTunableNumber("Wrist Algae Descoring Angle", 30.0);
     public static final LoggedTunableNumber kWristAlgaeHoldAngle =
-        new LoggedTunableNumber("Wrist Algae Hold Angle", 40.0);
+        new LoggedTunableNumber("Wrist Algae Hold Angle", 35.0);
     public static final LoggedTunableNumber kWristAlgaeOuttakeAngle =
         new LoggedTunableNumber("Wrist Algae Outtake Angle", 0.0);
 
@@ -682,7 +693,7 @@ public final class Constants {
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", 3.0);
     public static final LoggedTunableNumber kRollerAlgaeHoldVoltage =
-        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 0.5);
+        new LoggedTunableNumber("Manipulator Roller Algae Hold Voltage", 1.0);
     public static final LoggedTunableNumber kRollerAlgaeOuttakeVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Outtake Voltage", -4.0);
     public static final LoggedTunableNumber kRollerBargeVoltage =
