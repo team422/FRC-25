@@ -43,6 +43,8 @@ public class AprilTagVision extends SubsystemBase {
 
   private int m_autoAutoScoreMeasurements = 0;
 
+  private Timer m_alertDeadzoneTimer = new Timer();
+
   public AprilTagVision(AprilTagVisionIO... ios) {
     m_ios = ios;
     m_inputs = new AprilTagVisionInputs[m_ios.length];
@@ -70,6 +72,8 @@ public class AprilTagVision extends SubsystemBase {
       m_noReadingsAlerts[i] =
           new Alert(String.format("April Tag Vision %d: No Readings", i), AlertType.kError);
     }
+
+    m_alertDeadzoneTimer.start();
   }
 
   @Override
@@ -473,7 +477,7 @@ public class AprilTagVision extends SubsystemBase {
       Logger.recordOutput("AprilTagVision/AutoAutoScoreMeasurements", m_autoAutoScoreMeasurements);
     }
 
-    if (Constants.kUseAlerts) {
+    if (Constants.kUseAlerts && m_alertDeadzoneTimer.hasElapsed(20.0)) {
       for (int i = 0; i < m_noReadingsAlerts.length; i++) {
         double lastTime = m_lastFrameTimes.get(i);
         double elapsed = Timer.getFPGATimestamp() - lastTime;

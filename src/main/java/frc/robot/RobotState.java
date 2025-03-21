@@ -408,7 +408,7 @@ public class RobotState {
           // I HATE MATH
           m_drive.setTargetPose(
               new Pose2d(
-                  16.12, 6.99, Rotation2d.fromDegrees(50).plus(Rotation2d.fromDegrees(180))));
+                  15.96, 7.195, Rotation2d.fromDegrees(50).plus(Rotation2d.fromDegrees(180))));
         }
       } else {
         // we are on blue
@@ -982,6 +982,14 @@ public class RobotState {
       return m_autoFactory.getStartingPose(m_selectedAuto);
     }
     return new Pose2d();
+  }
+
+  public void setAutoSideLeft() {
+    m_left = true;
+  }
+
+  public void setAutoSideRight() {
+    m_left = false;
   }
 
   public DriveProfiles getDriveProfile() {

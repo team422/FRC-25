@@ -268,6 +268,8 @@ public class RobotContainer {
         "Drive SysId Quasistatic", m_drive.sysIdQuasistatic(Direction.kForward));
     m_autoChooser.addOption("Drive SysId Dynamic", m_drive.sysIdDynamic(Direction.kForward));
 
+    m_autoChooser.addDefaultOption("3 Coral Left", m_autoFactory.getAutoCommand("3 Coral Left"));
+
     List<String> paths = PathPlannerUtil.getExistingPaths();
     for (String path : paths) {
       m_autoChooser.addOption(path, m_autoFactory.getAutoCommand(path));

@@ -122,14 +122,14 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointI =
         new LoggedTunableNumber("DriveToPoint I", 0.0);
     public static final LoggedTunableNumber kDriveToPointD =
-        new LoggedTunableNumber("DriveToPoint D", 0.0);
+        new LoggedTunableNumber("DriveToPoint D", 0.15);
 
     public static final LoggedTunableNumber kDriveToPointAutoP =
-        new LoggedTunableNumber("DriveToPoint Auto P", 2.0);
+        new LoggedTunableNumber("DriveToPoint Auto P", 3.0);
     public static final LoggedTunableNumber kDriveToPointAutoI =
         new LoggedTunableNumber("DriveToPoint Auto I", 0.0);
     public static final LoggedTunableNumber kDriveToPointAutoD =
-        new LoggedTunableNumber("DriveToPoint Auto D", 0.0);
+        new LoggedTunableNumber("DriveToPoint Auto D", 0.15);
 
     public static final LoggedTunableNumber kDriveToPointHeadingP =
         new LoggedTunableNumber("DriveToPoint Heading P", 4.0);

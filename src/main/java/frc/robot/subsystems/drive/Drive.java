@@ -118,12 +118,12 @@ public class Drive extends SubsystemBase {
           DriveConstants.kDriveToPointHeadingI.get(),
           DriveConstants.kDriveToPointHeadingD.get());
 
-  private LoggedTunableNumber m_ffMinRadiusTeleop = new LoggedTunableNumber("Min FF Radius", 0.6);
-  private LoggedTunableNumber m_ffMaxRadiusTeleop = new LoggedTunableNumber("Max FF Radius", 1.2);
+  private LoggedTunableNumber m_ffMinRadiusTeleop = new LoggedTunableNumber("Min FF Radius", 100.0);
+  private LoggedTunableNumber m_ffMaxRadiusTeleop = new LoggedTunableNumber("Max FF Radius", 100.0);
   private LoggedTunableNumber m_ffMinRadiusAuto =
-      new LoggedTunableNumber("Min FF Radius Auto", 0.8);
+      new LoggedTunableNumber("Min FF Radius Auto", 100.0);
   private LoggedTunableNumber m_ffMaxRadiusAuto =
-      new LoggedTunableNumber("Max FF Radius Auto", 1.4);
+      new LoggedTunableNumber("Max FF Radius Auto", 100.0);
 
   private double m_desiredAcceleration = 0.0;
 
