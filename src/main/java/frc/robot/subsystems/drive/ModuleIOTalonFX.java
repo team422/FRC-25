@@ -40,6 +40,7 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -74,6 +75,7 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final StatusSignal<Angle> m_drivePosition;
   private final Queue<Double> m_drivePositionQueue;
   private final StatusSignal<AngularVelocity> m_driveVelocity;
+  private final StatusSignal<AngularAcceleration> m_driveAcceleration;
   private final StatusSignal<Voltage> m_driveAppliedVolts;
   private final StatusSignal<Current> m_driveCurrent;
 
@@ -208,6 +210,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     m_drivePositionQueue =
         PhoenixOdometryThread.getInstance().registerSignal(m_driveTalon.getPosition());
     m_driveVelocity = m_driveTalon.getVelocity();
+    m_driveAcceleration = m_driveTalon.getAcceleration();
     m_driveAppliedVolts = m_driveTalon.getMotorVoltage();
     m_driveCurrent = m_driveTalon.getSupplyCurrent();
 
@@ -276,6 +279,8 @@ public class ModuleIOTalonFX implements ModuleIO {
 
     inputs.drivePositionRad = Units.rotationsToRadians(m_drivePosition.getValueAsDouble());
     inputs.driveVelocityRadPerSec = Units.rotationsToRadians(m_driveVelocity.getValueAsDouble());
+    inputs.driveAccelerationRadPerSecSq =
+        Units.rotationsToRadians(m_driveAcceleration.getValueAsDouble());
     inputs.driveAppliedVolts = m_driveAppliedVolts.getValueAsDouble();
     inputs.driveCurrentAmps = m_driveCurrent.getValueAsDouble();
     inputs.driveMotorIsConnected = m_driveConnectedMotor.getValue() != ConnectedMotorValue.Unknown;

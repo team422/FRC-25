@@ -358,6 +358,10 @@ public class Drive extends SubsystemBase {
           Math.abs(accel * m_modules[i].getDriveVelocity()));
     }
 
+    if (slip) {
+      RobotState.getInstance().registerSlip();
+    }
+
     Logger.recordOutput("Drive/Slip", slip);
 
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());

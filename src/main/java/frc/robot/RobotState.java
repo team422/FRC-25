@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.hal.HALUtil;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
+import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants;
@@ -100,6 +102,8 @@ public class RobotState {
   private int m_desiredAlgaeIndex = 0;
 
   private int m_numVisionGyroObservations = 0;
+
+  private double m_odometryTrustFactor = 0.0;
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -211,6 +215,8 @@ public class RobotState {
 
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());
+
+    Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
 
     Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
@@ -795,7 +801,22 @@ public class RobotState {
     if (!m_usingVision) {
       return;
     }
+    if (observations.size() == 0) {
+      m_odometryTrustFactor -= AprilTagVisionConstants.kOdometryTrustFactorNoVision;
+    } else {
+      for (var observation : observations) {
+        m_odometryTrustFactor +=
+            AprilTagVisionConstants.kOdometryTrustFactorVisionScalar
+                / observation.stdDevs().get(0, 0);
+      }
+    }
+    m_odometryTrustFactor = MathUtil.clamp(m_odometryTrustFactor, 0.0, 1.0);
     m_drive.addTimestampedVisionObservations(observations);
+  }
+
+  public void registerSlip() {
+    m_odometryTrustFactor -= AprilTagVisionConstants.kOdometryTrustFactorSlip;
+    m_odometryTrustFactor = MathUtil.clamp(m_odometryTrustFactor, 0.0, 1.0);
   }
 
   public void setDesiredReefHeight(ReefHeight height) {

@@ -40,7 +40,7 @@ public final class Constants {
   public static final boolean kTuningMode = true;
 
   public static final Mode kRealMode = Mode.REAL;
-  public static final Mode kSimMode = Mode.SIM;
+  public static final Mode kSimMode = Mode.REPLAY;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
   public static final boolean kUsePhoenixDiagnosticServer = false;
@@ -523,6 +523,10 @@ public final class Constants {
 
     // how long (sec) before we are considered disconnected
     public static final double kDisconnectTimeout = 5.0;
+
+    public static final double kOdometryTrustFactorSlip = 0.2;
+    public static final double kOdometryTrustFactorVisionScalar = 0.005;
+    public static final double kOdometryTrustFactorNoVision = 0.01;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.01);
