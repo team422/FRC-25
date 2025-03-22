@@ -40,7 +40,7 @@ public final class Constants {
   public static final boolean kTuningMode = true;
 
   public static final Mode kRealMode = Mode.REAL;
-  public static final Mode kSimMode = Mode.REPLAY;
+  public static final Mode kSimMode = Mode.SIM;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
   public static final boolean kUsePhoenixDiagnosticServer = false;
@@ -244,7 +244,7 @@ public final class Constants {
     public static final LoggedTunableNumber kBargeScoreHeight =
         new LoggedTunableNumber("Elevator Barge Score Height", 73.5);
     public static final LoggedTunableNumber kAlgaeHoldHeight =
-        new LoggedTunableNumber("Elevator Algae Hold Height", 12.5);
+        new LoggedTunableNumber("Elevator Algae Hold Height", 14.5);
     public static final LoggedTunableNumber kAlgaeOuttakeHeight =
         new LoggedTunableNumber("Elevator Algae Outtake Height", 3.5);
 

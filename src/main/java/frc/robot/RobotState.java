@@ -110,7 +110,6 @@ public class RobotState {
           RobotAction.kAlgaeDescoringInitial,
           RobotAction.kAlgaeDescoringDeployManipulator,
           RobotAction.kAlgaeDescoringMoveUp,
-          RobotAction.kAlgaeDescoringDriveAway,
           RobotAction.kAlgaeDescoringFinal);
 
   // Singleton logic
@@ -400,9 +399,9 @@ public class RobotState {
       } else {
         // we are on blue
         if (m_left) {
-          m_drive.setTargetPose(new Pose2d(4.00, 5.89, m_drive.getRotation()));
+          m_drive.setTargetPose(new Pose2d(4.3519, 5.99, m_drive.getRotation()));
         } else {
-          m_drive.setTargetPose(new Pose2d(4.00, 2.06, m_drive.getRotation()));
+          m_drive.setTargetPose(new Pose2d(4.3519, 1.96, m_drive.getRotation()));
         }
       }
     } else {
@@ -419,11 +418,11 @@ public class RobotState {
       } else {
         // we are on blue
         if (m_left) {
-          m_drive.setTargetPose(new Pose2d(1.05, 6.99, Rotation2d.fromDegrees(-50)));
+          m_drive.setTargetPose(new Pose2d(1.5119, 7.195, Rotation2d.fromDegrees(-50)));
         } else {
           m_drive.setTargetPose(
               new Pose2d(
-                  1.05, 0.57, Rotation2d.fromDegrees(-130).plus(Rotation2d.fromDegrees(180))));
+                  1.5119, 0.73, Rotation2d.fromDegrees(-130).plus(Rotation2d.fromDegrees(180))));
         }
       }
     }
@@ -519,12 +518,12 @@ public class RobotState {
 
   public void algaeDescoringPeriodic() {
     if (getUsingVision()) {
-      if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringFinal
-          || m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
-        m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
-      } else {
-        m_drive.setTargetPose(SetpointGenerator.generateAlgae(m_desiredAlgaeIndex));
-      }
+      // if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringFinal
+      //     || m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
+      //   m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
+      // } else {
+      m_drive.setTargetPose(SetpointGenerator.generateAlgae(m_desiredAlgaeIndex));
+      // }
     }
 
     // each step in the sequence is identical in terms of whether to advance to the next step
@@ -537,10 +536,10 @@ public class RobotState {
         && m_manipulator.atSetpoint()
         && m_drive.driveToPointWithinTolerance(Meters.of(0.1), null)
         && m_hasRunASingleCycle) {
-      if (index < kAlgaeDescoreSequence.size() - 3) {
+      if (index < kAlgaeDescoreSequence.size() - 2) {
         Logger.recordOutput("AlgaeDescore/TransitionTime", Timer.getFPGATimestamp());
         updateRobotAction(kAlgaeDescoreSequence.get(index + 1));
-      } else if (index != kAlgaeDescoreSequence.size() - 3) {
+      } else if (index != kAlgaeDescoreSequence.size() - 2) {
         // if we're on the last step then we want to go back to stow
         m_manipulator.updateState(ManipulatorState.kAlgaeHold);
         setDefaultAction();
@@ -782,8 +781,8 @@ public class RobotState {
 
   public void manageAlgaeDescoreRelease() {
     if (m_profiles.getCurrentProfile()
-        == kAlgaeDescoreSequence.get(kAlgaeDescoreSequence.size() - 3)) {
-      updateRobotAction(RobotAction.kAlgaeDescoringDriveAway);
+        == kAlgaeDescoreSequence.get(kAlgaeDescoreSequence.size() - 2)) {
+      updateRobotAction(RobotAction.kAlgaeDescoringFinal);
     } else {
       setDefaultAction();
     }

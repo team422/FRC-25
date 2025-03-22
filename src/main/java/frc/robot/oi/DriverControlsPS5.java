@@ -62,7 +62,8 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger autoscoreLeft() {
-    return m_controller.square();
+    return new Trigger(() -> false);
+    // return m_controller.square();
   }
 
   @Override
@@ -88,7 +89,8 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger algaeDescore() {
-    return m_controller.L2();
+    return m_controller.button(1);
+    // return m_controller.L2();
   }
 
   @Override
