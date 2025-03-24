@@ -97,7 +97,7 @@ public class RobotState {
   private ReefHeight m_desiredReefHeight = ReefHeight.L1;
   private int m_desiredBranchIndex = 0;
   private RobotSetpoint m_setpoint =
-      SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+      SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
 
   private int m_desiredAlgaeIndex = 0;
 
@@ -162,6 +162,7 @@ public class RobotState {
     return m_instance;
   }
 
+  // TODO: replace with AlertManager
   private boolean m_miscAlertActive = false;
 
   public void triggerAlert(boolean fromVision) {
@@ -272,7 +273,7 @@ public class RobotState {
   public void autoScorePeriodic() {
     m_drive.updateProfile(DriveProfiles.kDriveToPoint);
 
-    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
     if (!EqualsUtil.GeomExtensions.epsilonEquals(m_setpoint.drivePose(), m_drive.getTargetPose())) {
       m_drive.setTargetPose(m_setpoint.drivePose());
@@ -319,7 +320,7 @@ public class RobotState {
   }
 
   public void autoAutoScorePeriodic() {
-    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
     if (!EqualsUtil.GeomExtensions.epsilonEquals(m_setpoint.drivePose(), m_drive.getTargetPose())) {
       m_drive.setTargetPose(m_setpoint.drivePose());
@@ -467,7 +468,7 @@ public class RobotState {
   }
 
   public void manualScorePeriodic() {
-    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight);
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, false);
 
     Logger.recordOutput("ManualScore/BranchIndex", m_desiredBranchIndex);
     Logger.recordOutput("ManualScore/ReefHeight", m_desiredReefHeight);

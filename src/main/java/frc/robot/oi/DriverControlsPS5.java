@@ -82,7 +82,6 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger algaeIntakeOuttake() {
-    // TODO: re-enable later
     return m_controller.R2();
   }
 

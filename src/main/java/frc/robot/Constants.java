@@ -690,7 +690,7 @@ public final class Constants {
         new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
         new LoggedTunableNumber("Manipulator Roller Intake Voltage", 5.0);
-    public static final LoggedTunableNumber kRollerL1ScoringVoltageAuto =
+    public static final LoggedTunableNumber kRollerL1ScoringVoltageAutoscore =
         new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Autoscore", 3.0);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageManual =
         new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Manual", 2.25);

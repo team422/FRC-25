@@ -44,6 +44,7 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
     configTable.getIntegerTopic("camera_brightness").publish().set(cameraBrightness);
     configTable.getIntegerTopic("camera_contrast").publish().set(cameraContrast);
     configTable.getIntegerTopic("camera_gamma").publish().set(cameraGamma);
+    // TODO: we need to rethink this because if the code is not running, this will not work
     configTable.getIntegerTopic("kys").publish().set(0);
     configTable
         .getDoubleTopic("fiducial_size_m")

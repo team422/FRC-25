@@ -477,6 +477,7 @@ public class AprilTagVision extends SubsystemBase {
       Logger.recordOutput("AprilTagVision/AutoAutoScoreMeasurements", m_autoAutoScoreMeasurements);
     }
 
+    // TODO: tommy when you're doing AlertManager you can delete alertActive
     boolean alertActive = false;
     if (Constants.kUseAlerts && m_alertDeadzoneTimer.hasElapsed(20.0)) {
       for (int i = 0; i < m_noReadingsAlerts.length; i++) {

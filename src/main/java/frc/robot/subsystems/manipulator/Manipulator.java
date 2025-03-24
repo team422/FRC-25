@@ -248,7 +248,7 @@ public class Manipulator extends SubsystemBase {
     if (m_runRollerScoring) {
       if (RobotState.getInstance().getDesiredReefHeight() == ReefHeight.L1) {
         if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore) {
-          m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageAuto.get());
+          m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageAutoscore.get());
         } else {
           m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageManual.get());
         }
