@@ -525,8 +525,8 @@ public final class Constants {
     public static final double kDisconnectTimeout = 5.0;
 
     public static final double kOdometryTrustFactorSlip = 0.2;
-    public static final double kOdometryTrustFactorVisionScalar = 0.005;
-    public static final double kOdometryTrustFactorNoVision = 0.01;
+    public static final double kOdometryTrustFactorVisionScalar = 0.001;
+    public static final double kOdometryTrustFactorNoVision = 0.04;
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.01);
@@ -690,10 +690,14 @@ public final class Constants {
         new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
         new LoggedTunableNumber("Manipulator Roller Intake Voltage", 5.0);
-    public static final LoggedTunableNumber kRollerLowerScoringVoltage =
-        new LoggedTunableNumber("Manipulator Roller Lower Scoring Voltage", 2.25);
-    public static final LoggedTunableNumber kRollerUpperScoringVoltage =
-        new LoggedTunableNumber("Manipulator Roller Upper Scoring Voltage", 5.0);
+    public static final LoggedTunableNumber kRollerL1ScoringVoltageAuto =
+        new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Autoscore", 3.0);
+    public static final LoggedTunableNumber kRollerL1ScoringVoltageManual =
+        new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Manual", 2.25);
+    public static final LoggedTunableNumber kRollerL2L3ScoringVoltage =
+        new LoggedTunableNumber("Manipulator Roller L2 L3 Scoring Voltage", 3.0);
+    public static final LoggedTunableNumber kRollerL4ScoringVoltage =
+        new LoggedTunableNumber("Manipulator Roller L4 Scoring Voltage", 3.0);
     public static final LoggedTunableNumber kRollerAlgaeDescoringVoltage =
         new LoggedTunableNumber("Manipulator Roller Algae Descoring Voltage", 3.0);
     public static final LoggedTunableNumber kRollerAlgaeHoldVoltage =
@@ -711,6 +715,9 @@ public final class Constants {
         new LoggedTunableNumber("Manipulator Roller D", 0.0);
     public static final LoggedTunableNumber kRollerKS =
         new LoggedTunableNumber("Manipulator Roller kS", 0.22);
+
+    public static final LoggedTunableNumber kCoralOuttakeTimeout =
+        new LoggedTunableNumber("Coral Outtake Timeout", 0.4);
 
     // Simulation constants
     public static final DCMotor kWristSimGearbox = DCMotor.getKrakenX60Foc(1);

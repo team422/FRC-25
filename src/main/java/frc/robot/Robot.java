@@ -1,6 +1,8 @@
 package frc.robot;
 
 import com.ctre.phoenix6.unmanaged.Unmanaged;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.CtreBaseRefreshManager;
@@ -20,6 +22,9 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 public class Robot extends LoggedRobot {
   private RobotContainer m_robotContainer;
   private Command m_autonomousCommand;
+
+  private WPILOGWriter m_writer = new WPILOGWriter();
+  private Alert m_writerAlert = new Alert("WPILOGWriter Failed to start", AlertType.kError);
 
   public Robot() {
     // Record metadata
@@ -45,7 +50,7 @@ public class Robot extends LoggedRobot {
       case REAL:
       case PROTO:
         // Running on a real robot, log to a USB stick ("/U/logs")
-        Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(m_writer);
         Logger.addDataReceiver(new NT4Publisher());
         break;
 
@@ -80,6 +85,22 @@ public class Robot extends LoggedRobot {
   public void robotPeriodic() {
     if (Constants.kUseBaseRefreshManager) {
       CtreBaseRefreshManager.updateAll();
+    }
+
+    // I LOVE REFLECTION
+    boolean isOpen = true;
+    try {
+      var openField = m_writer.getClass().getDeclaredField("isOpen");
+      openField.setAccessible(true);
+      isOpen = (Boolean) openField.get(m_writer);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    if (isOpen == false) {
+      RobotState.getInstance().triggerAlert(false);
+      m_writerAlert.set(true);
+    } else {
+      m_writerAlert.set(false);
     }
 
     RobotState.getInstance().updateRobotState();

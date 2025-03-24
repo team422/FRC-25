@@ -162,8 +162,20 @@ public class RobotState {
     return m_instance;
   }
 
-  public void triggerAlert() {
+  private boolean m_miscAlertActive = false;
+
+  public void triggerAlert(boolean fromVision) {
     m_led.updateState(LedState.kAlert);
+    if (!fromVision) {
+      m_miscAlertActive = true;
+    }
+  }
+
+  public void cancelAlert() {
+    // this is only from vision
+    if (!m_miscAlertActive) {
+      m_led.cancelAlert();
+    }
   }
 
   public boolean getClimbAtSetpoint() {
@@ -234,7 +246,7 @@ public class RobotState {
   }
 
   public void coralOuttakingPeriodic() {
-    if (m_timer.hasElapsed(0.4)) {
+    if (m_timer.hasElapsed(ManipulatorConstants.kCoralOuttakeTimeout.get())) {
       // after we release the coral go back to stow
       if (DriverStation.isAutonomous()) {
         updateRobotAction(RobotAction.kAutoCoralIntaking);
@@ -518,12 +530,12 @@ public class RobotState {
 
   public void algaeDescoringPeriodic() {
     if (getUsingVision()) {
-      // if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringFinal
-      //     || m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
-      //   m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
-      // } else {
-      m_drive.setTargetPose(SetpointGenerator.generateAlgae(m_desiredAlgaeIndex));
-      // }
+      if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringFinal) {
+        // || m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
+        m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
+      } else {
+        m_drive.setTargetPose(SetpointGenerator.generateAlgae(m_desiredAlgaeIndex));
+      }
     }
 
     // each step in the sequence is identical in terms of whether to advance to the next step
@@ -769,11 +781,11 @@ public class RobotState {
   public void manageAlgaeIntake() {
     if (m_manipulator.getCurrentState() == ManipulatorState.kAlgaeHold) {
       // if we're near the processor then initiate a drive to point
-      if (getUsingVision() && SetpointGenerator.isNearProcessor(m_drive.getPose())) {
-        updateRobotAction(RobotAction.kDriveToProcessor);
-      } else {
-        updateRobotAction(RobotAction.kProcessorOuttake);
-      }
+      // if (getUsingVision() && SetpointGenerator.isNearProcessor(m_drive.getPose())) {
+      // updateRobotAction(RobotAction.kDriveToProcessor);
+      // } else {
+      updateRobotAction(RobotAction.kProcessorOuttake);
+      // }
     } else {
       updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
     }

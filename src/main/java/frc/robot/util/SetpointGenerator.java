@@ -13,6 +13,7 @@ import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
+import frc.robot.RobotState.RobotAction;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
@@ -42,13 +43,24 @@ public class SetpointGenerator {
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
 
   private static final double kDriveXOffsetFinalAlgae =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(20.0);
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(13.0);
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
   private static final double kDriveYOffset = Units.inchesToMeters(6.469);
 
-  private static final double kDriveYL1Offset = Units.inchesToMeters(15.469);
+  private static final LoggedTunableNumber kDriveXL1Offset =
+      new LoggedTunableNumber(
+          "L1 X Offset", Units.metersToInches(DriveConstants.kTrackWidthX / 2.0) + 7.0);
+  private static final LoggedTunableNumber kDriveYL1Offset =
+      new LoggedTunableNumber("L1 Y Offset", 13.469);
+  private static final LoggedTunableNumber kRotationL1 =
+      new LoggedTunableNumber("L1 Rotation", 10.0);
+
+  private static final LoggedTunableNumber kElevatorL1Autoscore =
+      new LoggedTunableNumber("L1 Autoscore Height", 11.5);
+  private static final LoggedTunableNumber kManipulatorL1Autoscore =
+      new LoggedTunableNumber("L1 Autoscore Angle", 95.0);
 
   // we are considered "close" to a field element (processor, barge) if we're within this distance
   private static final double kDistanceThreshold = Units.inchesToMeters(36.0);
@@ -77,16 +89,40 @@ public class SetpointGenerator {
     var drivePoseFinal =
         centerFacePose.transformBy(
             new Transform2d(
-                kDriveXOffset,
+                (reefHeight == ReefHeight.L1)
+                    ? Units.inchesToMeters(kDriveXL1Offset.get())
+                    : kDriveXOffset,
                 // move to left or right depending on the reef index
                 // if L1 then use L1
                 (reefHeight == ReefHeight.L1)
-                    ? kDriveYL1Offset * ((reefIndex % 2 == 0) ? 1 : -1)
+                    ? Units.inchesToMeters(kDriveYL1Offset.get()) * ((reefIndex % 2 == 0) ? 1 : -1)
                     : kDriveYOffset * ((reefIndex % 2 == 0) ? 1 : -1),
-                Rotation2d.fromDegrees(180)));
+                (reefHeight == ReefHeight.L1)
+                    ? Rotation2d.fromDegrees(
+                        180 + kRotationL1.get() * ((reefIndex % 2 == 0) ? -1 : 1))
+                    : Rotation2d.fromDegrees(180)));
 
     var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
+    try {
+      if (reefHeight == ReefHeight.L1
+          && (frc.robot.RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+              || frc.robot.RobotState.getInstance().getCurrentAction()
+                  == RobotAction.kAutoAutoScore)) {
+        manipulatorAngle = kManipulatorL1Autoscore.get();
+      }
+    } catch (Exception e) {
+
+    }
     var elevatorHeight = kElevatorHeights.get(reefHeight).get();
+    try {
+      if (reefHeight == ReefHeight.L1
+          && (frc.robot.RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+              || frc.robot.RobotState.getInstance().getCurrentAction()
+                  == RobotAction.kAutoAutoScore)) {
+        elevatorHeight = kElevatorL1Autoscore.get();
+      }
+    } catch (Exception e) {
+    }
 
     return new RobotSetpoint(
         drivePoseFinal, Rotation2d.fromDegrees(manipulatorAngle), elevatorHeight);

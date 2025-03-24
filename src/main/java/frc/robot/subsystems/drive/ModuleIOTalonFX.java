@@ -231,6 +231,7 @@ public class ModuleIOTalonFX implements ModuleIO {
         m_driveConnectedMotor,
         m_turnConnectedMotor,
         m_driveVelocity,
+        m_driveAcceleration,
         m_driveAppliedVolts,
         m_driveCurrent,
         m_turnAbsolutePosition,
@@ -247,6 +248,7 @@ public class ModuleIOTalonFX implements ModuleIO {
               m_driveConnectedMotor,
               m_drivePosition,
               m_driveVelocity,
+              m_driveAcceleration,
               m_driveAppliedVolts,
               m_driveCurrent,
               m_turnConnectedMotor,
@@ -266,6 +268,7 @@ public class ModuleIOTalonFX implements ModuleIO {
           m_driveConnectedMotor,
           m_drivePosition,
           m_driveVelocity,
+          m_driveAcceleration,
           m_driveAppliedVolts,
           m_driveCurrent,
           m_turnConnectedMotor,
@@ -282,7 +285,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     inputs.driveAccelerationRadPerSecSq =
         Units.rotationsToRadians(m_driveAcceleration.getValueAsDouble());
     inputs.driveAppliedVolts = m_driveAppliedVolts.getValueAsDouble();
-    inputs.driveCurrentAmps = m_driveCurrent.getValueAsDouble();
+    inputs.driveCurrentAmps = Math.abs(m_driveCurrent.getValueAsDouble());
     inputs.driveMotorIsConnected = m_driveConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.turnAbsolutePosition =
@@ -291,7 +294,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     inputs.turnPosition = Rotation2d.fromRotations(m_turnPosition.getValueAsDouble());
     inputs.turnVelocityRadPerSec = Units.rotationsToRadians(m_turnVelocity.getValueAsDouble());
     inputs.turnAppliedVolts = m_turnAppliedVolts.getValueAsDouble();
-    inputs.turnCurrentAmps = m_turnCurrent.getValueAsDouble();
+    inputs.turnCurrentAmps = Math.abs(m_turnCurrent.getValueAsDouble());
     inputs.turnMotorIsConnected = m_turnConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     // this is a hack because the cancoder doesn't have a connected motor (obviously)

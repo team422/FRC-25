@@ -15,6 +15,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.indexer.Indexer.IndexerState;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIO;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorInputsAutoLogged;
@@ -174,12 +175,12 @@ public class Manipulator extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_wristInputs.motorIsConnected) {
       m_wristMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);
@@ -246,9 +247,15 @@ public class Manipulator extends SubsystemBase {
     m_wristIO.setDesiredAngle(m_desiredWristAngle);
     if (m_runRollerScoring) {
       if (RobotState.getInstance().getDesiredReefHeight() == ReefHeight.L1) {
-        m_rollerIO.setVoltage(ManipulatorConstants.kRollerLowerScoringVoltage.get());
+        if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore) {
+          m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageAuto.get());
+        } else {
+          m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageManual.get());
+        }
+      } else if (RobotState.getInstance().getDesiredReefHeight() == ReefHeight.L4) {
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerL4ScoringVoltage.get());
       } else {
-        m_rollerIO.setVoltage(ManipulatorConstants.kRollerUpperScoringVoltage.get());
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerL2L3ScoringVoltage.get());
       }
     } else {
       m_rollerIO.setVoltage(0.0);

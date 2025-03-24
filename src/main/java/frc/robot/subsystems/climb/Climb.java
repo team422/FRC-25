@@ -96,7 +96,7 @@ public class Climb extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.motorIsConnected) {
       m_motorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Climb", (HALUtil.getFPGATime() - start) / 1000.0);

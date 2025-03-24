@@ -94,17 +94,17 @@ public class Module {
 
     if (Constants.kUseAlerts && !m_inputs.driveMotorIsConnected) {
       m_driveDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.turnMotorIsConnected) {
       m_turnDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.turnEncoderIsConnected) {
       m_canCoderDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
   }
 

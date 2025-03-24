@@ -368,7 +368,7 @@ public class Drive extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_gyroInputs.connected) {
       m_gyroDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);

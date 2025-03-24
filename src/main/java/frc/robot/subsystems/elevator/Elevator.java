@@ -216,12 +216,12 @@ public class Elevator extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.isLeadingMotorConnected) {
       m_leadingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.isFollowingMotorConnected) {
       m_followingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);

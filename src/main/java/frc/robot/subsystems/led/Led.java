@@ -72,6 +72,12 @@ public class Led extends SubsystemBase {
     return m_state;
   }
 
+  public void cancelAlert() {
+    if (m_state == LedState.kAlert) {
+      m_state = LedState.kL1;
+    }
+  }
+
   @SuppressWarnings("unused")
   private void locationCheck() {
     Pose2d robotPose = RobotState.getInstance().getRobotPose();
