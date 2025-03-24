@@ -4,6 +4,7 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
@@ -13,6 +14,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,35 +61,47 @@ public class Elevator extends SubsystemBase {
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
-    m_io.setPIDFF(
-        0,
-        ElevatorConstants.kP0.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV0.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG0.getAsDouble());
+    if (RobotBase.isReal()) {
+      m_io.setPIDFF(
+          0,
+          ElevatorConstants.kP0.getAsDouble(),
+          ElevatorConstants.kI.getAsDouble(),
+          ElevatorConstants.kD.getAsDouble(),
+          ElevatorConstants.kKS.getAsDouble(),
+          ElevatorConstants.kKV0.getAsDouble(),
+          ElevatorConstants.kKA.getAsDouble(),
+          ElevatorConstants.kKG0.getAsDouble());
 
-    m_io.setPIDFF(
-        1,
-        ElevatorConstants.kP1.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV1.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG1.getAsDouble());
+      m_io.setPIDFF(
+          1,
+          ElevatorConstants.kP1.getAsDouble(),
+          ElevatorConstants.kI.getAsDouble(),
+          ElevatorConstants.kD.getAsDouble(),
+          ElevatorConstants.kKS.getAsDouble(),
+          ElevatorConstants.kKV1.getAsDouble(),
+          ElevatorConstants.kKA.getAsDouble(),
+          ElevatorConstants.kKG1.getAsDouble());
 
-    m_io.setPIDFF(
-        2,
-        ElevatorConstants.kP2.getAsDouble(),
-        ElevatorConstants.kI.getAsDouble(),
-        ElevatorConstants.kD.getAsDouble(),
-        ElevatorConstants.kKS.getAsDouble(),
-        ElevatorConstants.kKV2.getAsDouble(),
-        ElevatorConstants.kKA.getAsDouble(),
-        ElevatorConstants.kKG2.getAsDouble());
+      m_io.setPIDFF(
+          2,
+          ElevatorConstants.kP2.getAsDouble(),
+          ElevatorConstants.kI.getAsDouble(),
+          ElevatorConstants.kD.getAsDouble(),
+          ElevatorConstants.kKS.getAsDouble(),
+          ElevatorConstants.kKV2.getAsDouble(),
+          ElevatorConstants.kKA.getAsDouble(),
+          ElevatorConstants.kKG2.getAsDouble());
+    } else {
+      m_io.setPIDFF(
+          0,
+          ElevatorConstants.kSimElevatorP,
+          ElevatorConstants.kSimElevatorI,
+          ElevatorConstants.kSimElevatorD,
+          0,
+          0,
+          0,
+          ElevatorConstants.kSimElevatorkG);
+    }
 
     // to set the setpoint
     updateState(ElevatorState.kStow);
@@ -109,35 +123,47 @@ public class Elevator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_io.setPIDFF(
-              0,
-              ElevatorConstants.kP0.getAsDouble(),
-              ElevatorConstants.kI.getAsDouble(),
-              ElevatorConstants.kD.getAsDouble(),
-              ElevatorConstants.kKS.getAsDouble(),
-              ElevatorConstants.kKV0.getAsDouble(),
-              ElevatorConstants.kKA.getAsDouble(),
-              ElevatorConstants.kKG0.getAsDouble());
+          if (RobotBase.isReal()) {
+            m_io.setPIDFF(
+                0,
+                ElevatorConstants.kP0.getAsDouble(),
+                ElevatorConstants.kI.getAsDouble(),
+                ElevatorConstants.kD.getAsDouble(),
+                ElevatorConstants.kKS.getAsDouble(),
+                ElevatorConstants.kKV0.getAsDouble(),
+                ElevatorConstants.kKA.getAsDouble(),
+                ElevatorConstants.kKG0.getAsDouble());
 
-          m_io.setPIDFF(
-              1,
-              ElevatorConstants.kP1.getAsDouble(),
-              ElevatorConstants.kI.getAsDouble(),
-              ElevatorConstants.kD.getAsDouble(),
-              ElevatorConstants.kKS.getAsDouble(),
-              ElevatorConstants.kKV1.getAsDouble(),
-              ElevatorConstants.kKA.getAsDouble(),
-              ElevatorConstants.kKG1.getAsDouble());
+            m_io.setPIDFF(
+                1,
+                ElevatorConstants.kP1.getAsDouble(),
+                ElevatorConstants.kI.getAsDouble(),
+                ElevatorConstants.kD.getAsDouble(),
+                ElevatorConstants.kKS.getAsDouble(),
+                ElevatorConstants.kKV1.getAsDouble(),
+                ElevatorConstants.kKA.getAsDouble(),
+                ElevatorConstants.kKG1.getAsDouble());
 
-          m_io.setPIDFF(
-              2,
-              ElevatorConstants.kP2.getAsDouble(),
-              ElevatorConstants.kI.getAsDouble(),
-              ElevatorConstants.kD.getAsDouble(),
-              ElevatorConstants.kKS.getAsDouble(),
-              ElevatorConstants.kKV2.getAsDouble(),
-              ElevatorConstants.kKA.getAsDouble(),
-              ElevatorConstants.kKG2.getAsDouble());
+            m_io.setPIDFF(
+                2,
+                ElevatorConstants.kP2.getAsDouble(),
+                ElevatorConstants.kI.getAsDouble(),
+                ElevatorConstants.kD.getAsDouble(),
+                ElevatorConstants.kKS.getAsDouble(),
+                ElevatorConstants.kKV2.getAsDouble(),
+                ElevatorConstants.kKA.getAsDouble(),
+                ElevatorConstants.kKG2.getAsDouble());
+          } else {
+            m_io.setPIDFF(
+                0,
+                ElevatorConstants.kSimElevatorP,
+                ElevatorConstants.kSimElevatorI,
+                ElevatorConstants.kSimElevatorD,
+                0.0,
+                0.0,
+                0.0,
+                ElevatorConstants.kSimElevatorkG);
+          }
         },
         ElevatorConstants.kP0,
         ElevatorConstants.kP1,
@@ -190,12 +216,12 @@ public class Elevator extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.isLeadingMotorConnected) {
       m_leadingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.isFollowingMotorConnected) {
       m_followingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);
@@ -268,12 +294,9 @@ public class Elevator extends SubsystemBase {
   }
 
   public void algaeDescoringInitialPeriodic() {
-    // ReefHeight currHeight =
-    //     SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     ReefHeight currHeight;
     if (RobotState.getInstance().getUsingVision()) {
-      // currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
-      currHeight = RobotState.getInstance().getDesiredReefHeight();
+      currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     } else {
       currHeight = RobotState.getInstance().getDesiredReefHeight();
     }
@@ -289,8 +312,7 @@ public class Elevator extends SubsystemBase {
     //     SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     ReefHeight currHeight;
     if (RobotState.getInstance().getUsingVision()) {
-      // currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
-      currHeight = RobotState.getInstance().getDesiredReefHeight();
+      currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     } else {
       currHeight = RobotState.getInstance().getDesiredReefHeight();
     }
@@ -323,7 +345,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean atSetpoint(double tolerance) {
-    return Math.abs(m_io.getCurrHeight() - m_desiredHeight) < tolerance;
+    return m_io.atSetpoint(tolerance);
   }
 
   public void zeroElevator() {

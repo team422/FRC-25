@@ -4,6 +4,7 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -56,12 +57,18 @@ public class Intake extends SubsystemBase {
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IntakeState.kStow);
 
-    m_pivotIO.setPIDFF(
-        IntakeConstants.kPivotP.get(),
-        IntakeConstants.kPivotI.get(),
-        IntakeConstants.kPivotD.get(),
-        IntakeConstants.kPivotKS.get(),
-        IntakeConstants.kPivotKG.get());
+    // if sim use sim
+    if (RobotBase.isReal()) {
+      m_pivotIO.setPIDFF(
+          IntakeConstants.kPivotP.get(),
+          IntakeConstants.kPivotI.get(),
+          IntakeConstants.kPivotD.get(),
+          IntakeConstants.kPivotKS.get(),
+          IntakeConstants.kPivotKG.get());
+    } else {
+      m_pivotIO.setPIDFF(
+          IntakeConstants.kPivotSimP, IntakeConstants.kPivotSimI, IntakeConstants.kPivotSimD, 0, 0);
+    }
   }
 
   public void updateState(IntakeState state) {
@@ -84,12 +91,21 @@ public class Intake extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_pivotIO.setPIDFF(
-              IntakeConstants.kPivotP.get(),
-              IntakeConstants.kPivotI.get(),
-              IntakeConstants.kPivotD.get(),
-              IntakeConstants.kPivotKS.get(),
-              IntakeConstants.kPivotKG.get());
+          if (RobotBase.isReal()) {
+            m_pivotIO.setPIDFF(
+                IntakeConstants.kPivotP.get(),
+                IntakeConstants.kPivotI.get(),
+                IntakeConstants.kPivotD.get(),
+                IntakeConstants.kPivotKS.get(),
+                IntakeConstants.kPivotKG.get());
+          } else {
+            m_pivotIO.setPIDFF(
+                IntakeConstants.kPivotSimP,
+                IntakeConstants.kPivotSimI,
+                IntakeConstants.kPivotSimD,
+                0.0,
+                0.0);
+          }
         },
         IntakeConstants.kPivotP,
         IntakeConstants.kPivotI,
@@ -108,12 +124,12 @@ public class Intake extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_pivotInputs.motorIsConnected) {
       m_pivotMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Intake", (HALUtil.getFPGATime() - start) / 1000.0);

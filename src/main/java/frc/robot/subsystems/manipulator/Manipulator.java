@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -14,6 +15,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.indexer.Indexer.IndexerState;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorIO;
 import frc.robot.subsystems.manipulator.coralDetector.CoralDetectorInputsAutoLogged;
@@ -39,6 +41,7 @@ public class Manipulator extends SubsystemBase {
   private Rotation2d m_desiredWristAngle = new Rotation2d();
   private boolean m_runRollerScoring = false;
   private boolean m_runRollerAlgaeDescoring = false;
+  private boolean m_runRollerBargeScoring = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -75,19 +78,33 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kAlgaeOuttake, this::algaeOuttakePeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
+    if (RobotBase.isReal()) {
+      m_wristIO.setPIDFF(
+          ManipulatorConstants.kWristP.get(),
+          ManipulatorConstants.kWristI.get(),
+          ManipulatorConstants.kWristD.get(),
+          ManipulatorConstants.kWristKS.get(),
+          ManipulatorConstants.kWristKG.get());
 
-    m_wristIO.setPIDFF(
-        ManipulatorConstants.kWristP.get(),
-        ManipulatorConstants.kWristI.get(),
-        ManipulatorConstants.kWristD.get(),
-        ManipulatorConstants.kWristKS.get(),
-        ManipulatorConstants.kWristKG.get());
+      m_rollerIO.setPositionPID(
+          ManipulatorConstants.kRollerP.get(),
+          ManipulatorConstants.kRollerI.get(),
+          ManipulatorConstants.kRollerD.get(),
+          ManipulatorConstants.kRollerKS.get());
+    } else {
+      m_wristIO.setPIDFF(
+          ManipulatorConstants.kWristP.get(),
+          ManipulatorConstants.kWristI.get(),
+          ManipulatorConstants.kWristD.get(),
+          ManipulatorConstants.kWristKS.get(),
+          ManipulatorConstants.kWristKG.get());
 
-    m_rollerIO.setPositionPID(
-        ManipulatorConstants.kRollerP.get(),
-        ManipulatorConstants.kRollerI.get(),
-        ManipulatorConstants.kRollerD.get(),
-        ManipulatorConstants.kRollerKS.get());
+      m_rollerIO.setPositionPID(
+          ManipulatorConstants.kSimRollerP,
+          ManipulatorConstants.kSimRollerI,
+          ManipulatorConstants.kSimRollerD,
+          0.0);
+    }
   }
 
   @Override
@@ -97,12 +114,21 @@ public class Manipulator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_wristIO.setPIDFF(
-              ManipulatorConstants.kWristP.get(),
-              ManipulatorConstants.kWristI.get(),
-              ManipulatorConstants.kWristD.get(),
-              ManipulatorConstants.kWristKS.get(),
-              ManipulatorConstants.kWristKG.get());
+          if (RobotBase.isReal()) {
+            m_wristIO.setPIDFF(
+                ManipulatorConstants.kWristP.get(),
+                ManipulatorConstants.kWristI.get(),
+                ManipulatorConstants.kWristD.get(),
+                ManipulatorConstants.kWristKS.get(),
+                ManipulatorConstants.kWristKG.get());
+          } else {
+            m_wristIO.setPIDFF(
+                ManipulatorConstants.kSimWristP,
+                ManipulatorConstants.kSimWristI,
+                ManipulatorConstants.kSimWristD,
+                0.0,
+                0.0);
+          }
         },
         ManipulatorConstants.kWristP,
         ManipulatorConstants.kWristI,
@@ -113,11 +139,19 @@ public class Manipulator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_rollerIO.setPositionPID(
-              ManipulatorConstants.kRollerP.get(),
-              ManipulatorConstants.kRollerI.get(),
-              ManipulatorConstants.kRollerD.get(),
-              ManipulatorConstants.kRollerKS.get());
+          if (RobotBase.isReal()) {
+            m_rollerIO.setPositionPID(
+                ManipulatorConstants.kRollerP.get(),
+                ManipulatorConstants.kRollerI.get(),
+                ManipulatorConstants.kRollerD.get(),
+                ManipulatorConstants.kRollerKS.get());
+          } else {
+            m_rollerIO.setPositionPID(
+                ManipulatorConstants.kSimRollerP,
+                ManipulatorConstants.kSimRollerI,
+                ManipulatorConstants.kSimRollerD,
+                0.0);
+          }
         },
         ManipulatorConstants.kRollerP,
         ManipulatorConstants.kRollerI,
@@ -141,12 +175,12 @@ public class Manipulator extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     if (Constants.kUseAlerts && !m_wristInputs.motorIsConnected) {
       m_wristMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);
@@ -160,6 +194,7 @@ public class Manipulator extends SubsystemBase {
 
     m_runRollerScoring = false;
     m_runRollerAlgaeDescoring = true;
+    m_runRollerBargeScoring = false;
 
     if (state == ManipulatorState.kIndexing) {
       // set it some amount forward
@@ -212,9 +247,15 @@ public class Manipulator extends SubsystemBase {
     m_wristIO.setDesiredAngle(m_desiredWristAngle);
     if (m_runRollerScoring) {
       if (RobotState.getInstance().getDesiredReefHeight() == ReefHeight.L1) {
-        m_rollerIO.setVoltage(ManipulatorConstants.kRollerLowerScoringVoltage.get());
+        if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore) {
+          m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageAutoscore.get());
+        } else {
+          m_rollerIO.setVoltage(ManipulatorConstants.kRollerL1ScoringVoltageManual.get());
+        }
+      } else if (RobotState.getInstance().getDesiredReefHeight() == ReefHeight.L4) {
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerL4ScoringVoltage.get());
       } else {
-        m_rollerIO.setVoltage(ManipulatorConstants.kRollerUpperScoringVoltage.get());
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerL2L3ScoringVoltage.get());
       }
     } else {
       m_rollerIO.setVoltage(0.0);
@@ -235,7 +276,11 @@ public class Manipulator extends SubsystemBase {
   public void algaeHoldPeriodic() {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeHoldAngle.get()));
-    m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
+    if (m_runRollerBargeScoring) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerBargeVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
+    }
   }
 
   public void algaeOuttakePeriodic() {
@@ -264,6 +309,14 @@ public class Manipulator extends SubsystemBase {
 
   public void stopRollerAlgaeDescoring() {
     m_runRollerAlgaeDescoring = false;
+  }
+
+  public void runRollerBargeScoring() {
+    m_runRollerBargeScoring = true;
+  }
+
+  public void stopRollerBargeScoring() {
+    m_runRollerBargeScoring = false;
   }
 
   public ManipulatorState getStowOrHold() {

@@ -65,6 +65,20 @@ public class AutoFactory {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
             }));
 
+    NamedCommands.registerCommand(
+        "Left side",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setAutoSideLeft();
+            }));
+
+    NamedCommands.registerCommand(
+        "Right side",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setAutoSideRight();
+            }));
+
     new EventTrigger("Set Height L4")
         .onTrue(
             Commands.runOnce(

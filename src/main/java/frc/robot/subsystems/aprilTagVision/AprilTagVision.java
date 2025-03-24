@@ -20,6 +20,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIO.AprilTagVisionInputs;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +40,10 @@ public class AprilTagVision extends SubsystemBase {
   private Alert[] m_noReadingsAlerts;
 
   private boolean m_firstMeasurement = true;
+
+  private int m_autoAutoScoreMeasurements = 0;
+
+  private Timer m_alertDeadzoneTimer = new Timer();
 
   public AprilTagVision(AprilTagVisionIO... ios) {
     m_ios = ios;
@@ -67,6 +72,8 @@ public class AprilTagVision extends SubsystemBase {
       m_noReadingsAlerts[i] =
           new Alert(String.format("April Tag Vision %d: No Readings", i), AlertType.kError);
     }
+
+    m_alertDeadzoneTimer.start();
   }
 
   @Override
@@ -79,14 +86,25 @@ public class AprilTagVision extends SubsystemBase {
       Logger.processInputs("AprilTagVision/Inst" + i, m_inputs[i]);
     }
 
+    // if (RobotState.getInstance().getYawVelocity() > 1.0) {
+    //   Logger.recordOutput("AprilTagVision/TooFast", true);
+    //   return;
+    // }
+    // Logger.recordOutput("AprilTagVision/TooFast", false);
+
     List<Pose3d> allCameraPoses = new ArrayList<>();
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<Pose3d> allRobotPoses3d = new ArrayList<>();
     List<TimestampedVisionUpdate> allVisionUpdates = new ArrayList<>();
+    List<Pose3d> allSkippedPoses = new ArrayList<>();
+    List<Pose3d> allGod = new ArrayList<>();
     for (int instanceIndex = 0; instanceIndex < m_ios.length; instanceIndex++) {
       for (int frameIndex = 0;
-          frameIndex < m_inputs[instanceIndex].timestamps.length;
+          frameIndex < m_inputs[instanceIndex].timestamps.length && allRobotPoses.size() < 10;
           frameIndex++) {
+        if (m_inputs[instanceIndex].timestamps[frameIndex] == 0) {
+          continue;
+        }
         m_lastFrameTimes.put(instanceIndex, Timer.getFPGATimestamp());
         double timestamp = m_inputs[instanceIndex].timestamps[frameIndex];
 
@@ -115,28 +133,29 @@ public class AprilTagVision extends SubsystemBase {
             // No tag, do nothing
             continue;
           case 1:
+            continue;
             // One possible pose (multiple tags detected), can use directly
-            double translationX = values[2];
-            double translationY = values[3];
-            double translationZ = values[4];
-            double rotationW = values[5];
-            double rotationX = values[6];
-            double rotationY = values[7];
-            double rotationZ = values[8];
-            cameraPose =
-                new Pose3d(
-                    new Translation3d(translationX, translationY, translationZ),
-                    new Rotation3d(new Quaternion(rotationW, rotationX, rotationY, rotationZ)));
+            // double translationX = values[2];
+            // double translationY = values[3];
+            // double translationZ = values[4];
+            // double rotationW = values[5];
+            // double rotationX = values[6];
+            // double rotationY = values[7];
+            // double rotationZ = values[8];
+            // cameraPose =
+            //     new Pose3d(
+            //         new Translation3d(translationX, translationY, translationZ),
+            //         new Rotation3d(new Quaternion(rotationW, rotationX, rotationY, rotationZ)));
 
-            robotPose3d =
-                cameraPose.transformBy(
-                    AprilTagVisionConstants.kCameraTransforms[instanceIndex].inverse());
+            // robotPose3d =
+            //     cameraPose.transformBy(
+            //         AprilTagVisionConstants.kCameraTransforms[instanceIndex].inverse());
 
-            useVisionRotation = true;
+            // useVisionRotation = true;
 
-            error = values[1];
+            // error = values[1];
 
-            break;
+            // break;
           case 2:
             // Two possible poses (one tag detected), need to choose one
 
@@ -267,12 +286,45 @@ public class AprilTagVision extends SubsystemBase {
           Optional<Pose3d> tagPose = AprilTagVisionConstants.kAprilTagLayout.getTagPose(tagId);
           tagPose.ifPresent(tagPoses::add);
         }
+        Pose3d tagPose0 = tagPoses.get(0);
+        double distance = tagPose0.getTranslation().getDistance(cameraPose.getTranslation());
+        Logger.recordOutput(
+            "AprilTagVision/distance",
+            Math.abs(
+                RobotState.getInstance()
+                    .getRobotPose()
+                    .getRotation()
+                    .minus(robotPose.getRotation())
+                    .getDegrees()));
+        if (Math.abs(
+                    RobotState.getInstance()
+                        .getRobotPose()
+                        .getRotation()
+                        .minus(robotPose.getRotation())
+                        .getDegrees())
+                > 5
+            && distance > Units.inchesToMeters(50)) {
+          allSkippedPoses.add(robotPose3d);
+          continue;
+        }
+
+        double yawDifference =
+            Math.abs(
+                RobotState.getInstance()
+                    .getRobotPose()
+                    .getRotation()
+                    .minus(robotPose.getRotation())
+                    .getDegrees());
+
+        if (yawDifference < 0.5) {
+          allGod.add(robotPose3d);
+        }
 
         // if camera error low, distance to tag small, robot not moving, we can trust rotation
         // should only ever be single tag but leaving it in for now in case we switch
         if (!useVisionRotation) {
-          Pose3d tagPose = tagPoses.get(0);
-          double distance = tagPose.getTranslation().getDistance(cameraPose.getTranslation());
+          // Pose3d tagPose = tagPoses.get(0);
+          // double distance = tagPose.getTranslation().getDistance(cameraPose.getTranslation());
           ChassisSpeeds speeds = RobotState.getInstance().getRobotSpeeds();
           if (distance < AprilTagVisionConstants.kRotationDistanceThreshold
               && Math.abs(speeds.vxMetersPerSecond)
@@ -292,11 +344,17 @@ public class AprilTagVision extends SubsystemBase {
 
         // Add observation to list
         double xyStandardDeviation = 1;
-        xyStandardDeviation =
-            AprilTagVisionConstants.kXYStandardDeviationCoefficient.get()
-                // back to normal math
-                * Math.pow(averageDistance, 2.0)
-                / tagPoses.size();
+        if (averageDistance < Units.inchesToMeters(50)) {
+          xyStandardDeviation = 0.01;
+        } else {
+          xyStandardDeviation =
+              0.01
+                  // back to normal math
+                  * averageDistance
+                  / tagPoses.size();
+        }
+
+        // xyStandardDeviation *= yawDifference * 0.25 + 0.1;
 
         double thetaStandardDeviation = 1;
         if (RobotState.getInstance().getNumVisionGyroObservations() < 100) {
@@ -305,10 +363,7 @@ public class AprilTagVision extends SubsystemBase {
         }
 
         if (useVisionRotation) {
-          thetaStandardDeviation =
-              AprilTagVisionConstants.kThetaStandardDeviationCoefficient.get()
-                  * Math.pow(averageDistance, 2.0)
-                  / tagPoses.size();
+          thetaStandardDeviation = 0.05 * Math.pow(averageDistance, 2.0) / tagPoses.size();
         } else {
           thetaStandardDeviation = Double.POSITIVE_INFINITY;
         }
@@ -354,11 +409,18 @@ public class AprilTagVision extends SubsystemBase {
             "AprilTagVision/Inst" + instanceIndex + "/StandardDeviationTheta",
             thetaStandardDeviation);
 
+        // if (yawDifference < 0.5) {
+        //   allVisionUpdates.add(
+        //       new TimestampedVisionUpdate(timestamp, robotPose, VecBuilder.fill(0, 0, 0)));
+        // }
+        // if (DriverStation.isDisabled()) {
+
         allVisionUpdates.add(
             new TimestampedVisionUpdate(
                 timestamp,
                 robotPose,
                 VecBuilder.fill(xyStandardDeviation, xyStandardDeviation, thetaStandardDeviation)));
+        // }
         allRobotPoses.add(robotPose);
         allRobotPoses3d.add(robotPose3d);
 
@@ -383,6 +445,8 @@ public class AprilTagVision extends SubsystemBase {
     Logger.recordOutput("AprilTagVision/RobotPoses", allRobotPoses.toArray(Pose2d[]::new));
     Logger.recordOutput("AprilTagVision/RobotPoses3d", allRobotPoses3d.toArray(Pose3d[]::new));
     Logger.recordOutput("AprilTagVision/CameraPoses", allCameraPoses.toArray(Pose3d[]::new));
+    Logger.recordOutput("AprilTagVision/SkippedPoses", allSkippedPoses.toArray(Pose3d[]::new));
+    Logger.recordOutput("AprilTagVision/God", allGod.toArray(Pose3d[]::new));
 
     // Log tag poses
     List<Pose3d> allTagPoses = new ArrayList<>();
@@ -393,30 +457,54 @@ public class AprilTagVision extends SubsystemBase {
       }
     }
 
-    if (m_firstMeasurement) {
-      for (int i = 0; i < allVisionUpdates.size(); i++) {
-        var curr = allVisionUpdates.get(i);
-        curr = new TimestampedVisionUpdate(curr.timestamp(), curr.pose(), VecBuilder.fill(0, 0, 0));
-        allVisionUpdates.set(i, curr);
-      }
+    if (m_firstMeasurement && !allVisionUpdates.isEmpty()) {
+      // for (int i = 0; i < allVisionUpdates.size(); i++) {
+      //   var curr = allVisionUpdates.get(i);
+      //   curr = new TimestampedVisionUpdate(curr.timestamp(), curr.pose(), VecBuilder.fill(0, 0,
+      // 0));
+      //   allVisionUpdates.set(i, curr);
+      // }
+      Logger.recordOutput("AprilTagVision/First", allVisionUpdates.get(0).pose());
+      RobotState.getInstance().setDrivePose(allVisionUpdates.get(0).pose());
       m_firstMeasurement = false;
     }
 
     // Send to RobotState
     RobotState.getInstance().addTimestampedVisionObservations(allVisionUpdates);
 
-    if (Constants.kUseAlerts) {
-      // change initial to re-enable alerts for inst 0 and 1
-      for (int i = 2; i < m_noReadingsAlerts.length; i++) {
+    if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore) {
+      m_autoAutoScoreMeasurements += allVisionUpdates.size();
+      Logger.recordOutput("AprilTagVision/AutoAutoScoreMeasurements", m_autoAutoScoreMeasurements);
+    }
+
+    // TODO: tommy when you're doing AlertManager you can delete alertActive
+    boolean alertActive = false;
+    if (Constants.kUseAlerts && m_alertDeadzoneTimer.hasElapsed(20.0)) {
+      for (int i = 0; i < m_noReadingsAlerts.length; i++) {
         double lastTime = m_lastFrameTimes.get(i);
         double elapsed = Timer.getFPGATimestamp() - lastTime;
         if (elapsed > AprilTagVisionConstants.kDisconnectTimeout) {
           m_noReadingsAlerts[i].set(true);
-          RobotState.getInstance().triggerAlert();
+          alertActive = true;
+        } else {
+          m_noReadingsAlerts[i].set(false);
         }
       }
     }
+    if (alertActive) {
+      RobotState.getInstance().triggerAlert(true);
+    } else {
+      RobotState.getInstance().cancelAlert();
+    }
 
     Logger.recordOutput("PeriodicTime/AprilTagVision", (HALUtil.getFPGATime() - start) / 1000.0);
+  }
+
+  public int getAutoAutoScoreMeasurements() {
+    return m_autoAutoScoreMeasurements;
+  }
+
+  public void resetAutoAutoScoreMeasurements() {
+    m_autoAutoScoreMeasurements = 0;
   }
 }

@@ -4,6 +4,7 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -34,11 +35,19 @@ public class Climb extends SubsystemBase {
     m_io = io;
     m_inputs = new ClimbInputsAutoLogged();
 
-    m_io.setPID(
-        m_currSlot,
-        ClimbConstants.kClimbP.get(),
-        ClimbConstants.kClimbI.get(),
-        ClimbConstants.kClimbD.get());
+    if (RobotBase.isReal()) {
+      m_io.setPID(
+          m_currSlot,
+          ClimbConstants.kClimbP.get(),
+          ClimbConstants.kClimbI.get(),
+          ClimbConstants.kClimbD.get());
+    } else {
+      m_io.setPID(
+          m_currSlot,
+          ClimbConstants.kSimClimbP,
+          ClimbConstants.kSimClimbI,
+          ClimbConstants.kSimClimbD);
+    }
 
     // Create a map of periodic functions for each state, then make a SubsystemProfiles object
     Map<ClimbState, Runnable> periodicHash = new HashMap<>();
@@ -63,11 +72,15 @@ public class Climb extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_io.setPID(
-              m_currSlot,
-              ClimbConstants.kClimbP.get(),
-              ClimbConstants.kClimbI.get(),
-              ClimbConstants.kClimbD.get());
+          if (RobotBase.isReal()) {
+            m_io.setPID(
+                m_currSlot,
+                ClimbConstants.kClimbP.get(),
+                ClimbConstants.kClimbI.get(),
+                ClimbConstants.kClimbD.get());
+          } else {
+            m_io.setPID(m_currSlot, ClimbConstants.kSimClimbP, start, start);
+          }
         },
         ClimbConstants.kClimbP,
         ClimbConstants.kClimbI,
@@ -83,7 +96,7 @@ public class Climb extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.motorIsConnected) {
       m_motorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Climb", (HALUtil.getFPGATime() - start) / 1000.0);

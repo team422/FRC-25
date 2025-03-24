@@ -19,11 +19,11 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
   private static final int cameraResolutionWidth = 1600;
   private static final int cameraResolutionHeight = 1200;
   private static final int cameraAutoExposure = 1;
-  private static final int cameraExposure = 30;
-  private static final int cameraGain = 30;
-  private static final int cameraBrightness = 30;
-  private static final int cameraContrast = 47;
-  private static final int cameraGamma = 10;
+  private static final int cameraExposure = 10;
+  private static final int cameraGain = 80;
+  private static final int cameraBrightness = 10;
+  private static final int cameraContrast = 64;
+  private static final int cameraGamma = 80;
   // all non-ground tags
   private static final long[] tagIDBlacklist = new long[] {1, 2, 3, 4, 5, 12, 13, 14, 15, 16};
 
@@ -44,6 +44,8 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
     configTable.getIntegerTopic("camera_brightness").publish().set(cameraBrightness);
     configTable.getIntegerTopic("camera_contrast").publish().set(cameraContrast);
     configTable.getIntegerTopic("camera_gamma").publish().set(cameraGamma);
+    // TODO: we need to rethink this because if the code is not running, this will not work
+    configTable.getIntegerTopic("kys").publish().set(0);
     configTable
         .getDoubleTopic("fiducial_size_m")
         .publish()

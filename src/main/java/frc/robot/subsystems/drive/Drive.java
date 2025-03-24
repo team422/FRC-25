@@ -13,12 +13,17 @@
 
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -27,8 +32,10 @@ import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -38,6 +45,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.PoseEstimator;
@@ -46,8 +54,10 @@ import frc.lib.littletonUtils.SwerveSetpointGenerator;
 import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
+import frc.robot.util.BasicTrapezoid;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +83,7 @@ public class Drive extends SubsystemBase {
     kPathplanner,
     kAutoAlign,
     kDriveToPoint,
+    kCharacterization,
     kStop
   }
 
@@ -83,23 +94,38 @@ public class Drive extends SubsystemBase {
 
   private Rotation2d m_desiredHeading = new Rotation2d();
 
-  private ProfiledPIDController m_driveController =
-      new ProfiledPIDController(
+  private PIDController m_driveController =
+      new PIDController(
           DriveConstants.kDriveToPointP.get(),
           DriveConstants.kDriveToPointI.get(),
-          DriveConstants.kDriveToPointD.get(),
-          new TrapezoidProfile.Constraints(
-              DriveConstants.kMaxLinearSpeed, DriveConstants.kMaxLinearAcceleration));
+          DriveConstants.kDriveToPointD.get());
 
-  private ProfiledPIDController m_headingController =
-      new ProfiledPIDController(
+  private PIDController m_autoDriveController =
+      new PIDController(
+          DriveConstants.kDriveToPointAutoP.get(),
+          DriveConstants.kDriveToPointAutoI.get(),
+          DriveConstants.kDriveToPointAutoD.get());
+
+  private BasicTrapezoid m_driveTrapezoid =
+      new BasicTrapezoid(
+          MetersPerSecond.of(DriveConstants.kDriveToPointMaxVelocity.get()),
+          MetersPerSecondPerSecond.of(DriveConstants.kDriveToPointMaxAcceleration.get()),
+          MetersPerSecondPerSecond.of(DriveConstants.kDriveToPointMaxDeceleration.get()));
+
+  private PIDController m_headingController =
+      new PIDController(
           DriveConstants.kDriveToPointHeadingP.get(),
           DriveConstants.kDriveToPointHeadingI.get(),
-          DriveConstants.kDriveToPointHeadingD.get(),
-          new TrapezoidProfile.Constraints(
-              DriveConstants.kMaxAngularSpeed, DriveConstants.kMaxAngularAcceleration));
+          DriveConstants.kDriveToPointHeadingD.get());
 
-  private double m_ffMinRadius = 0.35, m_ffMaxRadius = 0.8;
+  private LoggedTunableNumber m_ffMinRadiusTeleop = new LoggedTunableNumber("Min FF Radius", 100.0);
+  private LoggedTunableNumber m_ffMaxRadiusTeleop = new LoggedTunableNumber("Max FF Radius", 100.0);
+  private LoggedTunableNumber m_ffMinRadiusAuto =
+      new LoggedTunableNumber("Min FF Radius Auto", 100.0);
+  private LoggedTunableNumber m_ffMaxRadiusAuto =
+      new LoggedTunableNumber("Max FF Radius Auto", 100.0);
+
+  private double m_desiredAcceleration = 0.0;
 
   private Pose2d m_driveToPointTargetPose = new Pose2d();
 
@@ -114,6 +140,8 @@ public class Drive extends SubsystemBase {
 
   private final PoseEstimator m_poseEstimator =
       new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
+  // private final PoseEstimator m_poseEstimatorNoSlowVision =
+  //     new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
 
   private SwerveSetpoint m_currSetpoint =
       new SwerveSetpoint(
@@ -125,10 +153,6 @@ public class Drive extends SubsystemBase {
             new SwerveModuleState()
           });
   private SwerveSetpointGenerator m_swerveSetpointGenerator;
-
-  private boolean m_enableDesiredChassisSpeeds =
-      true; // when we run characterization we want to disable all chassis speeds calculations until
-  // complete
 
   public Drive(
       GyroIO gyroIO,
@@ -167,6 +191,7 @@ public class Drive extends SubsystemBase {
     periodicHash.put(DriveProfiles.kPathplanner, this::pathplannerPeriodic);
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
     periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
+    periodicHash.put(DriveProfiles.kCharacterization, this::defaultPeriodic);
     periodicHash.put(DriveProfiles.kStop, this::stopPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, DriveProfiles.kDefault);
@@ -180,6 +205,7 @@ public class Drive extends SubsystemBase {
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     m_driveController.setTolerance(Units.inchesToMeters(0.5));
+    m_autoDriveController.setTolerance(Units.inchesToMeters(0.5));
     m_headingController.setTolerance(Units.degreesToRadians(1));
   }
 
@@ -196,13 +222,49 @@ public class Drive extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          m_headingController.setP(DriveConstants.kHeadingP.get());
-          m_headingController.setI(DriveConstants.kHeadingI.get());
-          m_headingController.setD(DriveConstants.kHeadingD.get());
+          m_headingController.setP(DriveConstants.kDriveToPointHeadingP.get());
+          m_headingController.setI(DriveConstants.kDriveToPointHeadingI.get());
+          m_headingController.setD(DriveConstants.kDriveToPointHeadingD.get());
         },
-        DriveConstants.kHeadingP,
-        DriveConstants.kHeadingI,
-        DriveConstants.kHeadingD);
+        DriveConstants.kDriveToPointHeadingP,
+        DriveConstants.kDriveToPointHeadingI,
+        DriveConstants.kDriveToPointHeadingD);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_driveController.setP(DriveConstants.kDriveToPointP.get());
+          m_driveController.setI(DriveConstants.kDriveToPointI.get());
+          m_driveController.setD(DriveConstants.kDriveToPointD.get());
+        },
+        DriveConstants.kDriveToPointP,
+        DriveConstants.kDriveToPointI,
+        DriveConstants.kDriveToPointD);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_autoDriveController.setP(DriveConstants.kDriveToPointAutoP.get());
+          m_autoDriveController.setI(DriveConstants.kDriveToPointAutoI.get());
+          m_autoDriveController.setD(DriveConstants.kDriveToPointAutoD.get());
+        },
+        DriveConstants.kDriveToPointAutoP,
+        DriveConstants.kDriveToPointAutoI,
+        DriveConstants.kDriveToPointAutoD);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_driveTrapezoid.setMaxVelocity(
+              MetersPerSecond.of(DriveConstants.kDriveToPointMaxVelocity.get()));
+          m_driveTrapezoid.setMaxAcceleration(
+              MetersPerSecondPerSecond.of(DriveConstants.kDriveToPointMaxAcceleration.get()));
+          m_driveTrapezoid.setMaxDeceleration(
+              MetersPerSecondPerSecond.of(DriveConstants.kDriveToPointMaxDeceleration.get()));
+        },
+        DriveConstants.kDriveToPointMaxVelocity,
+        DriveConstants.kDriveToPointMaxAcceleration,
+        DriveConstants.kDriveToPointMaxDeceleration);
 
     m_profiles.getPeriodicFunction().run();
 
@@ -272,6 +334,10 @@ public class Drive extends SubsystemBase {
       lastGyroYaw = m_rawGyroRotation;
     }
     m_poseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
+    // m_poseEstimatorNoSlowVision.addDriveData(Timer.getTimestamp(), totalTwist);
+
+    // Logger.recordOutput("VisionSlow/Pose", m_poseEstimatorNoSlowVision.getLatestPose());
+    // Logger.recordOutput("VisionSlow/Time", Timer.getTimestamp());
 
     // lets look for slip
     boolean slip = false;
@@ -292,27 +358,38 @@ public class Drive extends SubsystemBase {
           Math.abs(accel * m_modules[i].getDriveVelocity()));
     }
 
+    if (slip) {
+      RobotState.getInstance().registerSlip();
+    }
+
     Logger.recordOutput("Drive/Slip", slip);
 
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
 
     if (Constants.kUseAlerts && !m_gyroInputs.connected) {
       m_gyroDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert();
+      RobotState.getInstance().triggerAlert(false);
     }
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
+  public void characterizationPeriodic() {
+    Logger.recordOutput("Drive/DesiredHeading", m_desiredHeading.getDegrees());
+    Logger.recordOutput("Drive/CurrentHeading", getPose().getRotation().getDegrees());
+    Logger.recordOutput("Drive/DesiredSpeeds", new ChassisSpeeds());
+  }
+
   public void defaultPeriodic() {
-    if (m_enableDesiredChassisSpeeds) {
+    if (m_profiles.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
+      runVelocity(m_desiredChassisSpeeds, MetersPerSecondPerSecond.of(m_desiredAcceleration));
+    } else {
       runVelocity(m_desiredChassisSpeeds);
     }
 
     Logger.recordOutput("Drive/DesiredHeading", m_desiredHeading.getDegrees());
     Logger.recordOutput("Drive/CurrentHeading", getPose().getRotation().getDegrees());
     Logger.recordOutput("Drive/DesiredSpeeds", m_desiredChassisSpeeds);
-    Logger.recordOutput("Drive/EnableChassisSpeeds", m_enableDesiredChassisSpeeds);
   }
 
   public void pathplannerPeriodic() {
@@ -338,24 +415,9 @@ public class Drive extends SubsystemBase {
     runVelocity(new ChassisSpeeds());
   }
 
-  public void driveToPointPeriodic() {
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          m_driveController.setP(DriveConstants.kDriveToPointP.get());
-          m_driveController.setI(DriveConstants.kDriveToPointI.get());
-          m_driveController.setD(DriveConstants.kDriveToPointD.get());
-          m_headingController.setP(DriveConstants.kDriveToPointHeadingP.get());
-          m_headingController.setI(DriveConstants.kDriveToPointHeadingI.get());
-          m_headingController.setD(DriveConstants.kDriveToPointHeadingD.get());
-        },
-        DriveConstants.kDriveToPointP,
-        DriveConstants.kDriveToPointI,
-        DriveConstants.kDriveToPointD,
-        DriveConstants.kDriveToPointHeadingP,
-        DriveConstants.kDriveToPointHeadingI,
-        DriveConstants.kDriveToPointHeadingD);
+  private boolean m_hasNewTarget = false;
 
+  public void driveToPointPeriodic() {
     Pose2d currentPose = getPose();
 
     double currentDistance =
@@ -368,13 +430,31 @@ public class Drive extends SubsystemBase {
 
       return;
     }
+    ChassisSpeeds currSpeeds = getChassisSpeeds();
+    double currVelocity = Math.hypot(currSpeeds.vxMetersPerSecond, currSpeeds.vyMetersPerSecond);
+
+    double ffMinRadius =
+        DriverStation.isAutonomous() ? m_ffMinRadiusAuto.get() : m_ffMinRadiusTeleop.get();
+    double ffMaxRadius =
+        DriverStation.isAutonomous() ? m_ffMaxRadiusAuto.get() : m_ffMaxRadiusTeleop.get();
+
     double ffScaler =
-        MathUtil.clamp(
-            (currentDistance - m_ffMinRadius) / (m_ffMaxRadius - m_ffMinRadius), 0.0, 1.0);
-    double driveVelocityScalar =
-        m_driveController.getSetpoint().velocity * ffScaler
-            + m_driveController.calculate(currentDistance, 0.0);
-    if (currentDistance < m_driveController.getPositionTolerance()) {
+        MathUtil.clamp((currentDistance - ffMinRadius) / (ffMaxRadius - ffMinRadius), 0.0, 1.0);
+
+    var state =
+        m_driveTrapezoid.calculate(Meters.of(currentDistance), MetersPerSecond.of(currVelocity));
+    double trapVelocity = state.velocity();
+    double trapAccel = state.acceleration();
+
+    m_desiredAcceleration = trapAccel * ffScaler;
+
+    PIDController driveController =
+        DriverStation.isAutonomous() ? m_autoDriveController : m_driveController;
+
+    double driveVelocityScalar = -1 * trapVelocity * ffScaler;
+    double pidVelocity = driveController.calculate(currentDistance, 0.0) * (1 - ffScaler);
+    driveVelocityScalar += pidVelocity;
+    if (currentDistance < driveController.getErrorTolerance()) {
       driveVelocityScalar = 0.0;
     }
 
@@ -385,7 +465,7 @@ public class Drive extends SubsystemBase {
             currentPose.getRotation().getRadians(),
             m_driveToPointTargetPose.getRotation().getRadians());
 
-    if (Math.abs(headingError) < m_headingController.getPositionTolerance()) {
+    if (Math.abs(headingError) < m_headingController.getErrorTolerance()) {
       headingVelocity = 0.0;
     }
 
@@ -410,7 +490,14 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("DriveToPoint/TargetPose", m_driveToPointTargetPose);
     Logger.recordOutput("DriveToPoint/DriveDistance", currentDistance);
     Logger.recordOutput("DriveToPoint/HeadingError", headingError);
+    Logger.recordOutput(
+        "DriveToPoint/TargetTheta",
+        currentPose.getTranslation().minus(m_driveToPointTargetPose.getTranslation()).getAngle());
 
+    Logger.recordOutput("DriveToPoint/PIDVelocity", pidVelocity);
+    Logger.recordOutput("DriveToPoint/TrapezoidVelocity", trapVelocity);
+    Logger.recordOutput("DriveToPoint/TrapezoidAccel", trapAccel);
+    Logger.recordOutput("DriveToPoint/DriveVelocity", currVelocity);
     Logger.recordOutput("DriveToPoint/FFScaler", ffScaler);
     Logger.recordOutput("DriveToPoint/DriveVelocityScalar", driveVelocityScalar);
     Logger.recordOutput("DriveToPoint/HeadingVelocity", headingVelocity);
@@ -420,11 +507,20 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("DriveToPoint/DriveSpeeds", speeds);
 
     if (!DriverStation.isAutonomous()) {
-      if (m_driveController.atGoal() && m_headingController.atGoal()) {
+      if (driveToPointWithinTolerance()) {
         updateProfile(getDefaultProfile());
       }
     } else {
-      if (m_driveController.atGoal() && m_headingController.atGoal()) {
+      // TODO: hardcoded, debug later
+      if (driveToPointWithinTolerance()
+          && m_hasNewTarget
+          && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore
+              || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralOuttaking)
+          && getPose()
+                  .getTranslation()
+                  .getDistance(AllianceFlipUtil.apply(FieldConstants.Reef.kCenter))
+              < Units.inchesToMeters(72)) {
+        m_hasNewTarget = false;
         Commands.runOnce(
                 () -> {
                   updateProfile(DriveProfiles.kStop);
@@ -465,9 +561,10 @@ public class Drive extends SubsystemBase {
    * Runs the drive at the desired velocity.
    *
    * @param speeds Speeds in meters/sec
+   * @param accel Acceleration in meters/sec^2
    */
   @SuppressWarnings("unused")
-  public void runVelocity(ChassisSpeeds speeds) {
+  public void runVelocity(ChassisSpeeds speeds, LinearAcceleration accel) {
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
 
@@ -493,7 +590,7 @@ public class Drive extends SubsystemBase {
     SwerveModuleState[] setpointStatesOptimized = m_currSetpoint.moduleStates();
 
     for (int i = 0; i < 4; i++) {
-      m_modules[i].runSetpoint(setpointStates[i]);
+      m_modules[i].runSetpoint(setpointStates[i], accel);
     }
 
     // Log setpoint states
@@ -502,8 +599,17 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/ChassisSpeedsSetpoint", m_currSetpoint.chassisSpeeds());
   }
 
+  /**
+   * Runs the drive at the desired velocity.
+   *
+   * @param speeds Speeds in meters/sec
+   */
+  public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, MetersPerSecondPerSecond.of(0.0));
+  }
+
   public void setDesiredChassisSpeeds(ChassisSpeeds speeds) {
-    m_enableDesiredChassisSpeeds = true;
+    Logger.recordOutput("Drive/speed", speeds);
     m_desiredChassisSpeeds = speeds;
   }
 
@@ -526,11 +632,8 @@ public class Drive extends SubsystemBase {
   }
 
   public void setTargetPose(Pose2d pose) {
+    m_hasNewTarget = true;
     m_driveToPointTargetPose = pose;
-
-    if (m_profiles.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
-      driveToPointSetup();
-    }
   }
 
   public Pose2d getTargetPose() {
@@ -539,8 +642,7 @@ public class Drive extends SubsystemBase {
 
   /** Stops the drive. */
   public void stop() {
-    m_enableDesiredChassisSpeeds = false;
-    // runVelocity(new ChassisSpeeds());
+    updateProfile(DriveProfiles.kStop);
   }
 
   public void setCoast() {
@@ -560,7 +662,6 @@ public class Drive extends SubsystemBase {
    * return to their normal orientations the next time a nonzero velocity is requested.
    */
   public void stopWithX() {
-    m_enableDesiredChassisSpeeds = false;
     Rotation2d[] headings = new Rotation2d[4];
     for (int i = 0; i < 4; i++) {
       headings[i] = DriveConstants.kModuleTranslations[i].getAngle();
@@ -613,6 +714,7 @@ public class Drive extends SubsystemBase {
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
     m_poseEstimator.resetPose(pose);
+    // m_poseEstimatorNoSlowVision.resetPose(pose);
   }
 
   /**
@@ -621,15 +723,18 @@ public class Drive extends SubsystemBase {
    * @param observations The vision observations to add.
    */
   public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
+    // ChassisSpeeds speeds = getChassisSpeeds();
+    // if (Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond)
+    //     > DriveConstants.kVisionSpeedConstantK) {
+    //   // Logger.recordOutput("VisionSlow/IgnoringVision", false);
+    //   // m_poseEstimatorNoSlowVision.addVisionData(observations);
+    // } else {
+    //   // Logger.recordOutput("VisionSlow/IgnoringVision", true);
+    // }
     m_poseEstimator.addVisionData(observations);
   }
 
   public void updateProfile(DriveProfiles newProfile) {
-
-    if (newProfile == DriveProfiles.kDriveToPoint) {
-      driveToPointSetup();
-    }
-
     m_profiles.setCurrentProfile(newProfile);
   }
 
@@ -642,7 +747,7 @@ public class Drive extends SubsystemBase {
   }
 
   public boolean headingWithinTolerance() {
-    return Math.abs(m_headingController.getPositionError()) < Units.degreesToRadians(5);
+    return Math.abs(m_headingController.getError()) < Units.degreesToRadians(5);
   }
 
   public void setModuleCurrentLimits(double supplyLimit) {
@@ -657,7 +762,6 @@ public class Drive extends SubsystemBase {
 
   /** Runs the drive in a straight line with the specified drive output. */
   public void runCharacterization(double output) {
-    m_enableDesiredChassisSpeeds = false;
     for (int i = 0; i < 4; i++) {
       m_modules[i].runCharacterization(output);
     }
@@ -685,28 +789,29 @@ public class Drive extends SubsystemBase {
     return m_rawGyroRotation;
   }
 
-  private void driveToPointSetup() {
-    Pose2d currentPose = getPose();
+  public boolean driveToPointWithinTolerance() {
+    return driveToPointWithinTolerance(null, null);
+  }
 
-    ChassisSpeeds fieldRelative =
-        ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), currentPose.getRotation());
-    if (!(DriverStation.isAutonomous()
-        && RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking)) {
-      m_driveController.reset(
-          currentPose.getTranslation().getDistance(m_driveToPointTargetPose.getTranslation()),
-          Math.min(
-              0.0,
-              -new Translation2d(fieldRelative.vxMetersPerSecond, fieldRelative.vyMetersPerSecond)
-                  .rotateBy(
-                      m_driveToPointTargetPose
-                          .getTranslation()
-                          .minus(currentPose.getTranslation())
-                          .getAngle()
-                          .unaryMinus())
-                  .getX()));
-      m_desiredHeading = m_driveToPointTargetPose.getRotation();
-      m_headingController.reset(
-          currentPose.getRotation().getRadians(), fieldRelative.omegaRadiansPerSecond);
+  public boolean driveToPointWithinTolerance(Distance linearTolerance, Angle headingTolerance) {
+    if (linearTolerance == null) {
+      linearTolerance =
+          Meters.of(
+              DriverStation.isAutonomous()
+                  ? m_autoDriveController.getErrorTolerance()
+                  : m_driveController.getErrorTolerance());
     }
+    if (headingTolerance == null) {
+      headingTolerance = Radians.of(m_headingController.getErrorTolerance());
+    }
+    return m_profiles.getCurrentProfile() != DriveProfiles.kDriveToPoint
+        || (m_driveToPointTargetPose.getTranslation().getDistance(getPose().getTranslation())
+                < linearTolerance.in(Meters)
+            && m_driveToPointTargetPose.getRotation().minus(getRotation()).getMeasure().abs(Degrees)
+                < headingTolerance.in(Degrees));
+  }
+
+  public double getYawVelocity() {
+    return m_gyroInputs.yawVelocityRadPerSec;
   }
 }

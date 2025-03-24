@@ -231,6 +231,11 @@ public class ElevatorIOKraken implements ElevatorIO {
   }
 
   @Override
+  public boolean atSetpoint(double tolerance) {
+    return Math.abs(m_leadingPosition.getValueAsDouble() - m_desiredHeight) <= tolerance;
+  }
+
+  @Override
   public double getCurrHeight() {
     return m_leadingPosition.getValueAsDouble();
   }
