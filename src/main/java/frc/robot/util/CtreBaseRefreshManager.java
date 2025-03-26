@@ -2,8 +2,10 @@ package frc.robot.util;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
+import edu.wpi.first.hal.HALUtil;
 import java.util.ArrayList;
 import java.util.List;
+import org.littletonrobotics.junction.Logger;
 
 public class CtreBaseRefreshManager {
   // this is a static class and may not be instantiated
@@ -16,11 +18,16 @@ public class CtreBaseRefreshManager {
    * CommandScheduler.getInstance().run()} in the robot periodic to work properly.
    */
   public static void updateAll() {
+    double start = HALUtil.getFPGATime();
     // convert to array for the varargs
     if (m_signals.isEmpty()) {
       return;
     }
-    BaseStatusSignal.refreshAll(m_signals.stream().toArray(StatusSignal[]::new));
+    var status = BaseStatusSignal.refreshAll(m_signals.stream().toArray(StatusSignal[]::new));
+    Logger.recordOutput("CtreBaseRefreshManager/StatusCode", status);
+    Logger.recordOutput("CtreBaseRefreshManager/RegisteredSignals", m_signals.size());
+    Logger.recordOutput(
+        "PeriodicTime/CtreBaseRefreshManager", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public static void addSignals(List<StatusSignal<?>> signals) {

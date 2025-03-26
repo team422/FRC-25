@@ -5,11 +5,15 @@ import org.littletonrobotics.junction.AutoLog;
 public interface CoralDetectorIO {
   @AutoLog
   public static class CoralDetectorInputs {
-    public boolean sensorOne;
-    public boolean sensorTwo;
+    public boolean manipulatorSensorOne;
+    public boolean manipulatorSensorTwo;
+    public boolean funnelSensorOne;
+    public boolean funnelSensorTwo;
   }
 
   public void updateInputs(CoralDetectorInputs inputs);
 
   public boolean hasGamePiece();
+
+  public boolean gamePieceInFunnel();
 }

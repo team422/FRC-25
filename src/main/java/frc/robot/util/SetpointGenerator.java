@@ -10,10 +10,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
-import frc.robot.RobotState;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
+import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
@@ -70,7 +70,7 @@ public class SetpointGenerator {
    * @param reefHeight The height of the reef to score on. Using the reef height enum to avoid
    *     confusion with indices.
    * @param autoScore Whether or not the robot is currently trying to autoscore. This changes the
-   *    manipulator angle and elevator height for L1 to score on the side instead of the middle.
+   *     manipulator angle and elevator height for L1 to score on the side instead of the middle.
    * @return A RobotSetpoint object with the desired pose, manipulator angle, and elevator height.
    */
   public static RobotSetpoint generate(int reefIndex, ReefHeight reefHeight, boolean autoScore) {
@@ -94,25 +94,25 @@ public class SetpointGenerator {
                     ? kDriveYL1Offset * ((reefIndex % 2 == 0) ? 1 : -1)
                     : kDriveYOffset * ((reefIndex % 2 == 0) ? 1 : -1),
                 (reefHeight == ReefHeight.L1)
-                    ? Rotation2d.fromDegrees(
-                        180).plus(kRotationL1.times((reefIndex % 2 == 0) ? -1 : 1))
+                    ? Rotation2d.fromDegrees(180)
+                        .plus(kRotationL1.times((reefIndex % 2 == 0) ? -1 : 1))
                     : Rotation2d.fromDegrees(180)));
 
     var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
-    if (RobotState.getInstance() != null && reefHeight == ReefHeight.L1
+    if (RobotState.getInstance() != null
+        && reefHeight == ReefHeight.L1
         && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-            || RobotState.getInstance().getCurrentAction()
-                == RobotAction.kAutoAutoScore)) {
+            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
       manipulatorAngle = kManipulatorL1Autoscore.get();
-      }
+    }
 
     var elevatorHeight = kElevatorHeights.get(reefHeight).get();
-      if (RobotState.getInstance() != null && reefHeight == ReefHeight.L1
-          && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-              || RobotState.getInstance().getCurrentAction()
-                  == RobotAction.kAutoAutoScore)) {
-        elevatorHeight = kElevatorL1Autoscore.get();
-      }
+    if (RobotState.getInstance() != null
+        && reefHeight == ReefHeight.L1
+        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+      elevatorHeight = kElevatorL1Autoscore.get();
+    }
 
     return new RobotSetpoint(
         drivePoseFinal, Rotation2d.fromDegrees(manipulatorAngle), elevatorHeight);

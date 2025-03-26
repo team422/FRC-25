@@ -23,7 +23,6 @@ import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.RobotState;
@@ -118,7 +117,7 @@ public class Module {
     m_io.setTurnPosition(state.angle);
   }
 
-  /** */
+  /** Runs the module with the specified state and acceleration */
   public void runSetpoint(SwerveModuleState state, LinearAcceleration accel) {
     state.optimize(getAngle());
 
@@ -127,9 +126,11 @@ public class Module {
         Math.signum(speedRadPerSec)
             * accel.in(MetersPerSecondPerSecond)
             / DriveConstants.kWheelRadius;
+    double nextSpeedRadPerSec = m_inputs.driveVelocityRadPerSec + accelRadPerSec * 0.02;
 
     m_io.setDriveVelocity(
-        speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec, accelRadPerSec));
+        speedRadPerSec,
+        m_driveFeedforward.calculateWithVelocities(speedRadPerSec, nextSpeedRadPerSec));
     m_io.setTurnPosition(state.angle);
   }
 
@@ -139,13 +140,11 @@ public class Module {
     m_io.setTurnPosition(new Rotation2d());
 
     // Open loop drive control
-    Logger.recordOutput("Module/character", Timer.getFPGATimestamp());
     m_io.setDriveRawOutput(output);
   }
 
   /** Disables all outputs to motors. */
   public void stop() {
-    Logger.recordOutput("Module/stop", Timer.getFPGATimestamp());
     m_io.setDriveRawOutput(0.0);
     m_io.setTurnRawOutput(0.0);
   }

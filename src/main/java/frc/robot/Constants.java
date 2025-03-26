@@ -39,7 +39,7 @@ import java.util.Map;
 public final class Constants {
   public static final boolean kTuningMode = true;
 
-  public static final Mode kRealMode = Mode.REAL;
+  public static final Mode kRealMode = Mode.PROTO;
   public static final Mode kSimMode = Mode.SIM;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
@@ -681,15 +681,12 @@ public final class Constants {
     public static final LoggedTunableNumber kWristAlgaeOuttakeAngle =
         new LoggedTunableNumber("Wrist Algae Outtake Angle", 0.0);
 
-    public static final LoggedTunableNumber kRollerAlgaeCurrentThreshold =
-        new LoggedTunableNumber("Roller Algae Current Threshold", 2.0);
-    public static final LoggedTunableNumber kRollerAlgaeAccelerationThreshold =
-        new LoggedTunableNumber("Roller Algae Acceleration Threshold", -5);
-
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
         new LoggedTunableNumber("Manipulator Roller Intake Voltage", 5.0);
+    public static final LoggedTunableNumber kRollerIndexingVoltage =
+        new LoggedTunableNumber("Manipulator Roller Intake Voltage", 2.0);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageAutoscore =
         new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Autoscore", 3.0);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageManual =
@@ -823,8 +820,10 @@ public final class Constants {
     public static final int kManipulatorRoller = 29;
     public static final int kManipulatorWrist = 30;
     public static final int kManipulatorAbsoluteEncoder = 8;
-    public static final int kPhotoElectricOne = 6;
-    public static final int kPhotoElectricTwo = 7;
+    public static final int kManipulatorPhotoElectricOne = 6;
+    public static final int kManipulatorPhotoElectricTwo = 7;
+    public static final int kFunnelPhotoElectricOne = 4;
+    public static final int kFunnelPhotoElectricTwo = 5;
 
     public static final int kIndexerMotor = 25;
 
@@ -838,12 +837,12 @@ public final class Constants {
 
   /** Whether or not subsystems are enabled on the proto board */
   public static final class ProtoConstants {
-    public static final boolean kRealDrive = false;
-    public static final boolean kRealIntake = false;
+    public static final boolean kRealDrive = true;
+    public static final boolean kRealIntake = true;
     public static final boolean kRealIndexer = true;
     public static final boolean kRealManipulator = true;
     public static final boolean kRealClimb = false;
-    public static final boolean kRealElevator = true;
+    public static final boolean kRealElevator = false;
   }
 
   public class FieldConstants {

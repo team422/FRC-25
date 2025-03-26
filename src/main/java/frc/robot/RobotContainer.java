@@ -123,7 +123,11 @@ public class RobotContainer {
             new Manipulator(
                 new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
                 new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
-                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                new CoralDetectorIOPhotoelectric(
+                    Ports.kManipulatorPhotoElectricOne,
+                    Ports.kManipulatorPhotoElectricTwo,
+                    Ports.kFunnelPhotoElectricOne,
+                    Ports.kFunnelPhotoElectricTwo));
         // new ManipulatorRollerIOReplay(), new WristIOReplay(), new CoralDetectorIOReplay());
 
         m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
@@ -175,14 +179,20 @@ public class RobotContainer {
                   new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
                   new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
                   new CoralDetectorIOPhotoelectric(
-                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                      Ports.kManipulatorPhotoElectricOne,
+                      Ports.kManipulatorPhotoElectricTwo,
+                      Ports.kFunnelPhotoElectricOne,
+                      Ports.kFunnelPhotoElectricTwo));
         } else {
           m_manipulator =
               new Manipulator(
                   new ManipulatorRollerIOSim(),
                   new WristIOSim(),
                   new CoralDetectorIOPhotoelectric(
-                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                      Ports.kManipulatorPhotoElectricOne,
+                      Ports.kManipulatorPhotoElectricTwo,
+                      Ports.kFunnelPhotoElectricOne,
+                      Ports.kFunnelPhotoElectricTwo));
         }
 
         if (ProtoConstants.kRealClimb) {
@@ -217,7 +227,11 @@ public class RobotContainer {
             new Manipulator(
                 new ManipulatorRollerIOSim(),
                 new WristIOSim(),
-                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                new CoralDetectorIOPhotoelectric(
+                    Ports.kManipulatorPhotoElectricOne,
+                    Ports.kManipulatorPhotoElectricTwo,
+                    Ports.kFunnelPhotoElectricOne,
+                    Ports.kFunnelPhotoElectricTwo));
 
         m_climb = new Climb(new ClimbIOSim());
 

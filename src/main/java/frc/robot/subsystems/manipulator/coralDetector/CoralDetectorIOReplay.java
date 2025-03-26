@@ -8,4 +8,8 @@ public class CoralDetectorIOReplay implements CoralDetectorIO {
   public boolean hasGamePiece() {
     return false;
   }
+
+  public boolean gamePieceInFunnel() {
+    return false;
+  }
 }

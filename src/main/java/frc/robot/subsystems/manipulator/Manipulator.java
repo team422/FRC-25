@@ -1,10 +1,7 @@
 package frc.robot.subsystems.manipulator;
 
-import static edu.wpi.first.units.Units.Degrees;
-
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -196,14 +193,6 @@ public class Manipulator extends SubsystemBase {
     m_runRollerAlgaeDescoring = true;
     m_runRollerBargeScoring = false;
 
-    if (state == ManipulatorState.kIndexing) {
-      // set it some amount forward
-      Angle currPosition = m_rollerIO.getPosition();
-      currPosition =
-          currPosition.plus(Degrees.of(ManipulatorConstants.kRollerIndexingPosition.get()));
-      m_rollerIO.setDesiredPosition(currPosition);
-    }
-
     m_profiles.setCurrentProfile(state);
   }
 
@@ -230,7 +219,6 @@ public class Manipulator extends SubsystemBase {
     // if the indexer isn't running then the elevator and manipulator aren't both in position yet
     // so we don't want to intake yet
     if (m_coralDetectorIO.hasGamePiece()) {
-      // m_rollerIO.setVoltage(0.0);
       updateState(ManipulatorState.kIndexing);
     } else if (RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
       m_rollerIO.setVoltage(0.0);
@@ -240,6 +228,11 @@ public class Manipulator extends SubsystemBase {
   }
 
   public void indexingPeriodic() {
+    if (m_coralDetectorIO.gamePieceInFunnel()) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerIndexingVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(0.0);
+    }
     m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
   }
 
