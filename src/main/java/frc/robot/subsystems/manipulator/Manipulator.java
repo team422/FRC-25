@@ -20,6 +20,7 @@ import frc.robot.subsystems.manipulator.roller.ManipulatorRollerIO;
 import frc.robot.subsystems.manipulator.roller.ManipulatorRollerInputsAutoLogged;
 import frc.robot.subsystems.manipulator.wrist.WristIO;
 import frc.robot.subsystems.manipulator.wrist.WristInputsAutoLogged;
+import frc.robot.util.AlertManager;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -102,6 +103,8 @@ public class Manipulator extends SubsystemBase {
           ManipulatorConstants.kSimRollerD,
           0.0);
     }
+
+    AlertManager.registerAlert(m_wristMotorDisconnectedAlert, m_rollerMotorDisconnectedAlert);
   }
 
   @Override
@@ -172,12 +175,14 @@ public class Manipulator extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_rollerMotorDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_wristInputs.motorIsConnected) {
       m_wristMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_wristMotorDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);

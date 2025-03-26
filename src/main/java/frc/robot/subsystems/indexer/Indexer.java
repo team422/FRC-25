@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.IndexerConstants;
-import frc.robot.RobotState;
+import frc.robot.util.AlertManager;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +37,8 @@ public class Indexer extends SubsystemBase {
     periodicHash.put(IndexerState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IndexerState.kIdle);
+
+    AlertManager.registerAlert(m_motorDisconnectedAlert);
   }
 
   public void updateState(IndexerState state) {
@@ -68,7 +70,8 @@ public class Indexer extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.motorIsConnected) {
       m_motorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_motorDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Indexer", (HALUtil.getFPGATime() - start) / 1000.0);

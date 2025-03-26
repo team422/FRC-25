@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.util.AlertManager;
 import frc.robot.util.CtreBaseRefreshManager;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -78,6 +79,8 @@ public class Robot extends LoggedRobot {
 
     // Set up robot container
     m_robotContainer = new RobotContainer();
+
+    AlertManager.registerAlert(m_writerAlert);
   }
 
   /** This function is called periodically during all modes. */
@@ -97,7 +100,6 @@ public class Robot extends LoggedRobot {
       e.printStackTrace();
     }
     if (isOpen == false) {
-      RobotState.getInstance().triggerAlert(false);
       m_writerAlert.set(true);
     } else {
       m_writerAlert.set(false);
@@ -106,6 +108,8 @@ public class Robot extends LoggedRobot {
     RobotState.getInstance().updateRobotState();
 
     CommandScheduler.getInstance().run();
+
+    AlertManager.update();
   }
 
   /** This function is called once when the robot is disabled. */

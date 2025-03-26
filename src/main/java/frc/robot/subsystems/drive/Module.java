@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.RobotState;
+import frc.robot.util.AlertManager;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
@@ -65,6 +65,9 @@ public class Module {
         new Alert(String.format("Turn %d Disconnect", m_index), AlertType.kError);
     m_canCoderDisconnectedAlert =
         new Alert(String.format("Cancoder %d Disconnect", m_index), AlertType.kError);
+
+    AlertManager.registerAlert(
+        m_turnDisconnectedAlert, m_driveDisconnectedAlert, m_canCoderDisconnectedAlert);
   }
 
   /**
@@ -93,17 +96,20 @@ public class Module {
 
     if (Constants.kUseAlerts && !m_inputs.driveMotorIsConnected) {
       m_driveDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_driveDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.turnMotorIsConnected) {
       m_turnDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_turnDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.turnEncoderIsConnected) {
       m_canCoderDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_canCoderDisconnectedAlert.set(false);
     }
   }
 

@@ -15,6 +15,7 @@ import frc.robot.subsystems.intake.pivot.PivotInputsAutoLogged;
 import frc.robot.subsystems.intake.roller.IntakeRollerIO;
 import frc.robot.subsystems.intake.roller.IntakeRollerInputsAutoLogged;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.AlertManager;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,6 +70,8 @@ public class Intake extends SubsystemBase {
       m_pivotIO.setPIDFF(
           IntakeConstants.kPivotSimP, IntakeConstants.kPivotSimI, IntakeConstants.kPivotSimD, 0, 0);
     }
+
+    AlertManager.registerAlert(m_pivotMotorDisconnectedAlert, m_rollerMotorDisconnectedAlert);
   }
 
   public void updateState(IntakeState state) {
@@ -124,12 +127,14 @@ public class Intake extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_rollerMotorDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_pivotInputs.motorIsConnected) {
       m_pivotMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_pivotMotorDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Intake", (HALUtil.getFPGATime() - start) / 1000.0);

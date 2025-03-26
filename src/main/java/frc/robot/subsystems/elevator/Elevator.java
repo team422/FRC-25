@@ -14,6 +14,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.AlertManager;
 import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -110,6 +111,8 @@ public class Elevator extends SubsystemBase {
         ElevatorConstants.kMagicMotionCruiseVelocity.get(),
         ElevatorConstants.kMagicMotionAcceleration.get(),
         ElevatorConstants.kMagicMotionJerk.get());
+
+    AlertManager.registerAlert(m_leadingMotorDisconnectedAlert, m_followingMotorDisconnectedAlert);
   }
 
   @Override
@@ -216,12 +219,14 @@ public class Elevator extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.isLeadingMotorConnected) {
       m_leadingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_leadingMotorDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.isFollowingMotorConnected) {
       m_followingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_followingMotorDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);

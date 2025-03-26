@@ -162,21 +162,12 @@ public class RobotState {
     return m_instance;
   }
 
-  // TODO: replace with AlertManager
-  private boolean m_miscAlertActive = false;
-
-  public void triggerAlert(boolean fromVision) {
+  public void triggerAlert() {
     m_led.updateState(LedState.kAlert);
-    if (!fromVision) {
-      m_miscAlertActive = true;
-    }
   }
 
   public void cancelAlert() {
-    // this is only from vision
-    if (!m_miscAlertActive) {
-      m_led.cancelAlert();
-    }
+    m_led.cancelAlert();
   }
 
   public boolean getClimbAtSetpoint() {

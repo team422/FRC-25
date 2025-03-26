@@ -57,6 +57,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
+import frc.robot.util.AlertManager;
 import frc.robot.util.BasicTrapezoid;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -207,6 +208,8 @@ public class Drive extends SubsystemBase {
     m_driveController.setTolerance(Units.inchesToMeters(0.5));
     m_autoDriveController.setTolerance(Units.inchesToMeters(0.5));
     m_headingController.setTolerance(Units.degreesToRadians(1));
+
+    AlertManager.registerAlert(m_gyroDisconnectedAlert);
   }
 
   public void periodic() {
@@ -368,7 +371,8 @@ public class Drive extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_gyroInputs.connected) {
       m_gyroDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_gyroDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
