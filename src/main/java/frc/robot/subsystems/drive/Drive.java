@@ -22,6 +22,7 @@ import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -58,6 +59,8 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.util.BasicTrapezoid;
+import frc.robot.util.MeshedDrivingController;
+import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.List;
@@ -84,6 +87,7 @@ public class Drive extends SubsystemBase {
     kAutoAlign,
     kDriveToPoint,
     kCharacterization,
+    kMeshedUserControls,
     kStop
   }
 
@@ -96,9 +100,7 @@ public class Drive extends SubsystemBase {
 
   private PIDController m_driveController =
       new PIDController(
-          DriveConstants.kDriveToPointP.get(),
-          DriveConstants.kDriveToPointI.get(),
-          DriveConstants.kDriveToPointD.get());
+          DriveConstants.kDriveToPointP.get(), DriveConstants.kDriveToPointI.get(), 0.0);
 
   private PIDController m_autoDriveController =
       new PIDController(
@@ -127,7 +129,7 @@ public class Drive extends SubsystemBase {
 
   private double m_desiredAcceleration = 0.0;
 
-  private Pose2d m_driveToPointTargetPose = new Pose2d();
+  private Pose2d m_driveToPointTargetPose = null;
 
   private Rotation2d m_rawGyroRotation = new Rotation2d();
   private SwerveModulePosition[] m_lastModulePositions = // For delta tracking
@@ -153,6 +155,10 @@ public class Drive extends SubsystemBase {
             new SwerveModuleState()
           });
   private SwerveSetpointGenerator m_swerveSetpointGenerator;
+
+  private MeshedDrivingController m_meshedController;
+
+  private ChassisSpeeds m_userChassisSpeeds;
 
   public Drive(
       GyroIO gyroIO,
@@ -192,6 +198,7 @@ public class Drive extends SubsystemBase {
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
     periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
     periodicHash.put(DriveProfiles.kCharacterization, this::defaultPeriodic);
+    periodicHash.put(DriveProfiles.kMeshedUserControls, this::meshedUserControlsPeriodic);
     periodicHash.put(DriveProfiles.kStop, this::stopPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, DriveProfiles.kDefault);
@@ -405,6 +412,32 @@ public class Drive extends SubsystemBase {
     defaultPeriodic();
   }
 
+  public void meshedUserControlsPeriodic() {
+    m_desiredChassisSpeeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            m_meshedController.calculateSpeeds(
+                ChassisSpeeds.fromRobotRelativeSpeeds(m_userChassisSpeeds, getRotation()),
+                getPose()),
+            getRotation());
+
+    defaultPeriodic();
+    if (RobotState.getInstance().getCurrentAction() == RobotAction.kCoralIntaking) {
+      LoggedTunableNumber.ifChanged(
+          hashCode(),
+          () -> {
+            m_meshedController.setPIDControllers(
+                DriveConstants.kDriveToIntakeP.get(),
+                DriveConstants.kDriveToIntakeD.get(),
+                DriveConstants.kDriveToIntakeThetaP.get(),
+                DriveConstants.kDriveToIntakeThetaD.get());
+          },
+          DriveConstants.kDriveToIntakeP,
+          DriveConstants.kDriveToIntakeD,
+          DriveConstants.kDriveToIntakeThetaP,
+          DriveConstants.kDriveToIntakeThetaD);
+    }
+  }
+
   public void autoAlignPeriodic() {
     m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
 
@@ -611,6 +644,7 @@ public class Drive extends SubsystemBase {
   public void setDesiredChassisSpeeds(ChassisSpeeds speeds) {
     Logger.recordOutput("Drive/speed", speeds);
     m_desiredChassisSpeeds = speeds;
+    m_userChassisSpeeds = speeds;
   }
 
   public void setDesiredAutoChassisSpeeds(ChassisSpeeds speeds) {
@@ -736,11 +770,36 @@ public class Drive extends SubsystemBase {
 
   public void updateProfile(DriveProfiles newProfile) {
     m_profiles.setCurrentProfile(newProfile);
+    if (newProfile == DriveProfiles.kDriveToPoint) {
+      driveToPointPeriodic();
+      // m_driveController.reset();
+      // m_driveController.getErrorDerivative());
+      // m_headingController.reset();
+    }
+
+    if (newProfile == DriveProfiles.kMeshedUserControls) {
+      // if (RobotState.getInstance().getCurrentAction() == RobotAction.kCoralIntaking) {
+      Pair<Pose2d, List<Double>> desPose = SetpointGenerator.generateNearestIntake(getPose());
+      m_meshedController =
+          new MeshedDrivingController(
+              desPose.getFirst(), true, DriveConstants.kDebounceAmount.get(), 0.3);
+      m_meshedController.setPIDControllers(
+          DriveConstants.kDriveToIntakeP.get(),
+          DriveConstants.kDriveToIntakeD.get(),
+          DriveConstants.kDriveToIntakeThetaP.get(),
+          DriveConstants.kDriveToIntakeThetaD.get());
+      m_meshedController.setAxisLocked(
+          desPose.getSecond().get(0),
+          desPose.getSecond().get(1),
+          desPose.getSecond().get(2),
+          desPose.getSecond().get(3));
+      // }
+    }
   }
 
   public DriveProfiles getDefaultProfile() {
     if (DriverStation.isAutonomous()) {
-      return DriveProfiles.kPathplanner;
+      return DriveProfiles.kDriveToPoint;
     } else {
       return DriveProfiles.kDefault;
     }

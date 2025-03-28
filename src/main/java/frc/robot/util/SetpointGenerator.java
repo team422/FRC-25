@@ -10,11 +10,12 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
-import frc.robot.RobotState;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
+import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
+import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
@@ -46,6 +47,19 @@ public class SetpointGenerator {
   private static final double kDriveXOffsetFinalAlgae =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(13.0);
 
+  private static List<Pose2d> kIntakePositionsRed =
+      List.of(
+          new Pose2d(1., 0.96, Rotation2d.fromDegrees(-60)),
+          new Pose2d(1., 6.1, Rotation2d.fromDegrees(60)));
+  private static List<List<Double>> kIntakePositionsRedAngles =
+      List.of(List.of(-.714, 0.0, 2.0, 1.6), List.of(.714, 6.7, 7.7, 1.6));
+  private static List<Pose2d> kIntakePositionsBlue =
+      List.of(
+          new Pose2d(1., 0.96, Rotation2d.fromDegrees(49)),
+          new Pose2d(1., 6.1, Rotation2d.fromDegrees(-49)));
+  private static List<List<Double>> kIntakePositionsBlueAngles =
+      List.of(List.of(-.714, 0.0, 2.0, 1.6), List.of(.714, 0.0, 2.0, 1.6));
+
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
   private static final double kDriveYOffset = Units.inchesToMeters(6.469);
@@ -70,7 +84,7 @@ public class SetpointGenerator {
    * @param reefHeight The height of the reef to score on. Using the reef height enum to avoid
    *     confusion with indices.
    * @param autoScore Whether or not the robot is currently trying to autoscore. This changes the
-   *    manipulator angle and elevator height for L1 to score on the side instead of the middle.
+   *     manipulator angle and elevator height for L1 to score on the side instead of the middle.
    * @return A RobotSetpoint object with the desired pose, manipulator angle, and elevator height.
    */
   public static RobotSetpoint generate(int reefIndex, ReefHeight reefHeight, boolean autoScore) {
@@ -94,25 +108,25 @@ public class SetpointGenerator {
                     ? kDriveYL1Offset * ((reefIndex % 2 == 0) ? 1 : -1)
                     : kDriveYOffset * ((reefIndex % 2 == 0) ? 1 : -1),
                 (reefHeight == ReefHeight.L1)
-                    ? Rotation2d.fromDegrees(
-                        180).plus(kRotationL1.times((reefIndex % 2 == 0) ? -1 : 1))
+                    ? Rotation2d.fromDegrees(180)
+                        .plus(kRotationL1.times((reefIndex % 2 == 0) ? -1 : 1))
                     : Rotation2d.fromDegrees(180)));
 
     var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
-    if (RobotState.getInstance() != null && reefHeight == ReefHeight.L1
+    if (RobotState.getInstance() != null
+        && reefHeight == ReefHeight.L1
         && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-            || RobotState.getInstance().getCurrentAction()
-                == RobotAction.kAutoAutoScore)) {
+            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
       manipulatorAngle = kManipulatorL1Autoscore.get();
-      }
+    }
 
     var elevatorHeight = kElevatorHeights.get(reefHeight).get();
-      if (RobotState.getInstance() != null && reefHeight == ReefHeight.L1
-          && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-              || RobotState.getInstance().getCurrentAction()
-                  == RobotAction.kAutoAutoScore)) {
-        elevatorHeight = kElevatorL1Autoscore.get();
-      }
+    if (RobotState.getInstance() != null
+        && reefHeight == ReefHeight.L1
+        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+      elevatorHeight = kElevatorL1Autoscore.get();
+    }
 
     return new RobotSetpoint(
         drivePoseFinal, Rotation2d.fromDegrees(manipulatorAngle), elevatorHeight);
@@ -313,6 +327,24 @@ public class SetpointGenerator {
         centerFacePose.transformBy(
             new Transform2d(kDriveXOffset, 0.0, Rotation2d.fromDegrees(180)));
     return drivePoseFinal;
+  }
+
+  public static Pair<Pose2d, List<Double>> generateNearestIntake(Pose2d curPose) {
+    if (DriverStation.getAlliance().get() == Alliance.Red) {
+      if (curPose.getTranslation().getDistance(kIntakePositionsRed.get(0).getTranslation())
+          < curPose.getTranslation().getDistance(kIntakePositionsRed.get(1).getTranslation())) {
+        return Pair.of(kIntakePositionsRed.get(0), kIntakePositionsRedAngles.get(0));
+      } else {
+        return Pair.of(kIntakePositionsRed.get(1), kIntakePositionsRedAngles.get(1));
+      }
+    } else {
+      if (curPose.getTranslation().getDistance(kIntakePositionsBlue.get(0).getTranslation())
+          < curPose.getTranslation().getDistance(kIntakePositionsBlue.get(1).getTranslation())) {
+        return Pair.of(kIntakePositionsBlue.get(0), kIntakePositionsBlueAngles.get(0));
+      } else {
+        return Pair.of(kIntakePositionsBlue.get(1), kIntakePositionsBlueAngles.get(1));
+      }
+    }
   }
 
   public static Pose2d generateAlgaeFinal(int algaeIndex) {
