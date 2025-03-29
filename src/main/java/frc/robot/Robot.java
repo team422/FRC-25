@@ -122,6 +122,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     RobotState.getInstance().setSelectedAuto(m_robotContainer.getSelectedAuto());
+    RobotState.getInstance().calculateDriveTargetPose();
   }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */

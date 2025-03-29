@@ -315,7 +315,10 @@ public class RobotState {
   public void autoAutoScorePeriodic() {
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
-    if (!EqualsUtil.GeomExtensions.epsilonEquals(m_setpoint.drivePose(), m_drive.getTargetPose())) {
+
+    if (m_drive.getTargetPose() == null
+        || !EqualsUtil.GeomExtensions.epsilonEquals(
+            m_setpoint.drivePose(), m_drive.getTargetPose())) {
       m_drive.setTargetPose(m_setpoint.drivePose());
     }
 
@@ -616,7 +619,6 @@ public class RobotState {
         newDriveProfiles = DriveProfiles.kDriveToPoint;
         newElevatorState = ElevatorState.kScoring;
         newManipulatorState = ManipulatorState.kScoring;
-
         break;
 
       case kAutoCoralIntaking:
@@ -635,6 +637,7 @@ public class RobotState {
         newIntakeState = IntakeState.kCoralIntaking;
         newElevatorState = ElevatorState.kIntaking;
         newManipulatorState = ManipulatorState.kIntaking;
+        newDriveProfiles = DriveProfiles.kMeshedUserControls;
 
         break;
 
@@ -759,7 +762,6 @@ public class RobotState {
     }
 
     m_profiles.setCurrentProfile(newAction);
-
     // stop the timer so a previous action doesn't affect the new one
     m_timer.stop();
     m_timer.reset();
@@ -1052,6 +1054,11 @@ public class RobotState {
 
   public void setSelectedAuto(String name) {
     m_selectedAuto = name;
+  }
+
+  public void calculateDriveTargetPose() {
+    m_drive.setTargetPose(
+        SetpointGenerator.generate(m_desiredAlgaeIndex, m_desiredReefHeight, true).drivePose());
   }
 
   public Pose2d getPathPlannerStartPose() {

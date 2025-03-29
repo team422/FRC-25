@@ -68,7 +68,7 @@ public final class Constants {
   public static final boolean kUseAlerts = true && kCurrentMode != Mode.SIM;
 
   public static final class DriveConstants {
-    public static final double kMaxLinearSpeed = 6.0; // meters per second
+    public static final double kMaxLinearSpeed = 3.8; // meters per second
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
     public static final double kTrackWidthX = Units.inchesToMeters(22.75);
     public static final double kTrackWidthY = Units.inchesToMeters(22.75);
@@ -144,6 +144,18 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Max Acceleration", 4.0);
     public static final LoggedTunableNumber kDriveToPointMaxDeceleration =
         new LoggedTunableNumber("DriveToPoint Max Deceleration", 3.0);
+
+    public static final LoggedTunableNumber kDriveToIntakeP =
+        new LoggedTunableNumber("DriveToIntakeXY P", 3.);
+
+    public static final LoggedTunableNumber kDriveToIntakeD =
+        new LoggedTunableNumber("DriveToIntakeXY D", 0.0);
+    public static final LoggedTunableNumber kDriveToIntakeThetaP =
+        new LoggedTunableNumber("DriveToIntakeTheta P", 3.0);
+    public static final LoggedTunableNumber kDriveToIntakeThetaD =
+        new LoggedTunableNumber("DriveToIntakeTheta D", 0.0);
+    public static final LoggedTunableNumber kDebounceAmount =
+        new LoggedTunableNumber("DriveToDebounce", 0.1);
 
     public static final LoggedTunableNumber kAutoscoreDeployDistance =
         new LoggedTunableNumber("Autoscore Deploy Distance", 42.0);
