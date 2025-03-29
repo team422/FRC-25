@@ -121,6 +121,9 @@ public class Module {
 
     m_io.setDriveVelocity(speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec));
     m_io.setTurnPosition(state.angle);
+
+    Logger.recordOutput(
+        "Module" + m_index + "/DriveFF", m_driveFeedforward.calculate(speedRadPerSec));
   }
 
   /** Runs the module with the specified state and acceleration */
@@ -128,11 +131,11 @@ public class Module {
     state.optimize(getAngle());
 
     double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.kWheelRadius;
-    double accelRadPerSec =
+    double accelRadPerSecSq =
         Math.signum(speedRadPerSec)
             * accel.in(MetersPerSecondPerSecond)
             / DriveConstants.kWheelRadius;
-    double nextSpeedRadPerSec = m_inputs.driveVelocityRadPerSec + accelRadPerSec * 0.02;
+    double nextSpeedRadPerSec = speedRadPerSec + accelRadPerSecSq * 0.02;
 
     m_io.setDriveVelocity(
         speedRadPerSec,

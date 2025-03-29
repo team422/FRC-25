@@ -99,4 +99,9 @@ public class DriverControlsPS5 implements DriverControls {
   public Trigger toggleVision() {
     return m_controller.PS();
   }
+
+  @Override
+  public Trigger coralEject() {
+    return m_controller.R3();
+  }
 }

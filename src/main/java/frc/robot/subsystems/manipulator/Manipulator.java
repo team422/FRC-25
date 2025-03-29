@@ -1,5 +1,7 @@
 package frc.robot.subsystems.manipulator;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
@@ -40,6 +42,7 @@ public class Manipulator extends SubsystemBase {
   private boolean m_runRollerScoring = false;
   private boolean m_runRollerAlgaeDescoring = false;
   private boolean m_runRollerBargeScoring = false;
+  private boolean m_rollerPositionControlSet = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -55,6 +58,7 @@ public class Manipulator extends SubsystemBase {
     kAlgaeDescoring,
     kAlgaeHold,
     kAlgaeOuttake,
+    kCoralEject,
     kFullTuning,
   }
 
@@ -74,6 +78,7 @@ public class Manipulator extends SubsystemBase {
     periodicHash.put(ManipulatorState.kAlgaeDescoring, this::algaeDescoringPeriodic);
     periodicHash.put(ManipulatorState.kAlgaeHold, this::algaeHoldPeriodic);
     periodicHash.put(ManipulatorState.kAlgaeOuttake, this::algaeOuttakePeriodic);
+    periodicHash.put(ManipulatorState.kCoralEject, this::coralEjectPeriodic);
     periodicHash.put(ManipulatorState.kFullTuning, this::fullTuningPeriodic);
     m_profiles = new SubsystemProfiles<>(periodicHash, ManipulatorState.kStow);
     if (RobotBase.isReal()) {
@@ -197,6 +202,7 @@ public class Manipulator extends SubsystemBase {
     m_runRollerScoring = false;
     m_runRollerAlgaeDescoring = true;
     m_runRollerBargeScoring = false;
+    m_rollerPositionControlSet = false;
 
     m_profiles.setCurrentProfile(state);
   }
@@ -233,10 +239,15 @@ public class Manipulator extends SubsystemBase {
   }
 
   public void indexingPeriodic() {
-    if (m_coralDetectorIO.gamePieceInFunnel()) {
+    if (!fullyIndexed()) {
+      m_rollerPositionControlSet = false;
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerIndexingVoltage.get());
-    } else {
-      m_rollerIO.setVoltage(0.0);
+    } else if (!m_rollerPositionControlSet) {
+      m_rollerPositionControlSet = true;
+      m_rollerIO.setDesiredPosition(
+          m_rollerIO
+              .getPosition()
+              .plus(Degrees.of(ManipulatorConstants.kRollerIndexingPosition.get())));
     }
     m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
   }
@@ -287,6 +298,11 @@ public class Manipulator extends SubsystemBase {
     m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeOuttakeVoltage.get());
   }
 
+  public void coralEjectPeriodic() {
+    m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
+    m_rollerIO.setVoltage(ManipulatorConstants.kRollerEjectVoltage.get());
+  }
+
   public void fullTuningPeriodic() {
     m_wristIO.setDesiredAngle(
         Rotation2d.fromDegrees(FullTuningConstants.kManipulatorWristSetpoint.get()));
@@ -335,6 +351,14 @@ public class Manipulator extends SubsystemBase {
 
   public boolean hasGamePiece() {
     return m_coralDetectorIO.hasGamePiece();
+  }
+
+  public boolean fullyIndexed() {
+    return m_coralDetectorIO.hasGamePiece() && !m_coralDetectorIO.gamePieceInFunnel();
+  }
+
+  public boolean gamePieceInFunnel() {
+    return m_coralDetectorIO.gamePieceInFunnel();
   }
 
   public Rotation2d getCurrAngle() {

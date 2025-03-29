@@ -116,7 +116,8 @@ public class RobotContainer {
                 new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
-        m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+        m_indexer =
+            new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
         // m_indexer = new Indexer(new IndexerIOReplay());
 
         m_manipulator =
@@ -168,7 +169,8 @@ public class RobotContainer {
         }
 
         if (ProtoConstants.kRealIndexer) {
-          m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+          m_indexer =
+              new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
         } else {
           m_indexer = new Indexer(new IndexerIOSim());
         }
@@ -421,7 +423,8 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   // this is much simpler, we can just check if we are in manual score and cancel
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore) {
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore
+                      || RobotState.getInstance().getCurrentAction() == RobotAction.kBargeScore) {
                     RobotState.getInstance().setDefaultAction();
                   } else {
                     if (RobotState.getInstance().getManipulatorState()
@@ -488,6 +491,19 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().toggleUsingVision();
+                }));
+
+    m_driverControls
+        .coralEject()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralEject);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
                 }));
   }
 

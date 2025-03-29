@@ -53,6 +53,8 @@ public class SetpointGenerator {
   private static final double kDriveYL1Offset = Units.inchesToMeters(13.469);
   private static final Rotation2d kRotationL1 = Rotation2d.fromDegrees(10.0);
 
+  private static final double kBargeXOffset = Units.inchesToMeters(48.0);
+
   private static final LoggedTunableNumber kElevatorL1Autoscore =
       new LoggedTunableNumber("Elevator L1 Autoscore Height", 11.5);
   private static final LoggedTunableNumber kManipulatorL1Autoscore =
@@ -337,5 +339,14 @@ public class SetpointGenerator {
     int commonIndex = findCommonElement(vertical, diagonalPositive, diagonalNegative);
 
     return commonIndex;
+  }
+
+  public static Pose2d generateBarge() {
+    // TODO: possibly make smarter with meshed (or at least somewhat based on our current pose)
+    return new Pose2d(FieldConstants.Barge.kMiddleCage, new Rotation2d())
+        .rotateAround(
+            new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+            Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
+        .transformBy(new Transform2d(-kBargeXOffset, 0.0, new Rotation2d()));
   }
 }

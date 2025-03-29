@@ -1,12 +1,17 @@
 package frc.robot.subsystems.manipulator.coralDetector;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.Timer;
+import org.littletonrobotics.junction.Logger;
 
 public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   private DigitalInput m_manipulatorSensorOne;
   private DigitalInput m_manipulatorSensorTwo;
   private DigitalInput m_funnelSensorOne;
   private DigitalInput m_funnelSensorTwo;
+
+  private PowerDistribution m_pdp = new PowerDistribution();
 
   public CoralDetectorIOPhotoelectric(
       int manipulatorSensorOnePort,
@@ -46,10 +51,18 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
 
   // these photoelectrics give different readings from the manipulator ones
   private boolean photoElectricFunnelOneDetected() {
-    return !m_funnelSensorOne.get();
+    boolean brownout = m_pdp.getFaults().Brownout;
+    if (brownout) {
+      Logger.recordOutput("BROWNOUT", Timer.getFPGATimestamp());
+    }
+    return !m_funnelSensorOne.get() && !brownout;
   }
 
   private boolean photoElectricFunnelTwoDetected() {
-    return !m_funnelSensorTwo.get();
+    boolean brownout = m_pdp.getFaults().Brownout;
+    if (brownout) {
+      Logger.recordOutput("BROWNOUT", Timer.getFPGATimestamp());
+    }
+    return !m_funnelSensorTwo.get() && !brownout;
   }
 }

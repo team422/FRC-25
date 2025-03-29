@@ -84,6 +84,8 @@ public class Drive extends SubsystemBase {
     kPathplanner,
     kAutoAlign,
     kDriveToPoint,
+    kIntakeMesh,
+    kBargeMesh,
     kCharacterization,
     kStop
   }
@@ -192,6 +194,8 @@ public class Drive extends SubsystemBase {
     periodicHash.put(DriveProfiles.kPathplanner, this::pathplannerPeriodic);
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
     periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
+    periodicHash.put(DriveProfiles.kIntakeMesh, this::intakeMeshPeriodic);
+    periodicHash.put(DriveProfiles.kBargeMesh, this::bargeMeshPeriodic);
     periodicHash.put(DriveProfiles.kCharacterization, this::defaultPeriodic);
     periodicHash.put(DriveProfiles.kStop, this::stopPeriodic);
 
@@ -411,6 +415,18 @@ public class Drive extends SubsystemBase {
 
   public void autoAlignPeriodic() {
     m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
+
+    defaultPeriodic();
+  }
+
+  public void intakeMeshPeriodic() {
+    // TODO: implement
+
+    defaultPeriodic();
+  }
+
+  public void bargeMeshPeriodic() {
+    // TODO: implement
 
     defaultPeriodic();
   }
@@ -744,7 +760,7 @@ public class Drive extends SubsystemBase {
 
   public DriveProfiles getDefaultProfile() {
     if (DriverStation.isAutonomous()) {
-      return DriveProfiles.kPathplanner;
+      return DriveProfiles.kDriveToPoint;
     } else {
       return DriveProfiles.kDefault;
     }

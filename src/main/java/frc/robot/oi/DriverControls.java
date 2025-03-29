@@ -38,4 +38,6 @@ public interface DriverControls {
   public Trigger zeroElevator();
 
   public Trigger toggleVision();
+
+  public Trigger coralEject();
 }

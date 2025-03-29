@@ -39,7 +39,7 @@ import java.util.Map;
 public final class Constants {
   public static final boolean kTuningMode = true;
 
-  public static final Mode kRealMode = Mode.PROTO;
+  public static final Mode kRealMode = Mode.REAL;
   public static final Mode kSimMode = Mode.SIM;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
@@ -145,6 +145,13 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointMaxDeceleration =
         new LoggedTunableNumber("DriveToPoint Max Deceleration", 3.0);
 
+    public static final LoggedTunableNumber kAutoscoreDeployDistance =
+        new LoggedTunableNumber("Autoscore Deploy Distance", 42.0);
+    public static final LoggedTunableNumber kBargeScoreThrowDistance =
+        new LoggedTunableNumber("Barge Score Throw Distance", 24.0);
+    public static final LoggedTunableNumber kLoaderStationTimeout =
+        new LoggedTunableNumber("Loader Station Timeout", 0.35);
+
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =
         new LoggedTunableNumber("Slip Threshold", 150000);
@@ -247,6 +254,8 @@ public final class Constants {
         new LoggedTunableNumber("Elevator Algae Hold Height", 14.5);
     public static final LoggedTunableNumber kAlgaeOuttakeHeight =
         new LoggedTunableNumber("Elevator Algae Outtake Height", 3.5);
+    public static final LoggedTunableNumber kDriveUpHeight =
+        new LoggedTunableNumber("Drive Up Height", 11.5);
 
     public static final LoggedTunableNumber kBargeThrowHeight =
         new LoggedTunableNumber("Elevator Barge Throw Height", 20.0);
@@ -536,14 +545,14 @@ public final class Constants {
     // transform from center of robot to camera
     public static final Transform3d[] kCameraTransforms =
         new Transform3d[] {
-          // front left (facing out, currently unused)
+          // front left (facing out)
           new Transform3d(
               Inches.of(9.796),
               Inches.of(10.354),
               Inches.of(8.746),
               GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
 
-          // front right (facing out, currently unused)
+          // front right (facing out)
           new Transform3d(
               Inches.of(9.796),
               Inches.of(-10.354),
@@ -660,7 +669,7 @@ public final class Constants {
 
     // how many degrees to move after photoelectric is tripped
     public static final LoggedTunableNumber kRollerIndexingPosition =
-        new LoggedTunableNumber("Manipulator Roller Indexing Position", 150.0);
+        new LoggedTunableNumber("Manipulator Roller Indexing Position", 75.0);
 
     public static final LoggedTunableNumber kWristP = new LoggedTunableNumber("Wrist P", 55.0);
     public static final LoggedTunableNumber kWristI = new LoggedTunableNumber("Wrist I", 0.0);
@@ -684,9 +693,11 @@ public final class Constants {
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Manipulator Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Manipulator Roller Intake Voltage", 5.0);
-    public static final LoggedTunableNumber kRollerIndexingVoltage =
         new LoggedTunableNumber("Manipulator Roller Intake Voltage", 2.0);
+    public static final LoggedTunableNumber kRollerIndexingVoltage =
+        new LoggedTunableNumber("Manipulator Roller Indexing Voltage", 1.0);
+    public static final LoggedTunableNumber kRollerEjectVoltage =
+        new LoggedTunableNumber("Manipulator Roller Eject Voltage", -3.0);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageAutoscore =
         new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Autoscore", 3.0);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageManual =
@@ -714,7 +725,7 @@ public final class Constants {
         new LoggedTunableNumber("Manipulator Roller kS", 0.22);
 
     public static final LoggedTunableNumber kCoralOuttakeTimeout =
-        new LoggedTunableNumber("Coral Outtake Timeout", 0.4);
+        new LoggedTunableNumber("Coral Outtake Timeout", 0.15);
 
     // Simulation constants
     public static final DCMotor kWristSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -782,10 +793,16 @@ public final class Constants {
     public static final LoggedTunableNumber kIndexerIdleVoltage =
         new LoggedTunableNumber("Indexer Idle Voltage", 0.0);
     public static final LoggedTunableNumber kIndexerIndexingVoltage =
-        new LoggedTunableNumber("Indexer Indexing Voltage", 7.75);
+        new LoggedTunableNumber("Indexer Indexing Voltage", 5.0);
+    public static final LoggedTunableNumber kIndexerTopIndexingVoltage =
+        new LoggedTunableNumber("Indexer Top Indexing Voltage", 2.5);
+    public static final LoggedTunableNumber kIndexerEjectVoltage =
+        new LoggedTunableNumber("Indexer Eject Voltage", -5.0);
+    public static final LoggedTunableNumber kIndexerTopEjectVoltage =
+        new LoggedTunableNumber("Indexer Top Eject Voltage", -2.5);
 
     // Simulation constants
-    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(1);
+    public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(2);
     public static final double kSimGearing = kGearRatio;
     public static final double kSimMOI = 0.005;
   }
@@ -825,7 +842,8 @@ public final class Constants {
     public static final int kFunnelPhotoElectricOne = 4;
     public static final int kFunnelPhotoElectricTwo = 5;
 
-    public static final int kIndexerMotor = 25;
+    public static final int kIndexerSideMotor = 25;
+    public static final int kIndexerTopMotor = 26;
 
     public static final int kLed = 9;
 

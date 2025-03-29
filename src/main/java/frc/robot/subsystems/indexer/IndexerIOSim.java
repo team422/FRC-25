@@ -5,35 +5,48 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.IndexerConstants;
 
 public class IndexerIOSim implements IndexerIO {
-  private DCMotorSim m_sim;
-  private double m_voltage = 0.0;
+  private DCMotorSim m_sideSim;
+  private DCMotorSim m_topSim;
+
+  private double m_sideVoltage = 0.0;
+  private double m_topVoltage = 0.0;
 
   public IndexerIOSim() {
     var plant =
         LinearSystemId.createDCMotorSystem(
             IndexerConstants.kSimGearbox, IndexerConstants.kSimMOI, IndexerConstants.kSimGearing);
 
-    m_sim = new DCMotorSim(plant, IndexerConstants.kSimGearbox);
+    m_sideSim = new DCMotorSim(plant, IndexerConstants.kSimGearbox);
+    m_topSim = new DCMotorSim(plant, IndexerConstants.kSimGearbox);
   }
 
   @Override
   public void updateInputs(IndexerInputs inputs) {
-    m_sim.setInputVoltage(m_voltage);
-    m_sim.update(0.02);
+    m_sideSim.setInputVoltage(m_sideVoltage);
+    m_sideSim.update(0.02);
 
-    inputs.position = m_sim.getAngularPositionRotations();
-    inputs.velocityRPS = m_sim.getAngularVelocityRPM() / 60;
-    inputs.current = m_sim.getCurrentDrawAmps();
-    inputs.voltage = m_voltage;
+    inputs.sidePosition = m_sideSim.getAngularPositionRotations();
+    inputs.sideVelocityRPS = m_sideSim.getAngularVelocityRPM() / 60;
+    inputs.sideCurrent = m_sideSim.getCurrentDrawAmps();
+    inputs.sideVoltage = m_sideVoltage;
+
+    m_topSim.setInputVoltage(m_topVoltage);
+    m_topSim.update(0.02);
+
+    inputs.topPosition = m_topSim.getAngularPositionRotations();
+    inputs.topVelocityRPS = m_topSim.getAngularVelocityRPM() / 60;
+    inputs.topCurrent = m_topSim.getCurrentDrawAmps();
+    inputs.topVoltage = m_topVoltage;
 
     // these don't matter in sim
-    inputs.statorCurrent = 0.0;
-    inputs.motorIsConnected = false;
+    inputs.sideStatorCurrent = 0.0;
+    inputs.sideMotorIsConnected = false;
   }
 
   @Override
-  public void setVoltage(double voltage) {
-    m_voltage = voltage;
+  public void setVoltage(double sideVoltage, double topVoltage) {
+    m_sideVoltage = sideVoltage;
+    m_topVoltage = topVoltage;
   }
 
   @Override

@@ -101,4 +101,9 @@ public class DriverControlsXbox implements DriverControls {
   public Trigger toggleVision() {
     return m_controller.start();
   }
+
+  @Override
+  public Trigger coralEject() {
+    return m_controller.rightStick();
+  }
 }
