@@ -100,7 +100,7 @@ public final class Constants {
     public static final ModuleLimits kModuleLimitsFree =
         new ModuleLimits(kMaxLinearSpeed, kMaxAngularSpeed, Units.degreesToRadians(1080.0));
 
-    public static final double kWheelRadius = Units.inchesToMeters(1.941);
+    public static final double kWheelRadius = Units.inchesToMeters(1.929);
     public static final double kOdometryFrequency = 250.0;
 
     public static final double kDriveGearRatio =
@@ -122,14 +122,14 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointI =
         new LoggedTunableNumber("DriveToPoint I", 0.0);
     public static final LoggedTunableNumber kDriveToPointD =
-        new LoggedTunableNumber("DriveToPoint D", 0.15);
+        new LoggedTunableNumber("DriveToPoint D", 0.18);
 
     public static final LoggedTunableNumber kDriveToPointAutoP =
         new LoggedTunableNumber("DriveToPoint Auto P", 3.0);
     public static final LoggedTunableNumber kDriveToPointAutoI =
         new LoggedTunableNumber("DriveToPoint Auto I", 0.0);
     public static final LoggedTunableNumber kDriveToPointAutoD =
-        new LoggedTunableNumber("DriveToPoint Auto D", 0.15);
+        new LoggedTunableNumber("DriveToPoint Auto D", 0.18);
 
     public static final LoggedTunableNumber kDriveToPointHeadingP =
         new LoggedTunableNumber("DriveToPoint Heading P", 4.0);
@@ -155,14 +155,18 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToIntakeThetaD =
         new LoggedTunableNumber("DriveToIntakeTheta D", 0.0);
     public static final LoggedTunableNumber kDebounceAmount =
-        new LoggedTunableNumber("DriveToDebounce", 0.1);
+        new LoggedTunableNumber("Meshed Drive Debounce", 0.1);
+    public static final LoggedTunableNumber kMeshDrivePriority =
+        new LoggedTunableNumber("Meshed Drive Priority", 0.3);
 
     public static final LoggedTunableNumber kAutoscoreDeployDistance =
-        new LoggedTunableNumber("Autoscore Deploy Distance", 42.0);
+        new LoggedTunableNumber("Autoscore Deploy Distance", 48.0);
+    public static final LoggedTunableNumber kAutoscoreOuttakeDistance =
+        new LoggedTunableNumber("Autoscore Outtake Distance", 2.5);
     public static final LoggedTunableNumber kBargeScoreThrowDistance =
-        new LoggedTunableNumber("Barge Score Throw Distance", 24.0);
+        new LoggedTunableNumber("Barge Score Throw Distance", 10.0);
     public static final LoggedTunableNumber kLoaderStationTimeout =
-        new LoggedTunableNumber("Loader Station Timeout", 0.35);
+        new LoggedTunableNumber("Loader Station Timeout", 0.25);
 
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =

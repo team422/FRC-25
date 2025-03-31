@@ -8,6 +8,7 @@ import frc.lib.littletonUtils.EqualsUtil;
 import frc.robot.Constants;
 import org.littletonrobotics.junction.Logger;
 
+// TODO: refactor because this code is gross
 // A new object should be able to be made every time auto intake or auto net is called
 public class MeshedDrivingController {
   private Pose2d desiredPose = null;
@@ -130,6 +131,10 @@ public class MeshedDrivingController {
     //   Xcombined = Xcombined / velocityPercentage;
     //   Ycombined = Ycombined / velocityPercentage;
     // }
+
+    Xcombined = MathUtil.applyDeadband(Xcombined, 0.1);
+    Ycombined = MathUtil.applyDeadband(Ycombined, 0.1);
+    thetaCombined = MathUtil.applyDeadband(thetaCombined, 0.1);
 
     speedsOut = new ChassisSpeeds(Xcombined, Ycombined, thetaCombined);
 

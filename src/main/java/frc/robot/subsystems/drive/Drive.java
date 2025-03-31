@@ -398,7 +398,7 @@ public class Drive extends SubsystemBase {
   public void defaultPeriodic() {
     if (m_profiles.getCurrentProfile() == DriveProfiles.kDriveToPoint) {
       runVelocity(m_desiredChassisSpeeds, MetersPerSecondPerSecond.of(m_desiredAcceleration));
-    } else {
+    } else if (m_profiles.getCurrentProfile() != DriveProfiles.kCharacterization) {
       runVelocity(m_desiredChassisSpeeds);
     }
 
@@ -802,7 +802,10 @@ public class Drive extends SubsystemBase {
       Pair<Pose2d, List<Double>> desPose = SetpointGenerator.generateNearestIntake(getPose());
       m_meshedController =
           new MeshedDrivingController(
-              desPose.getFirst(), true, DriveConstants.kDebounceAmount.get(), 0.3);
+              desPose.getFirst(),
+              true,
+              DriveConstants.kDebounceAmount.get(),
+              DriveConstants.kMeshDrivePriority.get());
       m_meshedController.setPIDControllers(
           DriveConstants.kDriveToIntakeP.get(),
           DriveConstants.kDriveToIntakeD.get(),
@@ -841,6 +844,9 @@ public class Drive extends SubsystemBase {
 
   /** Runs the drive in a straight line with the specified drive output. */
   public void runCharacterization(double output) {
+    if (m_profiles.getCurrentProfile() != DriveProfiles.kCharacterization) {
+      updateProfile(DriveProfiles.kCharacterization);
+    }
     for (int i = 0; i < 4; i++) {
       m_modules[i].runCharacterization(output);
     }

@@ -16,7 +16,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.littletonUtils.LocalADStarAK;
@@ -111,7 +110,6 @@ public class AutoFactory {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  Logger.recordOutput("Pathplanner/AutoscoreRight", Timer.getFPGATimestamp());
                   RobotState.getInstance().setReefIndexRight();
                   RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
                 }));
@@ -141,6 +139,20 @@ public class AutoFactory {
         Commands.runOnce(
             () -> {
               RobotState.getInstance().driveToProcessorPeriodic();
+            }));
+
+    NamedCommands.registerCommand(
+        "Barge Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setBargeAuto(true);
+            }));
+
+    NamedCommands.registerCommand(
+        "Coral Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setBargeAuto(false);
             }));
 
     NamedCommands.registerCommand(

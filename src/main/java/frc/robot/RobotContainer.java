@@ -392,9 +392,18 @@ public class RobotContainer {
                 () -> {
                   // if we are in autoscore and we are on a left branch (autoscore left already
                   // pressed), then cancel
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 1) {
+                  if ((RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 1)) {
                     RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getCurrentAction()
+                          == RobotAction.kBargeAutoScore
+                      && RobotState.getInstance().getBargeLeftCage()) {
+                    m_manipulator.updateState(ManipulatorState.kStow);
+                    RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getManipulatorState()
+                      == ManipulatorState.kAlgaeHold) {
+                    RobotState.getInstance().setBargeScoreLeft();
+                    RobotState.getInstance().updateRobotAction(RobotAction.kBargeAutoScore);
                   } else {
                     RobotState.getInstance().setReefIndexLeft();
                     RobotState.getInstance().manageAutoScoreButton();
@@ -408,9 +417,18 @@ public class RobotContainer {
                 () -> {
                   // if we are in autoscore and we are on a right branch (autoscore right already
                   // pressed), then cancel
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 0) {
+                  if ((RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 0)) {
                     RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getCurrentAction()
+                          == RobotAction.kBargeAutoScore
+                      && !RobotState.getInstance().getBargeLeftCage()) {
+                    m_manipulator.updateState(ManipulatorState.kStow);
+                    RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getManipulatorState()
+                      == ManipulatorState.kAlgaeHold) {
+                    RobotState.getInstance().setBargeScoreRight();
+                    RobotState.getInstance().updateRobotAction(RobotAction.kBargeAutoScore);
                   } else {
                     RobotState.getInstance().setReefIndexRight();
                     RobotState.getInstance().manageAutoScoreButton();
@@ -423,8 +441,11 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   // this is much simpler, we can just check if we are in manual score and cancel
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore
-                      || RobotState.getInstance().getCurrentAction() == RobotAction.kBargeScore) {
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getCurrentAction()
+                      == RobotAction.kBargeScore) {
+                    m_manipulator.updateState(ManipulatorState.kStow);
                     RobotState.getInstance().setDefaultAction();
                   } else {
                     if (RobotState.getInstance().getManipulatorState()
@@ -489,9 +510,10 @@ public class RobotContainer {
         .toggleVision()
         .onTrue(
             Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().toggleUsingVision();
-                }));
+                    () -> {
+                      RobotState.getInstance().toggleUsingVision();
+                    })
+                .ignoringDisable(true));
 
     m_driverControls
         .coralEject()

@@ -1,9 +1,8 @@
 package frc.robot.subsystems.manipulator.coralDetector;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.Timer;
-import org.littletonrobotics.junction.Logger;
 
 public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   private DigitalInput m_manipulatorSensorOne;
@@ -11,7 +10,10 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   private DigitalInput m_funnelSensorOne;
   private DigitalInput m_funnelSensorTwo;
 
-  private PowerDistribution m_pdp = new PowerDistribution();
+  // sometimes the funnel photoelectrics false trigger so we use a rising debounce
+  // we don't want to have the debounce falling so that our indexing is not delayed
+  private Debouncer m_funnelSensorOneDebouncer = new Debouncer(0.1, DebounceType.kRising);
+  private Debouncer m_funnelSensorTwoDebouncer = new Debouncer(0.1, DebounceType.kRising);
 
   public CoralDetectorIOPhotoelectric(
       int manipulatorSensorOnePort,
@@ -51,18 +53,10 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
 
   // these photoelectrics give different readings from the manipulator ones
   private boolean photoElectricFunnelOneDetected() {
-    boolean brownout = m_pdp.getFaults().Brownout;
-    if (brownout) {
-      Logger.recordOutput("BROWNOUT", Timer.getFPGATimestamp());
-    }
-    return !m_funnelSensorOne.get() && !brownout;
+    return m_funnelSensorOneDebouncer.calculate(!m_funnelSensorOne.get());
   }
 
   private boolean photoElectricFunnelTwoDetected() {
-    boolean brownout = m_pdp.getFaults().Brownout;
-    if (brownout) {
-      Logger.recordOutput("BROWNOUT", Timer.getFPGATimestamp());
-    }
-    return !m_funnelSensorTwo.get() && !brownout;
+    return m_funnelSensorTwoDebouncer.calculate(!m_funnelSensorTwo.get());
   }
 }

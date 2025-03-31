@@ -48,11 +48,11 @@ public class Module {
     // Switch constants based on mode (the physics simulator is treated as a
     // separate robot with different tuning)
     if (RobotBase.isReal()) {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.229, 0.138, 0.0);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.22674, 0.14062, 0.0);
       m_io.setDrivePID(1.0, 0.0, 0.0);
       m_io.setTurnPID(300.0, 0.0, 0.0);
     } else {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13, 0.13);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13, 0.0);
       m_io.setDrivePID(0.1, 0.0, 0.0);
       m_io.setTurnPID(10.0, 0.0, 0.0);
     }

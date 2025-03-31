@@ -49,16 +49,16 @@ public class SetpointGenerator {
 
   private static List<Pose2d> kIntakePositionsRed =
       List.of(
-          new Pose2d(1., 0.96, Rotation2d.fromDegrees(-60)),
-          new Pose2d(1., 6.1, Rotation2d.fromDegrees(60)));
+          new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(125)),
+          new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-125)));
   private static List<List<Double>> kIntakePositionsRedAngles =
-      List.of(List.of(-.714, 0.0, 2.0, 1.6), List.of(.714, 6.7, 7.7, 1.6));
+      List.of(List.of(.714, 15.745, 16.73, -10.55), List.of(-.714, 15.645, 16.83, 18.5));
   private static List<Pose2d> kIntakePositionsBlue =
       List.of(
-          new Pose2d(1., 0.96, Rotation2d.fromDegrees(49)),
-          new Pose2d(1., 6.1, Rotation2d.fromDegrees(-49)));
+          new Pose2d(1., 0.96, Rotation2d.fromDegrees(55)),
+          new Pose2d(1., 6.1, Rotation2d.fromDegrees(-55)));
   private static List<List<Double>> kIntakePositionsBlueAngles =
-      List.of(List.of(-.714, 0.0, 2.0, 1.6), List.of(.714, 0.0, 2.0, 1.6));
+      List.of(List.of(-.714, 0.69, 1.77, 2.0), List.of(.714, 0.69, 1.77, 5.925));
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
@@ -67,7 +67,7 @@ public class SetpointGenerator {
   private static final double kDriveYL1Offset = Units.inchesToMeters(13.469);
   private static final Rotation2d kRotationL1 = Rotation2d.fromDegrees(10.0);
 
-  private static final double kBargeXOffset = Units.inchesToMeters(48.0);
+  private static final double kBargeXOffset = Units.inchesToMeters(48.0 + 28.0 / 2.0);
 
   private static final LoggedTunableNumber kElevatorL1Autoscore =
       new LoggedTunableNumber("Elevator L1 Autoscore Height", 11.5);
@@ -331,6 +331,7 @@ public class SetpointGenerator {
     return drivePoseFinal;
   }
 
+  // TODO: refactor with dataclass instead of double list
   public static Pair<Pose2d, List<Double>> generateNearestIntake(Pose2d curPose) {
     if (DriverStation.getAlliance().get() == Alliance.Red) {
       if (curPose.getTranslation().getDistance(kIntakePositionsRed.get(0).getTranslation())
@@ -373,9 +374,16 @@ public class SetpointGenerator {
     return commonIndex;
   }
 
-  public static Pose2d generateBarge() {
-    // TODO: possibly make smarter with meshed (or at least somewhat based on our current pose)
-    return new Pose2d(FieldConstants.Barge.kMiddleCage, new Rotation2d())
+  public static Pose2d generateBargeLeft() {
+    return new Pose2d(FieldConstants.Barge.kFarCage, new Rotation2d())
+        .rotateAround(
+            new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+            Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
+        .transformBy(new Transform2d(-kBargeXOffset, 0.0, new Rotation2d()));
+  }
+
+  public static Pose2d generateBargeRight() {
+    return new Pose2d(FieldConstants.Barge.kCloseCage, new Rotation2d())
         .rotateAround(
             new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
             Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))

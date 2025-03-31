@@ -126,7 +126,8 @@ public class Intake extends SubsystemBase {
     Logger.recordOutput("Intake/State", m_profiles.getCurrentProfile());
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
-      m_rollerMotorDisconnectedAlert.set(true);
+      // TODO: re-enable later
+      // m_rollerMotorDisconnectedAlert.set(true);
     } else {
       m_rollerMotorDisconnectedAlert.set(false);
     }

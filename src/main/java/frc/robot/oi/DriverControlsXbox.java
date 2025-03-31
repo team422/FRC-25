@@ -12,17 +12,17 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public double getForward() {
-    return m_controller.getLeftY();
+    return -m_controller.getLeftY();
   }
 
   @Override
   public double getStrafe() {
-    return m_controller.getLeftX();
+    return -m_controller.getLeftX();
   }
 
   @Override
   public double getTurn() {
-    return m_controller.getRightX();
+    return -m_controller.getRightX();
   }
 
   @Override
@@ -84,7 +84,6 @@ public class DriverControlsXbox implements DriverControls {
   @Override
   public Trigger algaeIntakeOuttake() {
     return m_controller.rightTrigger(0.1);
-    // return new Trigger(() -> false);
   }
 
   @Override

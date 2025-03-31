@@ -19,11 +19,11 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
   private static final int cameraResolutionWidth = 1600;
   private static final int cameraResolutionHeight = 1200;
   private static final int cameraAutoExposure = 1;
-  private static final int cameraExposure = 10;
-  private static final int cameraGain = 80;
-  private static final int cameraBrightness = 10;
+  private static final int cameraExposure = 20;
+  private static final int cameraGain = 60;
+  private static final int cameraBrightness = 0;
   private static final int cameraContrast = 64;
-  private static final int cameraGamma = 80;
+  private static final int cameraGamma = 85;
   // all non-ground tags
   private static final long[] tagIDBlacklist = new long[] {1, 2, 3, 4, 5, 12, 13, 14, 15, 16};
 
@@ -44,8 +44,6 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
     configTable.getIntegerTopic("camera_brightness").publish().set(cameraBrightness);
     configTable.getIntegerTopic("camera_contrast").publish().set(cameraContrast);
     configTable.getIntegerTopic("camera_gamma").publish().set(cameraGamma);
-    // TODO: we need to rethink this because if the code is not running, this will not work
-    configTable.getIntegerTopic("kys").publish().set(0);
     configTable
         .getDoubleTopic("fiducial_size_m")
         .publish()
@@ -73,6 +71,10 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
             .subscribe(
                 new double[] {}, PubSubOption.keepDuplicates(true), PubSubOption.sendAll(true));
     fpsSubscriber = outputTable.getIntegerTopic("fps").subscribe(0);
+
+    var genericNorthstarTable = NetworkTableInstance.getDefault().getTable("northstar");
+    var commandsTable = genericNorthstarTable.getSubTable("commands");
+    commandsTable.getIntegerTopic("kys").publish().set(0);
   }
 
   public void updateInputs(AprilTagVisionInputs inputs) {
