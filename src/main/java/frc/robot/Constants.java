@@ -118,18 +118,25 @@ public final class Constants {
     public static final boolean kSimReversed = false;
 
     public static final LoggedTunableNumber kDriveToPointP =
-        new LoggedTunableNumber("DriveToPoint P", 3.0);
+        new LoggedTunableNumber("DriveToPoint P", 3.2);
     public static final LoggedTunableNumber kDriveToPointI =
         new LoggedTunableNumber("DriveToPoint I", 0.0);
     public static final LoggedTunableNumber kDriveToPointD =
         new LoggedTunableNumber("DriveToPoint D", 0.18);
 
     public static final LoggedTunableNumber kDriveToPointAutoP =
-        new LoggedTunableNumber("DriveToPoint Auto P", 3.0);
+        new LoggedTunableNumber("DriveToPoint Auto P", 3.2);
     public static final LoggedTunableNumber kDriveToPointAutoI =
         new LoggedTunableNumber("DriveToPoint Auto I", 0.0);
     public static final LoggedTunableNumber kDriveToPointAutoD =
         new LoggedTunableNumber("DriveToPoint Auto D", 0.18);
+
+    public static final LoggedTunableNumber kDriveToPointAutoIntakeP =
+        new LoggedTunableNumber("DriveToPoint Auto Intake P", 5.0);
+    public static final LoggedTunableNumber kDriveToPointAutoIntakeI =
+        new LoggedTunableNumber("DriveToPoint Auto Intake I", 0.0);
+    public static final LoggedTunableNumber kDriveToPointAutoIntakeD =
+        new LoggedTunableNumber("DriveToPoint Auto Intake D", 0.2);
 
     public static final LoggedTunableNumber kDriveToPointHeadingP =
         new LoggedTunableNumber("DriveToPoint Heading P", 4.0);
@@ -145,15 +152,14 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointMaxDeceleration =
         new LoggedTunableNumber("DriveToPoint Max Deceleration", 3.0);
 
-    public static final LoggedTunableNumber kDriveToIntakeP =
-        new LoggedTunableNumber("DriveToIntakeXY P", 3.);
-
-    public static final LoggedTunableNumber kDriveToIntakeD =
-        new LoggedTunableNumber("DriveToIntakeXY D", 0.0);
-    public static final LoggedTunableNumber kDriveToIntakeThetaP =
-        new LoggedTunableNumber("DriveToIntakeTheta P", 3.0);
-    public static final LoggedTunableNumber kDriveToIntakeThetaD =
-        new LoggedTunableNumber("DriveToIntakeTheta D", 0.0);
+    public static final LoggedTunableNumber kDriveToIntakeMeshedP =
+        new LoggedTunableNumber("DriveToMeshedXY P", 3.);
+    public static final LoggedTunableNumber kDriveToIntakeMeshedD =
+        new LoggedTunableNumber("DriveToMeshedXY D", 0.0);
+    public static final LoggedTunableNumber kDriveToIntakeThetaMeshedP =
+        new LoggedTunableNumber("DriveToIntakeMeshed Theta P", 3.0);
+    public static final LoggedTunableNumber kDriveToIntakeThetaMeshedD =
+        new LoggedTunableNumber("DriveToIntakeMeshed Theta D", 0.0);
     public static final LoggedTunableNumber kDebounceAmount =
         new LoggedTunableNumber("Meshed Drive Debounce", 0.1);
     public static final LoggedTunableNumber kMeshDrivePriority =
@@ -162,7 +168,9 @@ public final class Constants {
     public static final LoggedTunableNumber kAutoscoreDeployDistance =
         new LoggedTunableNumber("Autoscore Deploy Distance", 48.0);
     public static final LoggedTunableNumber kAutoscoreOuttakeDistance =
-        new LoggedTunableNumber("Autoscore Outtake Distance", 2.5);
+        new LoggedTunableNumber("Autoscore Outtake Distance", 2.0);
+    public static final LoggedTunableNumber kAutoscoreL1OuttakeDistance =
+        new LoggedTunableNumber("Autoscore L1 Outtake Distance", 18.0);
     public static final LoggedTunableNumber kBargeScoreThrowDistance =
         new LoggedTunableNumber("Barge Score Throw Distance", 10.0);
     public static final LoggedTunableNumber kLoaderStationTimeout =
@@ -270,6 +278,8 @@ public final class Constants {
         new LoggedTunableNumber("Elevator Algae Hold Height", 14.5);
     public static final LoggedTunableNumber kAlgaeOuttakeHeight =
         new LoggedTunableNumber("Elevator Algae Outtake Height", 3.5);
+    public static final LoggedTunableNumber kLollipopIntakeHeight =
+        new LoggedTunableNumber("Elevator Lollipop Intake Height", 3.0);
     public static final LoggedTunableNumber kDriveUpHeight =
         new LoggedTunableNumber("Drive Up Height", 11.5);
 
@@ -560,20 +570,25 @@ public final class Constants {
 
     // transform from center of robot to camera
     public static final Transform3d[] kCameraTransforms =
+        // NEW:
+        // 0 - front right facing out, 10.4.22.29:8000, camera 3
+        // 1 - front left facing out, 10.4.22.228:8000, camera 6
+        // 2 - front left facing in, 10.4.22.29:8001, camera 4
+        // 3 - front right facing in, 10.4.22.228:8001, camera 5
         new Transform3d[] {
-          // front left (facing out)
-          new Transform3d(
-              Inches.of(9.796),
-              Inches.of(10.354),
-              Inches.of(8.746),
-              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
-
           // front right (facing out)
           new Transform3d(
               Inches.of(9.796),
               Inches.of(-10.354),
               Inches.of(8.746),
               GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(-12.218))),
+
+          // front left (facing out)
+          new Transform3d(
+              Inches.of(9.796),
+              Inches.of(10.354),
+              Inches.of(8.746),
+              GeomUtil.constructRotation3d(Degrees.zero(), Degrees.of(-15.0), Degrees.of(12.218))),
 
           // front left (facing in)
           new Transform3d(
@@ -631,7 +646,7 @@ public final class Constants {
     public static final LoggedTunableNumber kPivotOuttakeAngle =
         new LoggedTunableNumber("Pivot Outtake Angle", 25.0);
     public static final LoggedTunableNumber kPivotCoralIntakeAngle =
-        new LoggedTunableNumber("Pivot Coral Intake Angle", 25.0);
+        new LoggedTunableNumber("Pivot Coral Intake Angle", 30.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
@@ -678,7 +693,8 @@ public final class Constants {
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
     public static final Rotation2d kWristOffset =
-        Rotation2d.fromDegrees(-33.57 * kWristAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees(-37.3 * kWristAbsoluteEncoderGearRatio);
+    // get owned shrihari - sri b is a better coder
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
     public static final double kRollerPositionTolerance = 10.0; // degrees
@@ -715,7 +731,7 @@ public final class Constants {
     public static final LoggedTunableNumber kRollerEjectVoltage =
         new LoggedTunableNumber("Manipulator Roller Eject Voltage", -3.0);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageAutoscore =
-        new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Autoscore", 3.0);
+        new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Autoscore", 3.5);
     public static final LoggedTunableNumber kRollerL1ScoringVoltageManual =
         new LoggedTunableNumber("Manipulator Roller L1 Scoring Voltage Manual", 2.25);
     public static final LoggedTunableNumber kRollerL2L3ScoringVoltage =

@@ -480,7 +480,7 @@ public class RobotContainer {
         .onFalse(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().setDefaultAction();
+                  RobotState.getInstance().manageAlgaeIntakeRelease();
                 }));
 
     m_driverControls
@@ -526,6 +526,18 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .lollipop()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kLollipopIntake) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kLollipopIntake);
+                  }
                 }));
   }
 

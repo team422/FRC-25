@@ -15,6 +15,7 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
@@ -31,34 +32,34 @@ public class SetpointGenerator {
           ReefHeight.L1, new LoggedTunableNumber("Elevator L1 Height", 9.5),
           ReefHeight.L2, new LoggedTunableNumber("Elevator L2 Height", 27.0),
           ReefHeight.L3, new LoggedTunableNumber("Elevator L3 Height", 43.25),
-          ReefHeight.L4, new LoggedTunableNumber("Elevator L4 Height", 71.0));
+          ReefHeight.L4, new LoggedTunableNumber("Elevator L4 Height", 72.0));
 
   private static final Map<ReefHeight, LoggedTunableNumber> kManipulatorAngles =
       Map.of(
           ReefHeight.L1, new LoggedTunableNumber("Wrist L1 Angle", 112.0),
           ReefHeight.L2, new LoggedTunableNumber("Wrist L2 Angle", 55.0),
           ReefHeight.L3, new LoggedTunableNumber("Wrist L3 Angle", 55.0),
-          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 42.0));
+          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 40.0));
 
   // we need to move back a bit from the raw branch pose
   private static final double kDriveXOffset =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
 
   private static final double kDriveXOffsetFinalAlgae =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(13.0);
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(25.0);
 
   private static List<Pose2d> kIntakePositionsRed =
       List.of(
           new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(125)),
           new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-125)));
   private static List<List<Double>> kIntakePositionsRedAngles =
-      List.of(List.of(.714, 15.745, 16.73, -10.55), List.of(-.714, 15.645, 16.83, 18.5));
+      List.of(List.of(.714, 15.745, 16.73, -10.50), List.of(-.714, 15.645, 16.83, 18.55));
   private static List<Pose2d> kIntakePositionsBlue =
       List.of(
           new Pose2d(1., 0.96, Rotation2d.fromDegrees(55)),
           new Pose2d(1., 6.1, Rotation2d.fromDegrees(-55)));
   private static List<List<Double>> kIntakePositionsBlueAngles =
-      List.of(List.of(-.714, 0.69, 1.77, 2.0), List.of(.714, 0.69, 1.77, 5.925));
+      List.of(List.of(-.714, 0.69, 1.77, 1.95), List.of(.714, 0.69, 1.77, 5.975));
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
@@ -334,15 +335,19 @@ public class SetpointGenerator {
   // TODO: refactor with dataclass instead of double list
   public static Pair<Pose2d, List<Double>> generateNearestIntake(Pose2d curPose) {
     if (DriverStation.getAlliance().get() == Alliance.Red) {
-      if (curPose.getTranslation().getDistance(kIntakePositionsRed.get(0).getTranslation())
-          < curPose.getTranslation().getDistance(kIntakePositionsRed.get(1).getTranslation())) {
+      if (curPose.getY() < FieldConstants.kFieldWidth / 2) {
+        // if (curPose.getTranslation().getDistance(kIntakePositionsRed.get(0).getTranslation())
+        //     < curPose.getTranslation().getDistance(kIntakePositionsRed.get(1).getTranslation()))
+        // {
         return Pair.of(kIntakePositionsRed.get(0), kIntakePositionsRedAngles.get(0));
       } else {
         return Pair.of(kIntakePositionsRed.get(1), kIntakePositionsRedAngles.get(1));
       }
     } else {
-      if (curPose.getTranslation().getDistance(kIntakePositionsBlue.get(0).getTranslation())
-          < curPose.getTranslation().getDistance(kIntakePositionsBlue.get(1).getTranslation())) {
+      if (curPose.getY() < FieldConstants.kFieldWidth / 2) {
+        // if (curPose.getTranslation().getDistance(kIntakePositionsBlue.get(0).getTranslation())
+        //     < curPose.getTranslation().getDistance(kIntakePositionsBlue.get(1).getTranslation()))
+        // {
         return Pair.of(kIntakePositionsBlue.get(0), kIntakePositionsBlueAngles.get(0));
       } else {
         return Pair.of(kIntakePositionsBlue.get(1), kIntakePositionsBlueAngles.get(1));
@@ -375,11 +380,11 @@ public class SetpointGenerator {
   }
 
   public static Pose2d generateBargeLeft() {
-    return new Pose2d(FieldConstants.Barge.kFarCage, new Rotation2d())
+    return new Pose2d(FieldConstants.Barge.kMiddleCage, new Rotation2d())
         .rotateAround(
             new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
             Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
-        .transformBy(new Transform2d(-kBargeXOffset, 0.0, new Rotation2d()));
+        .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
   }
 
   public static Pose2d generateBargeRight() {
@@ -387,6 +392,31 @@ public class SetpointGenerator {
         .rotateAround(
             new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
             Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
-        .transformBy(new Transform2d(-kBargeXOffset, 0.0, new Rotation2d()));
+        .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+  }
+
+  public static Rotation2d generateLollipopAngle(Translation2d driveTranslation) {
+    var lollipopPoses =
+        new ArrayList<>(
+            List.of(
+                FieldConstants.StagingPositions.kLeftIceCream,
+                FieldConstants.StagingPositions.kMiddleIceCream,
+                FieldConstants.StagingPositions.kRightIceCream));
+
+    lollipopPoses.replaceAll(AllianceFlipUtil::apply);
+
+    var closestTranslation = lollipopPoses.get(0).getTranslation();
+
+    for (var pose : lollipopPoses) {
+      if (pose.getTranslation().getDistance(driveTranslation)
+          < closestTranslation.getDistance(driveTranslation)) {
+        closestTranslation = pose.getTranslation();
+      }
+    }
+
+    double dy = closestTranslation.getY() - driveTranslation.getY();
+    double dx = closestTranslation.getX() - driveTranslation.getX();
+
+    return Rotation2d.fromRadians(Math.atan2(dy, dx));
   }
 }

@@ -111,6 +111,12 @@ public class Drive extends SubsystemBase {
           DriveConstants.kDriveToPointAutoI.get(),
           DriveConstants.kDriveToPointAutoD.get());
 
+  private PIDController m_autoIntakeDriveController =
+      new PIDController(
+          DriveConstants.kDriveToPointAutoIntakeP.get(),
+          DriveConstants.kDriveToPointAutoIntakeI.get(),
+          DriveConstants.kDriveToPointAutoIntakeD.get());
+
   private BasicTrapezoid m_driveTrapezoid =
       new BasicTrapezoid(
           MetersPerSecond.of(DriveConstants.kDriveToPointMaxVelocity.get()),
@@ -218,6 +224,7 @@ public class Drive extends SubsystemBase {
 
     m_driveController.setTolerance(Units.inchesToMeters(0.5));
     m_autoDriveController.setTolerance(Units.inchesToMeters(0.5));
+    m_autoIntakeDriveController.setTolerance(Units.inchesToMeters(0.5));
     m_headingController.setTolerance(Units.degreesToRadians(1));
 
     AlertManager.registerAlert(m_gyroDisconnectedAlert);
@@ -265,6 +272,17 @@ public class Drive extends SubsystemBase {
         DriveConstants.kDriveToPointAutoP,
         DriveConstants.kDriveToPointAutoI,
         DriveConstants.kDriveToPointAutoD);
+
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_autoIntakeDriveController.setP(DriveConstants.kDriveToPointAutoIntakeP.get());
+          m_autoIntakeDriveController.setI(DriveConstants.kDriveToPointAutoIntakeI.get());
+          m_autoIntakeDriveController.setD(DriveConstants.kDriveToPointAutoIntakeD.get());
+        },
+        DriveConstants.kDriveToPointAutoIntakeP,
+        DriveConstants.kDriveToPointAutoIntakeI,
+        DriveConstants.kDriveToPointAutoIntakeD);
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -434,15 +452,15 @@ public class Drive extends SubsystemBase {
           hashCode(),
           () -> {
             m_meshedController.setPIDControllers(
-                DriveConstants.kDriveToIntakeP.get(),
-                DriveConstants.kDriveToIntakeD.get(),
-                DriveConstants.kDriveToIntakeThetaP.get(),
-                DriveConstants.kDriveToIntakeThetaD.get());
+                DriveConstants.kDriveToIntakeMeshedP.get(),
+                DriveConstants.kDriveToIntakeMeshedD.get(),
+                DriveConstants.kDriveToIntakeThetaMeshedP.get(),
+                DriveConstants.kDriveToIntakeThetaMeshedD.get());
           },
-          DriveConstants.kDriveToIntakeP,
-          DriveConstants.kDriveToIntakeD,
-          DriveConstants.kDriveToIntakeThetaP,
-          DriveConstants.kDriveToIntakeThetaD);
+          DriveConstants.kDriveToIntakeMeshedP,
+          DriveConstants.kDriveToIntakeMeshedD,
+          DriveConstants.kDriveToIntakeThetaMeshedP,
+          DriveConstants.kDriveToIntakeThetaMeshedD);
     }
   }
 
@@ -502,7 +520,11 @@ public class Drive extends SubsystemBase {
     m_desiredAcceleration = trapAccel * ffScaler;
 
     PIDController driveController =
-        DriverStation.isAutonomous() ? m_autoDriveController : m_driveController;
+        DriverStation.isAutonomous()
+            ? (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
+                ? m_autoIntakeDriveController
+                : m_autoDriveController)
+            : m_driveController;
 
     double driveVelocityScalar = -1 * trapVelocity * ffScaler;
     double pidVelocity = driveController.calculate(currentDistance, 0.0) * (1 - ffScaler);
@@ -798,25 +820,43 @@ public class Drive extends SubsystemBase {
     }
 
     if (newProfile == DriveProfiles.kMeshedUserControls) {
-      // if (RobotState.getInstance().getCurrentAction() == RobotAction.kCoralIntaking) {
-      Pair<Pose2d, List<Double>> desPose = SetpointGenerator.generateNearestIntake(getPose());
-      m_meshedController =
-          new MeshedDrivingController(
-              desPose.getFirst(),
-              true,
-              DriveConstants.kDebounceAmount.get(),
-              DriveConstants.kMeshDrivePriority.get());
-      m_meshedController.setPIDControllers(
-          DriveConstants.kDriveToIntakeP.get(),
-          DriveConstants.kDriveToIntakeD.get(),
-          DriveConstants.kDriveToIntakeThetaP.get(),
-          DriveConstants.kDriveToIntakeThetaD.get());
-      m_meshedController.setAxisLocked(
-          desPose.getSecond().get(0),
-          desPose.getSecond().get(1),
-          desPose.getSecond().get(2),
-          desPose.getSecond().get(3));
-      // }
+      if (RobotState.getInstance().getCurrentAction() == RobotAction.kCoralIntaking) {
+        Pair<Pose2d, List<Double>> desPose = SetpointGenerator.generateNearestIntake(getPose());
+        m_meshedController =
+            new MeshedDrivingController(
+                desPose.getFirst(),
+                true,
+                DriveConstants.kDebounceAmount.get(),
+                DriveConstants.kMeshDrivePriority.get());
+        m_meshedController.setPIDControllers(
+            DriveConstants.kDriveToIntakeMeshedP.get(),
+            DriveConstants.kDriveToIntakeMeshedD.get(),
+            DriveConstants.kDriveToIntakeThetaMeshedP.get(),
+            DriveConstants.kDriveToIntakeThetaMeshedD.get());
+        m_meshedController.setAxisLocked(
+            desPose.getSecond().get(0),
+            desPose.getSecond().get(1),
+            desPose.getSecond().get(2),
+            desPose.getSecond().get(3));
+      } else {
+        Pose2d desPose;
+        if (RobotState.getInstance().getBargeLeftCage()) {
+          desPose = SetpointGenerator.generateBargeLeft();
+        } else {
+          desPose = SetpointGenerator.generateBargeRight();
+        }
+        m_meshedController =
+            new MeshedDrivingController(
+                desPose,
+                false,
+                DriveConstants.kDebounceAmount.get(),
+                DriveConstants.kMeshDrivePriority.get());
+        m_meshedController.setPIDControllers(
+            DriveConstants.kDriveToIntakeMeshedP.get(),
+            DriveConstants.kDriveToIntakeMeshedD.get(),
+            DriveConstants.kDriveToIntakeThetaMeshedP.get(),
+            DriveConstants.kDriveToIntakeThetaMeshedD.get());
+      }
     }
   }
 
@@ -883,7 +923,9 @@ public class Drive extends SubsystemBase {
       linearTolerance =
           Meters.of(
               DriverStation.isAutonomous()
-                  ? m_autoDriveController.getErrorTolerance()
+                  ? (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralOuttaking
+                      ? m_autoIntakeDriveController.getErrorTolerance()
+                      : m_autoDriveController.getErrorTolerance())
                   : m_driveController.getErrorTolerance());
     }
     if (headingTolerance == null) {

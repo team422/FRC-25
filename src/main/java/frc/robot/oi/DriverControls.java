@@ -40,4 +40,6 @@ public interface DriverControls {
   public Trigger toggleVision();
 
   public Trigger coralEject();
+
+  public Trigger lollipop();
 }

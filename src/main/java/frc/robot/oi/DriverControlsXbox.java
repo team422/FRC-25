@@ -105,4 +105,9 @@ public class DriverControlsXbox implements DriverControls {
   public Trigger coralEject() {
     return m_controller.rightStick();
   }
+
+  @Override
+  public Trigger lollipop() {
+    return new Trigger(() -> false);
+  }
 }

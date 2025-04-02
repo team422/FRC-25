@@ -3,6 +3,7 @@ package frc.robot;
 import com.ctre.phoenix6.unmanaged.Unmanaged;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.AlertManager;
@@ -81,6 +82,8 @@ public class Robot extends LoggedRobot {
     m_robotContainer = new RobotContainer();
 
     AlertManager.registerAlert(m_writerAlert);
+
+    DriverStation.silenceJoystickConnectionWarning(true);
   }
 
   /** This function is called periodically during all modes. */

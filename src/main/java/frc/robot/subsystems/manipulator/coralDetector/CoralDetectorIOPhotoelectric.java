@@ -15,6 +15,11 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   private Debouncer m_funnelSensorOneDebouncer = new Debouncer(0.1, DebounceType.kRising);
   private Debouncer m_funnelSensorTwoDebouncer = new Debouncer(0.1, DebounceType.kRising);
 
+  // the manipulator photoelectric one gives incorrect false values sometimes so we need falling
+  // TODO: if the second photoelectric starts giving false values uncomment this
+  private Debouncer m_manipulatorSensorOneDebouncer = new Debouncer(0.1, DebounceType.kFalling);
+  // private Debouncer m_manipulatorSensorTwoDebouncer = new Debouncer(0.1, DebounceType.kFalling);
+
   public CoralDetectorIOPhotoelectric(
       int manipulatorSensorOnePort,
       int manipulatorSensorTwoPort,
@@ -28,35 +33,36 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
 
   @Override
   public void updateInputs(CoralDetectorInputs inputs) {
-    inputs.manipulatorSensorOne = photoElectricManiOneDetected();
-    inputs.manipulatorSensorTwo = photoElectricManiTwoDetected();
-    inputs.funnelSensorOne = photoElectricFunnelOneDetected();
-    inputs.funnelSensorTwo = photoElectricFunnelTwoDetected();
+    inputs.manipulatorSensorOne = manipulatorOneDetected();
+    inputs.manipulatorSensorTwo = manipulatorTwoDetected();
+    inputs.funnelSensorOne = funnelOneDetected();
+    inputs.funnelSensorTwo = funnelTwoDetected();
   }
 
   @Override
   public boolean hasGamePiece() {
-    return photoElectricManiOneDetected() && photoElectricManiTwoDetected();
+    return manipulatorOneDetected() && manipulatorTwoDetected();
   }
 
   public boolean gamePieceInFunnel() {
-    return photoElectricFunnelOneDetected() || photoElectricFunnelTwoDetected();
+    return funnelOneDetected() || funnelTwoDetected();
   }
 
-  private boolean photoElectricManiOneDetected() {
-    return m_manipulatorSensorOne.get();
+  private boolean manipulatorOneDetected() {
+    return m_manipulatorSensorOneDebouncer.calculate(m_manipulatorSensorOne.get());
   }
 
-  private boolean photoElectricManiTwoDetected() {
+  private boolean manipulatorTwoDetected() {
+    // return m_manipulatorSensorTwoDebouncer.calculate(m_manipulatorSensorTwo.get());
     return m_manipulatorSensorTwo.get();
   }
 
   // these photoelectrics give different readings from the manipulator ones
-  private boolean photoElectricFunnelOneDetected() {
+  private boolean funnelOneDetected() {
     return m_funnelSensorOneDebouncer.calculate(!m_funnelSensorOne.get());
   }
 
-  private boolean photoElectricFunnelTwoDetected() {
+  private boolean funnelTwoDetected() {
     return m_funnelSensorTwoDebouncer.calculate(!m_funnelSensorTwo.get());
   }
 }

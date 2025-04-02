@@ -39,6 +39,7 @@ public class Elevator extends SubsystemBase {
     kAlgaeDescoringInitial,
     kAlgaeDescoringFinal,
     kBargeScore,
+    kLollipopIntake,
     kFullTuning,
     kSlamming,
     // we force a slam every time we go down
@@ -57,6 +58,7 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kAlgaeDescoringInitial, this::algaeDescoringInitialPeriodic);
     periodicHash.put(ElevatorState.kAlgaeDescoringFinal, this::algaeDescoringFinalPeriodic);
     periodicHash.put(ElevatorState.kBargeScore, this::bargeScorePeriodic);
+    periodicHash.put(ElevatorState.kLollipopIntake, this::lollipopIntakePeriodic);
     periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
     periodicHash.put(ElevatorState.kSlamming, this::slammingPeriodic);
 
@@ -288,6 +290,10 @@ public class Elevator extends SubsystemBase {
         m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
       }
     }
+  }
+
+  public void lollipopIntakePeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kLollipopIntakeHeight.get());
   }
 
   public void scoringPeriodic() {

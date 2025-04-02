@@ -287,6 +287,8 @@ public class Manipulator extends SubsystemBase {
         Rotation2d.fromDegrees(ManipulatorConstants.kWristAlgaeHoldAngle.get()));
     if (m_runRollerBargeScoring) {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerBargeVoltage.get());
+    } else if (RobotState.getInstance().getCurrentAction() == RobotAction.kLollipopIntake) {
+      m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeDescoringVoltage.get());
     } else {
       m_rollerIO.setVoltage(ManipulatorConstants.kRollerAlgaeHoldVoltage.get());
     }
