@@ -42,6 +42,7 @@ public class GyroIOPigeon2 implements GyroIO {
   private final Queue<Double> m_yawPositionQueue;
   private final Queue<Double> m_pitchPositionQueue;
   private final Queue<Double> m_rollPositionQueue;
+  private final Queue<Double> m_zAccelerationQueue;
   private final Queue<Double> m_timestampQueue;
   private final StatusSignal<AngularVelocity> m_yawVelocity = m_pigeon.getAngularVelocityZWorld();
   private final StatusSignal<AngularVelocity> m_pitchVelocity = m_pigeon.getAngularVelocityXWorld();
@@ -75,6 +76,9 @@ public class GyroIOPigeon2 implements GyroIO {
     m_yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getYaw());
     m_pitchPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getPitch());
     m_rollPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getRoll());
+    m_zAccelerationQueue =
+        PhoenixOdometryThread.getInstance()
+            .registerSignal(m_pigeon.getAccelerationZ()::getValueAsDouble);
 
     if (Constants.kUseBaseRefreshManager) {
       CtreBaseRefreshManager.addSignals(
@@ -138,10 +142,13 @@ public class GyroIOPigeon2 implements GyroIO {
         m_rollPositionQueue.stream()
             .map((Double value) -> Rotation2d.fromDegrees(value))
             .toArray(Rotation2d[]::new);
+    inputs.odometryZAccelerations =
+        m_zAccelerationQueue.stream().mapToDouble((Double value) -> value).toArray();
 
     m_timestampQueue.clear();
     m_yawPositionQueue.clear();
     m_pitchPositionQueue.clear();
     m_rollPositionQueue.clear();
+    m_zAccelerationQueue.clear();
   }
 }

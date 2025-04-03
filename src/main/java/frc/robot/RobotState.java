@@ -96,6 +96,7 @@ public class RobotState {
   private SubsystemProfiles<RobotAction> m_profiles;
 
   private Timer m_timer = new Timer();
+  private Timer m_secondaryTimer = new Timer();
 
   private ReefHeight m_desiredReefHeight = ReefHeight.L1;
   private int m_desiredBranchIndex = 0;
@@ -110,7 +111,8 @@ public class RobotState {
 
   private double m_odometryTrustFactor = 0.0;
 
-  private boolean m_isBargeAuto = true;
+  private boolean m_isBargeAuto = false;
+  private boolean m_isCitrusAuto = false;
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -355,10 +357,30 @@ public class RobotState {
   }
 
   public void autoAutoScorePeriodic() {
+    if (!m_secondaryTimer.isRunning()) {
+      m_secondaryTimer.restart();
+    }
+
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
 
-    if (m_drive.getTargetPose() == null
+    if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_timer.get() < 0.75) {
+      if (AllianceFlipUtil.shouldFlip()) {
+        // we are on red
+        if (m_autoLeft) {
+          m_drive.setTargetPose(new Pose2d(12.92, 1.96, Rotation2d.fromDegrees(90)));
+        } else {
+          m_drive.setTargetPose(new Pose2d(12.92, 5.99, Rotation2d.fromDegrees(270)));
+        }
+      } else {
+        // we are on blue
+        if (m_autoLeft) {
+          m_drive.setTargetPose(new Pose2d(4.3519, 5.99, Rotation2d.fromDegrees(270)));
+        } else {
+          m_drive.setTargetPose(new Pose2d(4.3519, 1.96, Rotation2d.fromDegrees(90)));
+        }
+      }
+    } else if (m_drive.getTargetPose() == null
         || !EqualsUtil.GeomExtensions.epsilonEquals(
             m_setpoint.drivePose(), m_drive.getTargetPose())) {
       m_drive.setTargetPose(m_setpoint.drivePose());
@@ -485,12 +507,12 @@ public class RobotState {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(15.6975, 0.8575, Rotation2d.fromDegrees(130)));
+          m_drive.setTargetPose(new Pose2d(15.6475, 0.9075, Rotation2d.fromDegrees(130)));
         } else {
           // I HATE MATH
           m_drive.setTargetPose(
               new Pose2d(
-                  15.6975, 7.2325, Rotation2d.fromDegrees(50).plus(Rotation2d.fromDegrees(180))));
+                  15.6475, 7.1825, Rotation2d.fromDegrees(50).plus(Rotation2d.fromDegrees(180))));
         }
       } else {
         // we are on blue
@@ -513,15 +535,41 @@ public class RobotState {
         setReefIndexRight();
       } else {
         // I. Hate. Math.
-        var pose =
-            new Pose2d(
-                    AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                    AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
-                .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-        if (m_autoLeft) {
-          setReefIndexLeft(pose);
+        Pose2d pose;
+        if (m_isCitrusAuto) {
+          if (m_autoLeft) {
+            pose =
+                new Pose2d(
+                        AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                        AllianceFlipUtil.apply(Rotation2d.fromDegrees(-60)))
+                    .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+          } else {
+            pose =
+                new Pose2d(
+                        AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                        AllianceFlipUtil.apply(Rotation2d.fromDegrees(60)))
+                    .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+          }
+          Logger.recordOutput("posse", pose);
         } else {
-          setReefIndexRight(pose);
+          pose =
+              new Pose2d(
+                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                      AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
+                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+        }
+        if (m_autoLeft) {
+          if (m_isCitrusAuto) {
+            setReefIndexRight(pose);
+          } else {
+            setReefIndexLeft(pose);
+          }
+        } else {
+          if (m_isCitrusAuto) {
+            setReefIndexLeft(pose);
+          } else {
+            setReefIndexRight(pose);
+          }
         }
       }
       updateRobotAction(RobotAction.kAutoAutoScore);
@@ -541,15 +589,41 @@ public class RobotState {
           setReefIndexRight();
         } else {
           // I. Hate. Math. pt2
-          var pose =
-              new Pose2d(
-                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                      AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
-                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-          if (m_autoLeft) {
-            setReefIndexLeft(pose);
+          Pose2d pose;
+          if (m_isCitrusAuto) {
+            if (m_autoLeft) {
+              pose =
+                  new Pose2d(
+                          AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                          AllianceFlipUtil.apply(Rotation2d.fromDegrees(-60)))
+                      .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+            } else {
+              pose =
+                  new Pose2d(
+                          AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                          AllianceFlipUtil.apply(Rotation2d.fromDegrees(60)))
+                      .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+            }
+            Logger.recordOutput("pose", pose);
           } else {
-            setReefIndexRight(pose);
+            pose =
+                new Pose2d(
+                        AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                        AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
+                    .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+          }
+          if (m_autoLeft) {
+            if (m_isCitrusAuto) {
+              setReefIndexRight(pose);
+            } else {
+              setReefIndexLeft(pose);
+            }
+          } else {
+            if (m_isCitrusAuto) {
+              setReefIndexLeft(pose);
+            } else {
+              setReefIndexRight(pose);
+            }
           }
         }
         updateRobotAction(RobotAction.kAutoAutoScore);
@@ -965,6 +1039,9 @@ public class RobotState {
     m_timer.stop();
     m_timer.reset();
 
+    m_secondaryTimer.stop();
+    m_secondaryTimer.reset();
+
     m_loaderStationTimer.stop();
     m_loaderStationTimer.reset();
 
@@ -1303,6 +1380,10 @@ public class RobotState {
 
   public void setBargeAuto(boolean newValue) {
     m_isBargeAuto = newValue;
+  }
+
+  public void setCitrusAuto(boolean newValue) {
+    m_isCitrusAuto = newValue;
   }
 
   public DriveProfiles getDriveProfile() {

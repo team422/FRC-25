@@ -396,6 +396,10 @@ public class Drive extends SubsystemBase {
 
     Logger.recordOutput("Drive/Slip", slip);
 
+    Logger.recordOutput(
+        "Drive/FreeFall",
+        m_gyroInputs.zAcceleration < DriveConstants.kFreefallAccelerationThreshold);
+
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
 
     if (Constants.kUseAlerts && !m_gyroInputs.connected) {
@@ -543,6 +547,16 @@ public class Drive extends SubsystemBase {
     if (Math.abs(headingError) < m_headingController.getErrorTolerance()) {
       headingVelocity = 0.0;
     }
+
+    driveVelocityScalar =
+        MathUtil.clamp(
+            driveVelocityScalar,
+            RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
+                ? -DriveConstants.kMaxAutoIntakeSpeed.get()
+                : -DriveConstants.kMaxAutoscoreSpeed.get(),
+            RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
+                ? DriveConstants.kMaxAutoIntakeSpeed.get()
+                : DriveConstants.kMaxAutoscoreSpeed.get());
 
     // evil math
     // blame 254 for making this because i dont fully understand it

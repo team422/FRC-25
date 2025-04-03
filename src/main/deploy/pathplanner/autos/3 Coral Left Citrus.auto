@@ -13,13 +13,13 @@
         {
           "type": "named",
           "data": {
-            "name": "Non-citrus Auto"
+            "name": "Citrus Auto"
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "Right side"
+            "name": "Left side"
           }
         },
         {
@@ -31,7 +31,7 @@
         {
           "type": "named",
           "data": {
-            "name": "Autoscore Right"
+            "name": "Autoscore Left"
           }
         }
       ]

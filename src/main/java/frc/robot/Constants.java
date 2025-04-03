@@ -68,13 +68,20 @@ public final class Constants {
   public static final boolean kUseAlerts = true && kCurrentMode != Mode.SIM;
 
   public static final class DriveConstants {
-    public static final double kMaxLinearSpeed = 3.8; // meters per second
+    public static final LoggedTunableNumber kMaxLinearSpeed =
+        new LoggedTunableNumber("AA Max Linear Speed", 4.5); // meters per second
+    public static final LoggedTunableNumber kMaxAutoscoreSpeed =
+        new LoggedTunableNumber("AA Max Autoscore Speed", 3.6);
+    public static final LoggedTunableNumber kMaxAutoIntakeSpeed =
+        new LoggedTunableNumber("AA Max Intake Speed", 4.0);
+    public static final LoggedTunableNumber kMaxMeshedSpeed =
+        new LoggedTunableNumber("AA Max Meshed Speed", 4.5);
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
     public static final double kTrackWidthX = Units.inchesToMeters(22.75);
     public static final double kTrackWidthY = Units.inchesToMeters(22.75);
     public static final double kDriveBaseRadius =
         Math.hypot(kTrackWidthX / 2.0, kTrackWidthY / 2.0);
-    public static final double kMaxAngularSpeed = kMaxLinearSpeed / kDriveBaseRadius;
+    public static final double kMaxAngularSpeed = kMaxLinearSpeed.get() / kDriveBaseRadius;
     public static final double kMaxAngularAcceleration = kMaxLinearAcceleration / kDriveBaseRadius;
     public static final LoggedTunableNumber kTeleopRotationSpeed =
         new LoggedTunableNumber("Teleop Rotation Speed", 10.0);
@@ -98,13 +105,13 @@ public final class Constants {
         new SwerveDriveKinematics(kModuleTranslations);
 
     public static final ModuleLimits kModuleLimitsFree =
-        new ModuleLimits(kMaxLinearSpeed, kMaxAngularSpeed, Units.degreesToRadians(1080.0));
+        new ModuleLimits(kMaxLinearSpeed.get(), kMaxAngularSpeed, Units.degreesToRadians(1080.0));
 
-    public static final double kWheelRadius = Units.inchesToMeters(1.929);
+    public static final double kWheelRadius = Units.inchesToMeters(1.935);
     public static final double kOdometryFrequency = 250.0;
 
     public static final double kDriveGearRatio =
-        (50.0 / 16.0) * (19.0 / 25.0) * (45.0 / 15.0); // L1+ gear ratio
+        (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0); // L2 gear ratio
     public static final double kTurnGearRatio = 150.0 / 7.0;
 
     // Simulation constants
@@ -125,11 +132,11 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint D", 0.18);
 
     public static final LoggedTunableNumber kDriveToPointAutoP =
-        new LoggedTunableNumber("DriveToPoint Auto P", 3.2);
+        new LoggedTunableNumber("DriveToPoint Auto P", 3.0);
     public static final LoggedTunableNumber kDriveToPointAutoI =
         new LoggedTunableNumber("DriveToPoint Auto I", 0.0);
     public static final LoggedTunableNumber kDriveToPointAutoD =
-        new LoggedTunableNumber("DriveToPoint Auto D", 0.18);
+        new LoggedTunableNumber("DriveToPoint Auto D", 0.12);
 
     public static final LoggedTunableNumber kDriveToPointAutoIntakeP =
         new LoggedTunableNumber("DriveToPoint Auto Intake P", 5.0);
@@ -166,7 +173,7 @@ public final class Constants {
         new LoggedTunableNumber("Meshed Drive Priority", 0.3);
 
     public static final LoggedTunableNumber kAutoscoreDeployDistance =
-        new LoggedTunableNumber("Autoscore Deploy Distance", 48.0);
+        new LoggedTunableNumber("Autoscore Deploy Distance", 42.0);
     public static final LoggedTunableNumber kAutoscoreOuttakeDistance =
         new LoggedTunableNumber("Autoscore Outtake Distance", 2.0);
     public static final LoggedTunableNumber kAutoscoreL1OuttakeDistance =
@@ -179,6 +186,9 @@ public final class Constants {
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =
         new LoggedTunableNumber("Slip Threshold", 150000);
+
+    // meters per second squared to be considered in freefall (less than)
+    public static final double kFreefallAccelerationThreshold = 9.0;
 
     public static final Mass kRobotMass = Pounds.of(120);
     public static final MomentOfInertia kRobotMOI = KilogramSquareMeters.of(6.5);

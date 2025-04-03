@@ -156,6 +156,19 @@ public class AutoFactory {
             }));
 
     NamedCommands.registerCommand(
+        "Citrus Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setCitrusAuto(true);
+            }));
+    NamedCommands.registerCommand(
+        "Non-citrus Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setCitrusAuto(false);
+            }));
+
+    NamedCommands.registerCommand(
         "autoscoreFinish",
         Commands.waitUntil(
             () -> {
@@ -190,7 +203,7 @@ public class AutoFactory {
             DriveConstants.kRobotMOI,
             new ModuleConfig(
                 DriveConstants.kWheelRadius,
-                DriveConstants.kMaxLinearSpeed,
+                DriveConstants.kMaxLinearSpeed.get(),
                 1.7,
                 DCMotor.getKrakenX60Foc(1),
                 900,

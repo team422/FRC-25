@@ -88,8 +88,8 @@ public class DriveCommands {
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  linearVelocity.getX() * DriveConstants.kMaxLinearSpeed,
-                  linearVelocity.getY() * DriveConstants.kMaxLinearSpeed,
+                  linearVelocity.getX() * DriveConstants.kMaxLinearSpeed.get(),
+                  linearVelocity.getY() * DriveConstants.kMaxLinearSpeed.get(),
                   omega * DriveConstants.kTeleopRotationSpeed.get());
           drive.setDesiredChassisSpeeds(
               robotRelative
@@ -140,8 +140,8 @@ public class DriveCommands {
               // Convert to field relative speeds & send command
               ChassisSpeeds speeds =
                   new ChassisSpeeds(
-                      linearVelocity.getX() * DriveConstants.kMaxLinearSpeed,
-                      linearVelocity.getY() * DriveConstants.kMaxLinearSpeed,
+                      linearVelocity.getX() * DriveConstants.kMaxLinearSpeed.get(),
+                      linearVelocity.getY() * DriveConstants.kMaxLinearSpeed.get(),
                       omega);
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()

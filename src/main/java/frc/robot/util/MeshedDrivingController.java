@@ -21,7 +21,7 @@ public class MeshedDrivingController {
   private double maxX;
   private double userControlPrio;
 
-  private double robotMaxSpeed = Constants.DriveConstants.kMaxLinearSpeed;
+  private double robotMaxSpeed = Constants.DriveConstants.kMaxMeshedSpeed.get();
   private double robotMaxRotationalVelocity = Constants.DriveConstants.kTeleopRotationSpeed.get();
 
   private PIDController linearXController;
@@ -90,6 +90,14 @@ public class MeshedDrivingController {
     }
 
     // mesh user controls
+
+    if (Constants.DriveConstants.kMaxLinearSpeed.hasChanged(hashCode())) {
+      robotMaxSpeed = Constants.DriveConstants.kMaxMeshedSpeed.get();
+    }
+
+    if (Constants.DriveConstants.kTeleopRotationSpeed.hasChanged(hashCode())) {
+      robotMaxRotationalVelocity = Constants.DriveConstants.kTeleopRotationSpeed.get();
+    }
 
     // lets find the value of user control
     double controlHead =
