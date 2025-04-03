@@ -552,11 +552,11 @@ public class Drive extends SubsystemBase {
         MathUtil.clamp(
             driveVelocityScalar,
             RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
-                ? -DriveConstants.kMaxAutoIntakeSpeed.get()
-                : -DriveConstants.kMaxAutoscoreSpeed.get(),
+                ? -DriveConstants.kMaxAutoIntakeSpeed
+                : -DriveConstants.kMaxAutoscoreSpeed,
             RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
-                ? DriveConstants.kMaxAutoIntakeSpeed.get()
-                : DriveConstants.kMaxAutoscoreSpeed.get());
+                ? DriveConstants.kMaxAutoIntakeSpeed
+                : DriveConstants.kMaxAutoscoreSpeed);
 
     // evil math
     // blame 254 for making this because i dont fully understand it

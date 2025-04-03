@@ -203,7 +203,7 @@ public class AutoFactory {
             DriveConstants.kRobotMOI,
             new ModuleConfig(
                 DriveConstants.kWheelRadius,
-                DriveConstants.kMaxLinearSpeed.get(),
+                DriveConstants.kMaxLinearSpeed,
                 1.7,
                 DCMotor.getKrakenX60Foc(1),
                 900,

@@ -1338,6 +1338,7 @@ public class RobotState {
 
   public void toggleUsingVision() {
     m_usingVision = !m_usingVision;
+    m_led.updateLEDState();
   }
 
   public boolean manipulatorAtSetpoint() {

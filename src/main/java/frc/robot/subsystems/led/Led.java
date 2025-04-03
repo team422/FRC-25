@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LedConstants;
 import frc.robot.RobotState;
+import java.util.ArrayList;
 import org.littletonrobotics.junction.Logger;
 
 public class Led extends SubsystemBase {
@@ -110,7 +111,7 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/LocationCheck/NumDistanceLeds", numDistanceLeds);
   }
 
-  private void updateLEDState() {
+  public void updateLEDState() {
     LEDPattern pattern;
     switch (m_state) {
       case kLocationCheck:
@@ -148,6 +149,28 @@ public class Led extends SubsystemBase {
     }
     if (pattern != null) {
       pattern.applyTo(m_buffer);
+    }
+    Logger.recordOutput("Hello", RobotState.getInstance().getUsingVision());
+    if (!RobotState.getInstance().getUsingVision()) {
+      // we need to set the middle 6 leds to the no vision color
+      // if the length is odd we use 5 instead so that it's always symmetric
+      int middle = m_buffer.getLength() / 2;
+      int start;
+      int end;
+      if (m_buffer.getLength() % 2 == 0) {
+        start = middle - 3;
+        end = middle + 3;
+      } else {
+        start = middle - 2;
+        end = middle + 3;
+      }
+      var list = new ArrayList<Integer>();
+      for (int i = start; i < end; i++) {
+        list.add(i);
+
+        m_buffer.setLED(i, convertColor(LedConstants.kVisionOff));
+      }
+      Logger.recordOutput("Hello2", list.stream().mapToInt((val) -> val).toArray());
     }
     m_strip.setData(m_buffer);
   }
