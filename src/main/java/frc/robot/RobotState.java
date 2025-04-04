@@ -364,7 +364,7 @@ public class RobotState {
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
 
-    if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_timer.get() < 0.75) {
+    if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_secondaryTimer.get() < 0.75) {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_autoLeft) {
@@ -517,11 +517,11 @@ public class RobotState {
       } else {
         // we are on blue
         if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(1.5119, 7.195, Rotation2d.fromDegrees(-50)));
+          m_drive.setTargetPose(new Pose2d(1.6244, 7.1825, Rotation2d.fromDegrees(-50)));
         } else {
           m_drive.setTargetPose(
               new Pose2d(
-                  1.5119, 0.73, Rotation2d.fromDegrees(-130).plus(Rotation2d.fromDegrees(180))));
+                  1.6244, 0.9075, Rotation2d.fromDegrees(-130).plus(Rotation2d.fromDegrees(180))));
         }
       }
     }
@@ -541,13 +541,13 @@ public class RobotState {
             pose =
                 new Pose2d(
                         AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                        AllianceFlipUtil.apply(Rotation2d.fromDegrees(-60)))
+                        Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
                     .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
           } else {
             pose =
                 new Pose2d(
                         AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                        AllianceFlipUtil.apply(Rotation2d.fromDegrees(60)))
+                        Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
                     .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
           }
           Logger.recordOutput("posse", pose);
@@ -595,13 +595,13 @@ public class RobotState {
               pose =
                   new Pose2d(
                           AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                          AllianceFlipUtil.apply(Rotation2d.fromDegrees(-60)))
+                          Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
                       .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
             } else {
               pose =
                   new Pose2d(
                           AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                          AllianceFlipUtil.apply(Rotation2d.fromDegrees(60)))
+                          Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
                       .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
             }
             Logger.recordOutput("pose", pose);
@@ -1133,10 +1133,9 @@ public class RobotState {
   }
 
   public void onDisable() {
-    // TODO: re-enable for comp
-    // if (m_profiles.getCurrentProfile() == RobotAction.kAutoCoralIntaking) {
-    //   m_drive.setCoast();
-    // }
+    if (m_profiles.getCurrentProfile() == RobotAction.kAutoCoralIntaking) {
+      m_drive.setCoast();
+    }
   }
 
   public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {

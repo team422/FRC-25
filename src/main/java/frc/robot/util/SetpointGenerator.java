@@ -53,13 +53,13 @@ public class SetpointGenerator {
           new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(125)),
           new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-125)));
   private static List<List<Double>> kIntakePositionsRedAngles =
-      List.of(List.of(.714, 15.745, 16.73, -10.50), List.of(-.714, 15.645, 16.83, 18.55));
+      List.of(List.of(.714, 15.745, 16.73, -10.50), List.of(-.714, 15.745, 16.73, 18.55));
   private static List<Pose2d> kIntakePositionsBlue =
       List.of(
           new Pose2d(1., 0.96, Rotation2d.fromDegrees(55)),
           new Pose2d(1., 6.1, Rotation2d.fromDegrees(-55)));
   private static List<List<Double>> kIntakePositionsBlueAngles =
-      List.of(List.of(-.714, 0.69, 1.77, 1.95), List.of(.714, 0.69, 1.77, 5.975));
+      List.of(List.of(-.714, 0.5419, 1.5269, 1.83214), List.of(.714, 0.5419, 1.5269, 6.2178634));
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
