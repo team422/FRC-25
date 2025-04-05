@@ -90,7 +90,7 @@ public class Climb extends SubsystemBase {
 
     // update inputs and run periodic function for current state
     m_io.updateInputs(m_inputs);
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     // log inputs and profile
     Logger.processInputs("Climb", m_inputs);

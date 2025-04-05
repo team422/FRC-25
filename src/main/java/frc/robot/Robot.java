@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.unmanaged.Unmanaged;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -84,6 +85,8 @@ public class Robot extends LoggedRobot {
     AlertManager.registerAlert(m_writerAlert);
 
     DriverStation.silenceJoystickConnectionWarning(true);
+
+    SignalLogger.enableAutoLogging(false);
   }
 
   /** This function is called periodically during all modes. */
@@ -93,19 +96,21 @@ public class Robot extends LoggedRobot {
       CtreBaseRefreshManager.updateAll();
     }
 
-    // I LOVE REFLECTION
-    boolean isOpen = true;
-    try {
-      var openField = m_writer.getClass().getDeclaredField("isOpen");
-      openField.setAccessible(true);
-      isOpen = (Boolean) openField.get(m_writer);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    if (isOpen == false) {
-      m_writerAlert.set(true);
-    } else {
-      m_writerAlert.set(false);
+    if (Constants.kUseAlerts) {
+      // I LOVE REFLECTION
+      boolean isOpen = true;
+      try {
+        var openField = m_writer.getClass().getDeclaredField("isOpen");
+        openField.setAccessible(true);
+        isOpen = (Boolean) openField.get(m_writer);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      if (isOpen == false) {
+        m_writerAlert.set(true);
+      } else {
+        m_writerAlert.set(false);
+      }
     }
 
     RobotState.getInstance().updateRobotState();

@@ -349,15 +349,16 @@ public class AprilTagVision extends SubsystemBase {
         double xyStandardDeviation = 1;
         if (averageDistance < Units.inchesToMeters(50)) {
           xyStandardDeviation = 0.01;
-        } else if (averageDistance < Units.inchesToMeters(65)) {
+        } else if (averageDistance < Units.inchesToMeters(999999)) {
           xyStandardDeviation =
-              0.05
+              0.01
                   // back to normal math
                   * averageDistance
                   / tagPoses.size();
-        } else {
-          xyStandardDeviation = 0.05 * Math.pow(averageDistance / tagPoses.size(), 2);
         }
+        // } else {
+        //   xyStandardDeviation = 0.05 * Math.pow(averageDistance / tagPoses.size(), 2);
+        // }
 
         // xyStandardDeviation *= yawDifference * 0.25 + 0.1;
 

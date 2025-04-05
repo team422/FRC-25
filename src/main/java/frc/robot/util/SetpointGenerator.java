@@ -50,16 +50,16 @@ public class SetpointGenerator {
 
   private static List<Pose2d> kIntakePositionsRed =
       List.of(
-          new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(125)),
-          new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-125)));
+          new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(126)),
+          new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-126)));
   private static List<List<Double>> kIntakePositionsRedAngles =
       List.of(List.of(.714, 15.745, 16.73, -10.50), List.of(-.714, 15.745, 16.73, 18.55));
   private static List<Pose2d> kIntakePositionsBlue =
       List.of(
-          new Pose2d(1., 0.96, Rotation2d.fromDegrees(55)),
-          new Pose2d(1., 6.1, Rotation2d.fromDegrees(-55)));
+          new Pose2d(1., 0.96, Rotation2d.fromDegrees(54)),
+          new Pose2d(1., 6.1, Rotation2d.fromDegrees(-54)));
   private static List<List<Double>> kIntakePositionsBlueAngles =
-      List.of(List.of(-.714, 0.5419, 1.5269, 1.83214), List.of(.714, 0.5419, 1.5269, 6.2178634));
+      List.of(List.of(-.714, 0.7419, 1.7269, 1.98214), List.of(.714, 0.7419, 1.7269, 6.0678634));
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
@@ -228,7 +228,7 @@ public class SetpointGenerator {
 
   private static int[] checkVertical(Pose2d pose) {
     // check the alliance
-    Alliance alliance = DriverStation.getAlliance().get();
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
     if (alliance == Alliance.Red) {
       if (pose.getX() >= 13.062) {
         return new int[] {0, 1, 5};
@@ -245,7 +245,7 @@ public class SetpointGenerator {
   }
 
   private static int[] checkDiagonalPositive(Pose2d pose) {
-    Alliance alliance = DriverStation.getAlliance().get();
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
     double m = Math.sqrt(3) / 3;
     double b = alliance == Alliance.Red ? -3.53 : 1.4;
     double ty = m * pose.getX() + b;
@@ -265,7 +265,7 @@ public class SetpointGenerator {
   }
 
   private static int[] checkDiagonalNegative(Pose2d pose) {
-    Alliance alliance = DriverStation.getAlliance().get();
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
     double m = -Math.sqrt(3) / 3;
     double b = alliance == Alliance.Red ? 11.55 : 6.6;
     double ty = m * pose.getX() + b;
@@ -334,7 +334,7 @@ public class SetpointGenerator {
 
   // TODO: refactor with dataclass instead of double list
   public static Pair<Pose2d, List<Double>> generateNearestIntake(Pose2d curPose) {
-    if (DriverStation.getAlliance().get() == Alliance.Red) {
+    if (DriverStation.getAlliance().orElse(Alliance.Red) == Alliance.Red) {
       if (curPose.getY() < FieldConstants.kFieldWidth / 2) {
         // if (curPose.getTranslation().getDistance(kIntakePositionsRed.get(0).getTranslation())
         //     < curPose.getTranslation().getDistance(kIntakePositionsRed.get(1).getTranslation()))

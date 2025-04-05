@@ -51,8 +51,6 @@ import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.PoseEstimator;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
-import frc.lib.littletonUtils.SwerveSetpointGenerator;
-import frc.lib.littletonUtils.SwerveSetpointGenerator.SwerveSetpoint;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
@@ -154,17 +152,6 @@ public class Drive extends SubsystemBase {
   // private final PoseEstimator m_poseEstimatorNoSlowVision =
   //     new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
 
-  private SwerveSetpoint m_currSetpoint =
-      new SwerveSetpoint(
-          new ChassisSpeeds(),
-          new SwerveModuleState[] {
-            new SwerveModuleState(),
-            new SwerveModuleState(),
-            new SwerveModuleState(),
-            new SwerveModuleState()
-          });
-  private SwerveSetpointGenerator m_swerveSetpointGenerator;
-
   private MeshedDrivingController m_meshedController;
 
   private ChassisSpeeds m_userChassisSpeeds;
@@ -216,10 +203,6 @@ public class Drive extends SubsystemBase {
 
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
 
-    m_swerveSetpointGenerator =
-        new SwerveSetpointGenerator(
-            DriveConstants.kDriveKinematics, DriveConstants.kModuleTranslations);
-
     m_headingController.enableContinuousInput(-Math.PI, Math.PI);
 
     m_driveController.setTolerance(Units.inchesToMeters(0.5));
@@ -233,12 +216,17 @@ public class Drive extends SubsystemBase {
   public void periodic() {
     double start = HALUtil.getFPGATime();
 
+    double updateInputsStart = HALUtil.getFPGATime();
     m_odometryLock.lock(); // Prevents odometry updates while reading data
     m_gyroIO.updateInputs(m_gyroInputs);
     for (var module : m_modules) {
       module.updateInputs();
     }
     m_odometryLock.unlock();
+    Logger.recordOutput(
+        "PeriodicTime/DriveUpdateInputs", (HALUtil.getFPGATime() - updateInputsStart) / 1000.0);
+    Logger.recordOutput(
+        "FUCKYOUDRIVE/1UpdateInputsCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -298,12 +286,24 @@ public class Drive extends SubsystemBase {
         DriveConstants.kDriveToPointMaxAcceleration,
         DriveConstants.kDriveToPointMaxDeceleration);
 
-    m_profiles.getPeriodicFunction().run();
+    Logger.recordOutput(
+        "FUCKYOUDRIVE/2LoggedTunableCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
+
+    m_profiles.getPeriodicFunctionTimed().run();
+
+    Logger.recordOutput(
+        "FUCKYOUDRIVE/3SubsystemProfilesCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     Logger.processInputs("Drive/Gyro", m_gyroInputs);
+
+    double modulePeriodicStart = HALUtil.getFPGATime();
     for (var module : m_modules) {
       module.periodic();
     }
+    Logger.recordOutput(
+        "PeriodicTime/ModulePeriodic", (HALUtil.getFPGATime() - modulePeriodicStart) / 1000.0);
+    Logger.recordOutput(
+        "FUCKYOUDRIVE/4ModulePeriodicCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -317,6 +317,10 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
 
+    Logger.recordOutput(
+        "FUCKYOUDRIVE/5RandomShitCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
+
+    double odometryUpdateStart = HALUtil.getFPGATime();
     // Update odometry
     double[] sampleTimestamps =
         m_modules[0].getOdometryTimestamps(); // All signals are sampled together
@@ -366,11 +370,17 @@ public class Drive extends SubsystemBase {
       lastGyroYaw = m_rawGyroRotation;
     }
     m_poseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
+
+    Logger.recordOutput(
+        "PeriodicTime/OdometryUpdate", (HALUtil.getFPGATime() - odometryUpdateStart) / 1000.0);
+    Logger.recordOutput(
+        "FUCKYOUDRIVE/6OdometryUpdateCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
     // m_poseEstimatorNoSlowVision.addDriveData(Timer.getTimestamp(), totalTwist);
 
     // Logger.recordOutput("VisionSlow/Pose", m_poseEstimatorNoSlowVision.getLatestPose());
     // Logger.recordOutput("VisionSlow/Time", Timer.getTimestamp());
 
+    double slipStart = HALUtil.getFPGATime();
     // lets look for slip
     boolean slip = false;
     for (int i = 0; i < m_modules.length; i++) {
@@ -400,6 +410,9 @@ public class Drive extends SubsystemBase {
         "Drive/FreeFall",
         m_gyroInputs.zAcceleration < DriveConstants.kFreefallAccelerationThreshold);
 
+    Logger.recordOutput("PeriodicTime/DriveSlip", (HALUtil.getFPGATime() - slipStart) / 1000.0);
+    Logger.recordOutput("FUCKYOUDRIVE/7SlipCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
+
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
 
     if (Constants.kUseAlerts && !m_gyroInputs.connected) {
@@ -409,6 +422,7 @@ public class Drive extends SubsystemBase {
     }
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
+    Logger.recordOutput("FUCKYOUDRIVE/8Final", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void characterizationPeriodic() {
@@ -427,6 +441,7 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/DesiredHeading", m_desiredHeading.getDegrees());
     Logger.recordOutput("Drive/CurrentHeading", getPose().getRotation().getDegrees());
     Logger.recordOutput("Drive/DesiredSpeeds", m_desiredChassisSpeeds);
+    Logger.recordOutput("Drive/MeasuredSpeeds", getChassisSpeeds());
   }
 
   public void pathplannerPeriodic() {
@@ -673,19 +688,12 @@ public class Drive extends SubsystemBase {
     SwerveModuleState[] setpointStates =
         DriveConstants.kDriveKinematics.toSwerveModuleStates(discreteSpeeds);
 
-    m_currSetpoint =
-        m_swerveSetpointGenerator.generateSetpoint(
-            DriveConstants.kModuleLimitsFree, m_currSetpoint, discreteSpeeds, 0.02);
-    SwerveModuleState[] setpointStatesOptimized = m_currSetpoint.moduleStates();
-
     for (int i = 0; i < 4; i++) {
       m_modules[i].runSetpoint(setpointStates[i], accel);
     }
 
     // Log setpoint states
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
-    Logger.recordOutput("SwerveStates/SetpointsOptimized", setpointStatesOptimized);
-    Logger.recordOutput("Drive/ChassisSpeedsSetpoint", m_currSetpoint.chassisSpeeds());
   }
 
   /**

@@ -65,7 +65,7 @@ public class Indexer extends SubsystemBase {
 
     m_io.updateInputs(m_inputs);
 
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     Logger.processInputs("Indexer", m_inputs);
     Logger.recordOutput("Indexer/State", m_profiles.getCurrentProfile());

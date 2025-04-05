@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LedConstants;
@@ -18,6 +19,11 @@ public class Led extends SubsystemBase {
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
 
+  private Timer m_timer = new Timer();
+  private static final double kCrazyTurnRate = 5.0; // hz
+  private static final double kCrazyTurnInterval = 1.0 / kCrazyTurnRate; // seconds
+  private double m_lastCallTime = 0.0; // seconds
+
   public static enum LedState {
     kLocationCheck,
     kL1,
@@ -28,7 +34,8 @@ public class Led extends SubsystemBase {
     kFullTuning,
     kAutoscoreMeasurementsBad,
     kAutoscoreMeasurementsGood,
-    kOff
+    kCrazyTurn,
+    kOff,
   }
 
   public Led(int port, int length) {
@@ -36,6 +43,8 @@ public class Led extends SubsystemBase {
     m_buffer = new AddressableLEDBuffer(length);
     m_strip.setLength(length);
     m_strip.start();
+
+    m_timer.start();
   }
 
   @Override
@@ -45,8 +54,18 @@ public class Led extends SubsystemBase {
     //   locationCheck();
     // }
 
+    if (RobotState.getInstance().getCrazyTurn()) {
+      updateState(LedState.kCrazyTurn);
+    }
+
+    if (m_state == LedState.kCrazyTurn && m_timer.get() - m_lastCallTime > kCrazyTurnInterval) {
+      crazyTurn();
+      m_lastCallTime = m_timer.get();
+    }
+
     Logger.recordOutput("LED/State", m_state.toString());
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
+    Logger.recordOutput("LED/Time", m_timer.get() - m_lastCallTime);
   }
 
   public void updateState(LedState state) {
@@ -66,6 +85,8 @@ public class Led extends SubsystemBase {
     }
     m_state = state;
     updateLEDState();
+
+    m_timer.restart();
   }
 
   public LedState getCurrentState() {
@@ -110,6 +131,20 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/LocationCheck/NumDistanceLeds", numDistanceLeds);
   }
 
+  private void crazyTurn() {
+    // random colors
+    for (int i = 0; i < m_buffer.getLength(); i++) {
+      m_buffer.setLED(
+          i,
+          new Color(
+              (int) (Math.random() * 255),
+              (int) (Math.random() * 255),
+              (int) (Math.random() * 255)));
+    }
+
+    m_strip.setData(m_buffer);
+  }
+
   public void updateLEDState() {
     LEDPattern pattern;
     switch (m_state) {
@@ -140,6 +175,9 @@ public class Led extends SubsystemBase {
         break;
       case kAutoscoreMeasurementsGood:
         pattern = LEDPattern.solid(convertColor(LedConstants.kAutoscoreMeasurementsGood));
+        break;
+      case kCrazyTurn:
+        pattern = null;
         break;
       case kOff:
       default:

@@ -214,7 +214,7 @@ public class Elevator extends SubsystemBase {
       updateState(ElevatorState.kSlamming);
     }
 
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     Logger.processInputs("Elevator", m_inputs);
     Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());

@@ -110,4 +110,9 @@ public class DriverControlsXbox implements DriverControls {
   public Trigger lollipop() {
     return new Trigger(() -> false);
   }
+
+  @Override
+  public Trigger crazyTurn() {
+    return m_controller.leftStick();
+  }
 }

@@ -119,7 +119,7 @@ public class Intake extends SubsystemBase {
     m_rollerIO.updateInputs(m_rollerInputs);
     m_pivotIO.updateInputs(m_pivotInputs);
 
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     Logger.processInputs("Intake/Roller", m_rollerInputs);
     Logger.processInputs("Intake/Pivot", m_pivotInputs);

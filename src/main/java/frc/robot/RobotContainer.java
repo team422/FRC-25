@@ -539,6 +539,16 @@ public class RobotContainer {
                     RobotState.getInstance().updateRobotAction(RobotAction.kLollipopIntake);
                   }
                 }));
+
+    m_driverControls
+        .crazyTurn()
+        .whileTrue(
+            Commands.waitSeconds(0.25)
+                .andThen(
+                    Commands.runOnce(
+                        () -> {
+                          RobotState.getInstance().setCrazyTurn(true);
+                        })));
   }
 
   /**

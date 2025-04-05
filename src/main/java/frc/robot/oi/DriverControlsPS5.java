@@ -109,4 +109,9 @@ public class DriverControlsPS5 implements DriverControls {
   public Trigger lollipop() {
     return m_controller.create();
   }
+
+  @Override
+  public Trigger crazyTurn() {
+    return m_controller.L3();
+  }
 }

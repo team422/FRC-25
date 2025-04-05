@@ -37,7 +37,7 @@ import java.util.Map;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final boolean kTuningMode = true;
+  public static final boolean kTuningMode = false;
 
   public static final Mode kRealMode = Mode.REAL;
   public static final Mode kSimMode = Mode.SIM;
@@ -647,7 +647,7 @@ public final class Constants {
     public static final LoggedTunableNumber kPivotStowAngle =
         new LoggedTunableNumber("Pivot Stow Angle", 5.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
-        new LoggedTunableNumber("Pivot Intake Angle", 60.0);
+        new LoggedTunableNumber("Pivot Intake Angle", 30.0);
     public static final LoggedTunableNumber kPivotHoldAngle =
         new LoggedTunableNumber("Pivot Hold Angle", 25.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =

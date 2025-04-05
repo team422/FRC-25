@@ -42,4 +42,6 @@ public interface DriverControls {
   public Trigger coralEject();
 
   public Trigger lollipop();
+
+  public Trigger crazyTurn();
 }

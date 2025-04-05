@@ -49,6 +49,7 @@ import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
@@ -113,6 +114,10 @@ public class RobotState {
 
   private boolean m_isBargeAuto = false;
   private boolean m_isCitrusAuto = false;
+
+  private boolean m_crazyTurn = false;
+  private Set<RobotAction> m_crazyTurnCancelActions =
+      Set.of(RobotAction.kAutoScore, RobotAction.kCoralIntaking);
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -227,7 +232,7 @@ public class RobotState {
   public void updateRobotState() {
     double start = HALUtil.getFPGATime();
 
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     if (Constants.kUseComponents) {
       updateComponent();
@@ -239,6 +244,12 @@ public class RobotState {
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());
 
     Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
+
+    if (m_crazyTurnCancelActions.contains(m_profiles.getCurrentProfile())) {
+      m_crazyTurn = false;
+    }
+
+    Logger.recordOutput("CrazyTurn", m_crazyTurn);
 
     Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
@@ -550,7 +561,6 @@ public class RobotState {
                         Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
                     .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
           }
-          Logger.recordOutput("posse", pose);
         } else {
           pose =
               new Pose2d(
@@ -604,7 +614,6 @@ public class RobotState {
                           Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
                       .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
             }
-            Logger.recordOutput("pose", pose);
           } else {
             pose =
                 new Pose2d(
@@ -1057,6 +1066,10 @@ public class RobotState {
           Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
       m_elevator.setDesiredHeight(ElevatorConstants.kStowHeight.get());
     }
+
+    if (m_crazyTurnCancelActions.contains(newAction)) {
+      m_crazyTurn = false;
+    }
   }
 
   public RobotAction getCurrentAction() {
@@ -1295,6 +1308,10 @@ public class RobotState {
       m_led.updateState(LedState.kLocationCheck);
       return;
     }
+    if (m_crazyTurn) {
+      // don't update so that the timer can keep running
+      return;
+    }
     if (DriverStation.isAutonomous()
         && m_profiles.getCurrentProfile() == RobotAction.kAutoAutoScore) {
       if (m_aprilTagVision.getAutoAutoScoreMeasurements() > 30) {
@@ -1359,8 +1376,10 @@ public class RobotState {
   }
 
   public void calculateDriveTargetPose() {
-    m_drive.setTargetPose(
-        SetpointGenerator.generate(m_desiredAlgaeIndex, m_desiredReefHeight, true).drivePose());
+    setReefIndexLeft();
+    setDesiredReefHeight(ReefHeight.L4);
+    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
+    m_drive.setTargetPose(m_setpoint.drivePose());
   }
 
   public Pose2d getPathPlannerStartPose() {
@@ -1384,6 +1403,14 @@ public class RobotState {
 
   public void setCitrusAuto(boolean newValue) {
     m_isCitrusAuto = newValue;
+  }
+
+  public void setCrazyTurn(boolean newValue) {
+    m_crazyTurn = newValue;
+  }
+
+  public boolean getCrazyTurn() {
+    return m_crazyTurn;
   }
 
   public DriveProfiles getDriveProfile() {

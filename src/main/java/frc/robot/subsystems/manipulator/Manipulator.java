@@ -171,7 +171,7 @@ public class Manipulator extends SubsystemBase {
       updateState(ManipulatorState.kFullTuning);
     }
 
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     Logger.processInputs("Manipulator/Roller", m_rollerInputs);
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
