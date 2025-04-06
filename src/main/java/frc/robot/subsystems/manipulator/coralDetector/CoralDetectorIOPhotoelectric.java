@@ -16,9 +16,8 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   private Debouncer m_funnelSensorTwoDebouncer = new Debouncer(0.1, DebounceType.kRising);
 
   // the manipulator photoelectric one gives incorrect false values sometimes so we need falling
-  // TODO: if the second photoelectric starts giving false values uncomment this
   private Debouncer m_manipulatorSensorOneDebouncer = new Debouncer(0.1, DebounceType.kFalling);
-  // private Debouncer m_manipulatorSensorTwoDebouncer = new Debouncer(0.1, DebounceType.kFalling);
+  private Debouncer m_manipulatorSensorTwoDebouncer = new Debouncer(0.1, DebounceType.kFalling);
 
   public CoralDetectorIOPhotoelectric(
       int manipulatorSensorOnePort,
@@ -53,8 +52,7 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   }
 
   private boolean manipulatorTwoDetected() {
-    // return m_manipulatorSensorTwoDebouncer.calculate(m_manipulatorSensorTwo.get());
-    return m_manipulatorSensorTwo.get();
+    return m_manipulatorSensorTwoDebouncer.calculate(m_manipulatorSensorTwo.get());
   }
 
   // these photoelectrics give different readings from the manipulator ones

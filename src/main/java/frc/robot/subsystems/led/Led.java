@@ -19,10 +19,10 @@ public class Led extends SubsystemBase {
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
 
-  private Timer m_timer = new Timer();
-  private static final double kCrazyTurnRate = 5.0; // hz
-  private static final double kCrazyTurnInterval = 1.0 / kCrazyTurnRate; // seconds
-  private double m_lastCallTime = 0.0; // seconds
+  private Timer m_mismatchTimer = new Timer();
+  private static final double kMismatchFrequency = 5.0; // Hz
+  private static final double kMismatchPeriod = 1.0 / kMismatchFrequency; // seconds
+  private double m_lastMismatchTime = 0.0; // seconds
 
   public static enum LedState {
     kLocationCheck,
@@ -34,7 +34,7 @@ public class Led extends SubsystemBase {
     kFullTuning,
     kAutoscoreMeasurementsBad,
     kAutoscoreMeasurementsGood,
-    kCrazyTurn,
+    kTargetMismatch,
     kOff,
   }
 
@@ -44,7 +44,7 @@ public class Led extends SubsystemBase {
     m_strip.setLength(length);
     m_strip.start();
 
-    m_timer.start();
+    m_mismatchTimer.start();
   }
 
   @Override
@@ -54,18 +54,13 @@ public class Led extends SubsystemBase {
     //   locationCheck();
     // }
 
-    if (RobotState.getInstance().getCrazyTurn()) {
-      updateState(LedState.kCrazyTurn);
-    }
-
-    if (m_state == LedState.kCrazyTurn && m_timer.get() - m_lastCallTime > kCrazyTurnInterval) {
-      crazyTurn();
-      m_lastCallTime = m_timer.get();
+    if (m_state == LedState.kTargetMismatch) {
+      // if the mismatch timer is running, check if it has elapsed
+      targetMismatch();
     }
 
     Logger.recordOutput("LED/State", m_state.toString());
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
-    Logger.recordOutput("LED/Time", m_timer.get() - m_lastCallTime);
   }
 
   public void updateState(LedState state) {
@@ -85,8 +80,6 @@ public class Led extends SubsystemBase {
     }
     m_state = state;
     updateLEDState();
-
-    m_timer.restart();
   }
 
   public LedState getCurrentState() {
@@ -131,18 +124,22 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/LocationCheck/NumDistanceLeds", numDistanceLeds);
   }
 
-  private void crazyTurn() {
-    // random colors
-    for (int i = 0; i < m_buffer.getLength(); i++) {
-      m_buffer.setLED(
-          i,
-          new Color(
-              (int) (Math.random() * 255),
-              (int) (Math.random() * 255),
-              (int) (Math.random() * 255)));
-    }
+  private void targetMismatch() {
+    if (m_mismatchTimer.get() - m_lastMismatchTime >= kMismatchPeriod) {
+      // random colors
+      for (int i = 0; i < m_buffer.getLength(); i++) {
+        m_buffer.setLED(
+            i,
+            new Color(
+                (int) (Math.random() * 255),
+                (int) (Math.random() * 255),
+                (int) (Math.random() * 255)));
+      }
 
-    m_strip.setData(m_buffer);
+      m_strip.setData(m_buffer);
+
+      m_lastMismatchTime = m_mismatchTimer.get();
+    }
   }
 
   public void updateLEDState() {
@@ -176,7 +173,7 @@ public class Led extends SubsystemBase {
       case kAutoscoreMeasurementsGood:
         pattern = LEDPattern.solid(convertColor(LedConstants.kAutoscoreMeasurementsGood));
         break;
-      case kCrazyTurn:
+      case kTargetMismatch:
         pattern = null;
         break;
       case kOff:

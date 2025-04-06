@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.EqualsUtil;
@@ -49,7 +50,6 @@ import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
@@ -115,9 +115,9 @@ public class RobotState {
   private boolean m_isBargeAuto = false;
   private boolean m_isCitrusAuto = false;
 
-  private boolean m_crazyTurn = false;
-  private Set<RobotAction> m_crazyTurnCancelActions =
-      Set.of(RobotAction.kAutoScore, RobotAction.kCoralIntaking);
+  private boolean m_autoTestingMode = false;
+
+  private Timer m_threadPriorityTimer = new Timer();
 
   private final List<RobotAction> kAlgaeDescoreSequence =
       List.of(
@@ -180,6 +180,8 @@ public class RobotState {
     periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
+
+    m_threadPriorityTimer.start();
   }
 
   public static RobotState getInstance() {
@@ -232,6 +234,27 @@ public class RobotState {
   public void updateRobotState() {
     double start = HALUtil.getFPGATime();
 
+    // Pose2d[] hardcoded =
+    //     new Pose2d[] {
+    //       new Pose2d(12.92, 1.96, Rotation2d.fromDegrees(90)),
+    //       new Pose2d(12.92, 5.99, Rotation2d.fromDegrees(270)),
+    //       new Pose2d(4.3519, 5.99, Rotation2d.fromDegrees(270)),
+    //       new Pose2d(4.3519, 1.96, Rotation2d.fromDegrees(90)),
+    //       new Pose2d(15.92385, 0.9075, Rotation2d.fromDegrees(126)),
+    //       new Pose2d(
+    //           15.92385, 7.1825, Rotation2d.fromDegrees(54).plus(Rotation2d.fromDegrees(180))),
+    //       new Pose2d(1.6244, 7.1825, Rotation2d.fromDegrees(-54)),
+    //       new Pose2d(
+    //           1.6244, 0.9075, Rotation2d.fromDegrees(-126).plus(Rotation2d.fromDegrees(180))),
+    //     };
+
+    // Logger.recordOutput("Hardcoded", hardcoded);
+
+    if (m_threadPriorityTimer != null && m_threadPriorityTimer.hasElapsed(20)) {
+      Threads.setCurrentThreadPriority(true, 10);
+      m_threadPriorityTimer = null;
+    }
+
     m_profiles.getPeriodicFunctionTimed().run();
 
     if (Constants.kUseComponents) {
@@ -245,12 +268,6 @@ public class RobotState {
 
     Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
 
-    if (m_crazyTurnCancelActions.contains(m_profiles.getCurrentProfile())) {
-      m_crazyTurn = false;
-    }
-
-    Logger.recordOutput("CrazyTurn", m_crazyTurn);
-
     Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
@@ -258,7 +275,7 @@ public class RobotState {
     // when we have a game piece don't runm
     if (m_manipulator.hasGamePiece()) {
       m_indexer.updateState(IndexerState.kIdle);
-      if (!DriverStation.isAutonomous()) {
+      if (!(DriverStation.isAutonomous() || m_autoTestingMode)) {
         m_drive.updateProfile(DriveProfiles.kDefault);
       }
     }
@@ -273,7 +290,7 @@ public class RobotState {
   public void coralOuttakingPeriodic() {
     if (m_timer.hasElapsed(ManipulatorConstants.kCoralOuttakeTimeout.get())) {
       // after we release the coral go back to stow
-      if (DriverStation.isAutonomous()) {
+      if (!m_autoTestingMode && DriverStation.isAutonomous()) {
         if (m_isBargeAuto) {
           algaeDescore();
         } else {
@@ -518,28 +535,34 @@ public class RobotState {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(15.6475, 0.9075, Rotation2d.fromDegrees(130)));
+          m_drive.setTargetPose(new Pose2d(15.92385, 0.9075, Rotation2d.fromDegrees(126)));
         } else {
           // I HATE MATH
           m_drive.setTargetPose(
               new Pose2d(
-                  15.6475, 7.1825, Rotation2d.fromDegrees(50).plus(Rotation2d.fromDegrees(180))));
+                  15.92385, 7.1825, Rotation2d.fromDegrees(54).plus(Rotation2d.fromDegrees(180))));
         }
       } else {
         // we are on blue
         if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(1.6244, 7.1825, Rotation2d.fromDegrees(-50)));
+          m_drive.setTargetPose(new Pose2d(1.6244, 7.1825, Rotation2d.fromDegrees(-54)));
         } else {
           m_drive.setTargetPose(
               new Pose2d(
-                  1.6244, 0.9075, Rotation2d.fromDegrees(-130).plus(Rotation2d.fromDegrees(180))));
+                  1.6244, 0.9075, Rotation2d.fromDegrees(-126).plus(Rotation2d.fromDegrees(180))));
         }
       }
     }
 
+    if (DriverStation.getMatchTime() < 1.0) {
+      var targetPose = m_drive.getTargetPose();
+      var newTarget = new Pose2d(targetPose.getTranslation(), m_drive.getRotation());
+      m_drive.setTargetPose(newTarget);
+    }
+
     coralIntakingPeriodic();
 
-    if (m_manipulator.gamePieceInFunnel()) {
+    if (!m_autoTestingMode && m_manipulator.gamePieceInFunnel()) {
       if (m_numCoralScoredAuto < 2) {
         setReefIndexLeft();
       } else if (m_numCoralScoredAuto < 3) {
@@ -569,17 +592,9 @@ public class RobotState {
                   .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
         }
         if (m_autoLeft) {
-          if (m_isCitrusAuto) {
-            setReefIndexRight(pose);
-          } else {
-            setReefIndexLeft(pose);
-          }
+          setReefIndexLeft(pose);
         } else {
-          if (m_isCitrusAuto) {
-            setReefIndexLeft(pose);
-          } else {
-            setReefIndexRight(pose);
-          }
+          setReefIndexRight(pose);
         }
       }
       updateRobotAction(RobotAction.kAutoAutoScore);
@@ -589,7 +604,7 @@ public class RobotState {
     Logger.recordOutput(
         "AutoCoralIntake/DriveRight",
         m_drive.driveToPointWithinTolerance(Inches.of(3.0), Degrees.of(10)));
-    if (m_drive.driveToPointWithinTolerance(Inches.of(3.0), Degrees.of(10))) {
+    if (!m_autoTestingMode && m_drive.driveToPointWithinTolerance(Inches.of(3.0), Degrees.of(10))) {
       if (!m_loaderStationTimer.isRunning()) {
         m_loaderStationTimer.restart();
       } else if (m_loaderStationTimer.hasElapsed(DriveConstants.kLoaderStationTimeout.get())) {
@@ -702,7 +717,7 @@ public class RobotState {
 
   public void bargeAutoScorePeriodic() {
     // only autoshoot in auto
-    if (DriverStation.isAutonomous()
+    if ((DriverStation.isAutonomous() || m_autoTestingMode)
         && m_drive.driveToPointWithinTolerance(
             Inches.of(DriveConstants.kBargeScoreThrowDistance.get()), Degrees.of(10.0))) {
       m_elevator.updateState(ElevatorState.kBargeScore);
@@ -718,7 +733,7 @@ public class RobotState {
         }
 
         m_manipulator.runRollerBargeScoring();
-        if (DriverStation.isAutonomous() && m_timer.hasElapsed(0.4)) {
+        if ((DriverStation.isAutonomous() || m_autoTestingMode) && m_timer.hasElapsed(0.4)) {
           m_numAlgaeScoredAuto++;
           m_manipulator.updateState(ManipulatorState.kStow);
           algaeDescore();
@@ -755,7 +770,10 @@ public class RobotState {
 
   public void algaeDescoringPeriodic() {
 
-    var sequence = DriverStation.isAutonomous() ? kAlgaeDescoreSequenceAuto : kAlgaeDescoreSequence;
+    var sequence =
+        (DriverStation.isAutonomous() || m_autoTestingMode)
+            ? kAlgaeDescoreSequenceAuto
+            : kAlgaeDescoreSequence;
 
     if (!m_timer.isRunning()) {
       m_timer.restart();
@@ -764,7 +782,7 @@ public class RobotState {
     if (getUsingVision()) {
       if (!m_hasMovedOnFromTheIntermediateToTheDescore
           && (!m_hasRunASingleCycle
-              || (DriverStation.isAutonomous()
+              || ((DriverStation.isAutonomous() || m_autoTestingMode)
                   && m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringInitial
                   && m_timer.get() < 10.0
                   && !m_drive.driveToPointWithinTolerance(Inches.of(24.0), Degrees.of(10.0))))) {
@@ -792,20 +810,20 @@ public class RobotState {
     Logger.recordOutput(
         "AlgaeDescore/DriveWithinTolerance",
         m_drive.driveToPointWithinTolerance(
-            Meters.of(DriverStation.isAutonomous() ? 2.0 : 0.1), null));
+            Meters.of((DriverStation.isAutonomous() || m_autoTestingMode) ? 2.0 : 0.1), null));
     Logger.recordOutput("AlgaeDescore/Index", index);
 
     if (m_elevator.atSetpoint()
-        && (m_manipulator.atSetpoint() || DriverStation.isAutonomous())
+        && (m_manipulator.atSetpoint() || (DriverStation.isAutonomous() || m_autoTestingMode))
         && m_drive.driveToPointWithinTolerance(
-            Meters.of(DriverStation.isAutonomous() ? 2.0 : 0.1), null)
+            Meters.of((DriverStation.isAutonomous() || m_autoTestingMode) ? 2.0 : 0.1), null)
         && m_hasRunASingleCycle) {
       if (index < sequence.size() - 2) {
         Logger.recordOutput("AlgaeDescore/TransitionTime", Timer.getFPGATimestamp());
         updateRobotAction(sequence.get(index + 1));
       } else if (index == sequence.size() - 1) {
         // if we're on the last step then we want to go back to stow
-        if (DriverStation.isAutonomous()) {
+        if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
           setBargeScoreRight();
           updateRobotAction(RobotAction.kBargeAutoScore);
           return;
@@ -813,7 +831,7 @@ public class RobotState {
           m_manipulator.updateState(ManipulatorState.kAlgaeHold);
         }
         setDefaultAction();
-      } else if (DriverStation.isAutonomous()
+      } else if ((DriverStation.isAutonomous() || m_autoTestingMode)
           && index == sequence.size() - 2
           && m_timer.hasElapsed(m_numAlgaeScoredAuto < 1 ? 1.0 : 1.0)) {
         // if we in auto then wait enough time to descore
@@ -913,7 +931,7 @@ public class RobotState {
         break;
 
       case kBargeAutoScore:
-        if (DriverStation.isAutonomous()) {
+        if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
           newDriveProfiles = DriveProfiles.kDriveToPoint;
           m_drive.setTargetPose(
               m_bargeLeftCage
@@ -947,7 +965,7 @@ public class RobotState {
       case kAlgaeDescoringInitial:
         if (getUsingVision()) {
           newDriveProfiles = DriveProfiles.kDriveToPoint;
-          if (DriverStation.isAutonomous()) {
+          if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
             if (m_numAlgaeScoredAuto < 1) {
               m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
             } else if (m_numAlgaeScoredAuto < 2) {
@@ -973,7 +991,7 @@ public class RobotState {
             m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
           }
         }
-        if (DriverStation.isAutonomous()) {
+        if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
           newElevatorState = ElevatorState.kStow;
         } else {
           newElevatorState = ElevatorState.kAlgaeDescoringInitial;
@@ -1065,10 +1083,6 @@ public class RobotState {
       m_manipulator.setDesiredWristAngle(
           Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
       m_elevator.setDesiredHeight(ElevatorConstants.kStowHeight.get());
-    }
-
-    if (m_crazyTurnCancelActions.contains(newAction)) {
-      m_crazyTurn = false;
     }
   }
 
@@ -1243,6 +1257,14 @@ public class RobotState {
     return m_drive.getPose();
   }
 
+  public void incrementCoralScoredAuto() {
+    m_numCoralScoredAuto++;
+  }
+
+  public void decrementCoralScoredAuto() {
+    m_numCoralScoredAuto--;
+  }
+
   public ChassisSpeeds getRobotSpeeds() {
     return m_drive.getChassisSpeeds();
   }
@@ -1305,14 +1327,10 @@ public class RobotState {
       return;
     }
     if (DriverStation.isDisabled()) {
-      m_led.updateState(LedState.kLocationCheck);
+      // do nothing here because we don't want the timer to reset
       return;
     }
-    if (m_crazyTurn) {
-      // don't update so that the timer can keep running
-      return;
-    }
-    if (DriverStation.isAutonomous()
+    if ((DriverStation.isAutonomous() || m_autoTestingMode)
         && m_profiles.getCurrentProfile() == RobotAction.kAutoAutoScore) {
       if (m_aprilTagVision.getAutoAutoScoreMeasurements() > 30) {
         m_led.updateState(LedState.kAutoscoreMeasurementsGood);
@@ -1380,6 +1398,71 @@ public class RobotState {
     setDesiredReefHeight(ReefHeight.L4);
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     m_drive.setTargetPose(m_setpoint.drivePose());
+
+    // find if we're in the wrong spot for the auto we have selected
+    // only if fms connected
+    if (DriverStation.isFMSAttached() || true) {
+      Pose2d expectedTarget = null;
+      switch (m_selectedAuto.toLowerCase()) {
+        case "3 coral left":
+        case "3 coral left citrus":
+          expectedTarget =
+              SetpointGenerator.generate(
+                      SetpointGenerator.getPossibleIndices(
+                              new Pose2d(
+                                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                                      Rotation2d.fromDegrees(
+                                          AllianceFlipUtil.shouldFlip() ? -120 : 60))
+                                  .transformBy(new Transform2d(3, 0, new Rotation2d())))
+                          .getSecond(),
+                      ReefHeight.L4,
+                      true)
+                  .drivePose();
+          break;
+
+        case "3 coral right":
+        case "3 coral right citrus":
+          expectedTarget =
+              SetpointGenerator.generate(
+                      SetpointGenerator.getPossibleIndices(
+                              new Pose2d(
+                                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                                      Rotation2d.fromDegrees(
+                                          AllianceFlipUtil.shouldFlip() ? 120 : -60))
+                                  .transformBy(new Transform2d(3, 0, new Rotation2d())))
+                          .getSecond(),
+                      ReefHeight.L4,
+                      true)
+                  .drivePose();
+          break;
+
+        case "center barge":
+          expectedTarget =
+              SetpointGenerator.generate(
+                      SetpointGenerator.getPossibleIndices(
+                              new Pose2d(
+                                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                                      Rotation2d.fromDegrees(
+                                          AllianceFlipUtil.shouldFlip() ? 180 : 0))
+                                  .transformBy(new Transform2d(3, 0, new Rotation2d())))
+                          .getSecond(),
+                      ReefHeight.L4,
+                      true)
+                  .drivePose();
+          break;
+      }
+
+      Logger.recordOutput("PreAuto/ExpectedTarget", expectedTarget);
+      Logger.recordOutput("PreAuto/CurrentTarget", m_drive.getTargetPose());
+      if (expectedTarget != null
+          && !EqualsUtil.GeomExtensions.epsilonEquals(expectedTarget, m_drive.getTargetPose())) {
+        Logger.recordOutput("PreAuto/TargetMismatch", true);
+        m_led.updateState(LedState.kTargetMismatch);
+      } else {
+        Logger.recordOutput("PreAuto/TargetMismatch", false);
+        m_led.updateState(LedState.kLocationCheck);
+      }
+    }
   }
 
   public Pose2d getPathPlannerStartPose() {
@@ -1405,12 +1488,12 @@ public class RobotState {
     m_isCitrusAuto = newValue;
   }
 
-  public void setCrazyTurn(boolean newValue) {
-    m_crazyTurn = newValue;
+  public void toggleTestingMode() {
+    m_autoTestingMode = !m_autoTestingMode;
   }
 
-  public boolean getCrazyTurn() {
-    return m_crazyTurn;
+  public void testAutoCoralIntake() {
+    updateRobotAction(RobotAction.kAutoCoralIntaking);
   }
 
   public DriveProfiles getDriveProfile() {

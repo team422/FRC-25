@@ -14,6 +14,7 @@ import frc.robot.commands.auto.AutoFactory;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
+import frc.robot.oi.TestingController;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.climb.Climb;
@@ -39,7 +40,6 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.pivot.PivotIOKraken;
 import frc.robot.subsystems.intake.pivot.PivotIOReplay;
 import frc.robot.subsystems.intake.pivot.PivotIOSim;
-import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
 import frc.robot.subsystems.led.Led;
@@ -77,6 +77,7 @@ public class RobotContainer {
 
   // Controller
   private DriverControls m_driverControls;
+  private TestingController m_testingController;
 
   // Dashboard inputs
   private LoggedDashboardChooser<Command> m_autoChooser;
@@ -113,7 +114,8 @@ public class RobotContainer {
         // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
         m_intake =
             new Intake(
-                new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                // new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                new IntakeRollerIOReplay(),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer =
@@ -162,7 +164,8 @@ public class RobotContainer {
         if (ProtoConstants.kRealIntake) {
           m_intake =
               new Intake(
-                  new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                  // new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                  new IntakeRollerIOReplay(),
                   new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
         } else {
           m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
@@ -308,6 +311,7 @@ public class RobotContainer {
   private void configureControllers() {
     // m_driverControls = new DriverControlsXbox(0);
     m_driverControls = new DriverControlsPS5(0);
+    m_testingController = new TestingController(5);
   }
 
   /** Configure the button bindings. */
@@ -540,15 +544,70 @@ public class RobotContainer {
                   }
                 }));
 
-    m_driverControls
-        .crazyTurn()
-        .whileTrue(
-            Commands.waitSeconds(0.25)
-                .andThen(
-                    Commands.runOnce(
-                        () -> {
-                          RobotState.getInstance().setCrazyTurn(true);
-                        })));
+    m_testingController
+        .toggleTestingMode()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().toggleTestingMode();
+                }));
+
+    m_testingController
+        .autoAutoscoreLeft()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexLeft();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                }));
+    m_testingController
+        .autoAutoscoreRight()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexRight();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                }));
+
+    m_testingController
+        .autoCoralIntake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().testAutoCoralIntake();
+                }));
+
+    m_testingController
+        .autoLeft()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setAutoSideLeft();
+                }));
+
+    m_testingController
+        .autoRight()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setAutoSideRight();
+                }));
+
+    m_testingController
+        .incrementCoralScored()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().incrementCoralScoredAuto();
+                }));
+
+    m_testingController
+        .decrementCoralScored()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().decrementCoralScoredAuto();
+                }));
   }
 
   /**

@@ -23,7 +23,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.RobotState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import java.text.DecimalFormat;
@@ -91,10 +90,7 @@ public class DriveCommands {
               new ChassisSpeeds(
                   linearVelocity.getX() * DriveConstants.kMaxLinearSpeed,
                   linearVelocity.getY() * DriveConstants.kMaxLinearSpeed,
-                  omega
-                      * (RobotState.getInstance().getCrazyTurn()
-                          ? 25
-                          : DriveConstants.kTeleopRotationSpeed.get()));
+                  omega * DriveConstants.kTeleopRotationSpeed.get());
           drive.setDesiredChassisSpeeds(
               robotRelative
                   ? speeds

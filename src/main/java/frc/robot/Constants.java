@@ -135,11 +135,11 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Auto D", 0.12);
 
     public static final LoggedTunableNumber kDriveToPointAutoIntakeP =
-        new LoggedTunableNumber("DriveToPoint Auto Intake P", 5.0);
+        new LoggedTunableNumber("DriveToPoint Auto Intake P", 3.0);
     public static final LoggedTunableNumber kDriveToPointAutoIntakeI =
         new LoggedTunableNumber("DriveToPoint Auto Intake I", 0.0);
     public static final LoggedTunableNumber kDriveToPointAutoIntakeD =
-        new LoggedTunableNumber("DriveToPoint Auto Intake D", 0.2);
+        new LoggedTunableNumber("DriveToPoint Auto Intake D", 0.12);
 
     public static final LoggedTunableNumber kDriveToPointHeadingP =
         new LoggedTunableNumber("DriveToPoint Heading P", 4.0);
@@ -156,9 +156,9 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint Max Deceleration", 3.0);
 
     public static final LoggedTunableNumber kDriveToIntakeMeshedP =
-        new LoggedTunableNumber("DriveToMeshedXY P", 3.);
+        new LoggedTunableNumber("DriveToMeshedXY P", 3.0);
     public static final LoggedTunableNumber kDriveToIntakeMeshedD =
-        new LoggedTunableNumber("DriveToMeshedXY D", 0.0);
+        new LoggedTunableNumber("DriveToMeshedXY D", 0.12);
     public static final LoggedTunableNumber kDriveToIntakeThetaMeshedP =
         new LoggedTunableNumber("DriveToIntakeMeshed Theta P", 3.0);
     public static final LoggedTunableNumber kDriveToIntakeThetaMeshedD =
