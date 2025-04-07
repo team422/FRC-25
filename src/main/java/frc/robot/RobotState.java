@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.AllianceFlipUtil;
@@ -442,6 +443,7 @@ public class RobotState {
 
       if (!m_isBargeAuto && m_timer.hasElapsed(2.5)) {
         // we give up and accept that we don't have a game piece
+        m_numCoralScoredAuto++;
         updateRobotAction(RobotAction.kAutoCoralIntaking);
       }
       return;
@@ -554,7 +556,7 @@ public class RobotState {
       }
     }
 
-    if (DriverStation.getMatchTime() < 1.0) {
+    if (RobotBase.isReal() && DriverStation.getMatchTime() < 1.0) {
       var targetPose = m_drive.getTargetPose();
       var newTarget = new Pose2d(targetPose.getTranslation(), m_drive.getRotation());
       m_drive.setTargetPose(newTarget);
@@ -564,9 +566,17 @@ public class RobotState {
 
     if (!m_autoTestingMode && m_manipulator.gamePieceInFunnel()) {
       if (m_numCoralScoredAuto < 2) {
-        setReefIndexLeft();
+        if (m_autoLeft) {
+          setReefIndexLeft();
+        } else {
+          setReefIndexRight();
+        }
       } else if (m_numCoralScoredAuto < 3) {
-        setReefIndexRight();
+        if (m_autoLeft) {
+          setReefIndexRight();
+        } else {
+          setReefIndexLeft();
+        }
       } else {
         // I. Hate. Math.
         Pose2d pose;
@@ -609,9 +619,17 @@ public class RobotState {
         m_loaderStationTimer.restart();
       } else if (m_loaderStationTimer.hasElapsed(DriveConstants.kLoaderStationTimeout.get())) {
         if (m_numCoralScoredAuto < 2) {
-          setReefIndexLeft();
+          if (m_autoLeft) {
+            setReefIndexLeft();
+          } else {
+            setReefIndexRight();
+          }
         } else if (m_numCoralScoredAuto < 3) {
-          setReefIndexRight();
+          if (m_autoLeft) {
+            setReefIndexRight();
+          } else {
+            setReefIndexLeft();
+          }
         } else {
           // I. Hate. Math. pt2
           Pose2d pose;
@@ -637,17 +655,9 @@ public class RobotState {
                     .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
           }
           if (m_autoLeft) {
-            if (m_isCitrusAuto) {
-              setReefIndexRight(pose);
-            } else {
-              setReefIndexLeft(pose);
-            }
+            setReefIndexLeft(pose);
           } else {
-            if (m_isCitrusAuto) {
-              setReefIndexLeft(pose);
-            } else {
-              setReefIndexRight(pose);
-            }
+            setReefIndexRight(pose);
           }
         }
         updateRobotAction(RobotAction.kAutoAutoScore);
@@ -1144,10 +1154,9 @@ public class RobotState {
   public void manageAlgaeDescoreRelease() {
     if (m_profiles.getCurrentProfile()
         == kAlgaeDescoreSequence.get(kAlgaeDescoreSequence.size() - 2)) {
-      updateRobotAction(RobotAction.kAlgaeDescoringFinal);
-    } else {
-      setDefaultAction();
+      m_manipulator.updateState(ManipulatorState.kAlgaeHold);
     }
+    setDefaultAction();
   }
 
   public void onEnable() {
@@ -1401,7 +1410,7 @@ public class RobotState {
 
     // find if we're in the wrong spot for the auto we have selected
     // only if fms connected
-    if (DriverStation.isFMSAttached() || true) {
+    if (DriverStation.isFMSAttached()) {
       Pose2d expectedTarget = null;
       switch (m_selectedAuto.toLowerCase()) {
         case "3 coral left":
@@ -1462,6 +1471,8 @@ public class RobotState {
         Logger.recordOutput("PreAuto/TargetMismatch", false);
         m_led.updateState(LedState.kLocationCheck);
       }
+    } else {
+      m_led.updateState(LedState.kLocationCheck);
     }
   }
 
