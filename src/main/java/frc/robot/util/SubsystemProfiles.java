@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,6 +83,26 @@ public class SubsystemProfiles<T extends Enum<T>> {
           };
     }
     return res;
+  }
+
+  /**
+   * Gets a timed version of the periodic function returned by {@code getPeriodicFunction}. This
+   * will log the time taken to "PeriodicTime/EnumName", where EnumName is the name of the states
+   * enum.
+   *
+   * @return the periodic function with a timing wrapper.
+   */
+  public Runnable getPeriodicFunctionTimed() {
+    Runnable r = getPeriodicFunction();
+    return () -> {
+      double start = HALUtil.getFPGATime();
+
+      r.run();
+
+      Logger.recordOutput(
+          String.format("PeriodicTime/%s", m_profileEnum.getSimpleName()),
+          (HALUtil.getFPGATime() - start) / 1000.0);
+    };
   }
 
   /**

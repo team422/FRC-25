@@ -22,6 +22,7 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIO.AprilTagVisionInputs;
+import frc.robot.util.AlertManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,8 @@ public class AprilTagVision extends SubsystemBase {
     }
 
     m_alertDeadzoneTimer.start();
+
+    AlertManager.registerAlert(m_noReadingsAlerts);
   }
 
   @Override
@@ -346,13 +349,16 @@ public class AprilTagVision extends SubsystemBase {
         double xyStandardDeviation = 1;
         if (averageDistance < Units.inchesToMeters(50)) {
           xyStandardDeviation = 0.01;
-        } else {
+        } else if (averageDistance < Units.inchesToMeters(999999)) {
           xyStandardDeviation =
               0.01
                   // back to normal math
                   * averageDistance
                   / tagPoses.size();
         }
+        // } else {
+        //   xyStandardDeviation = 0.05 * Math.pow(averageDistance / tagPoses.size(), 2);
+        // }
 
         // xyStandardDeviation *= yawDifference * 0.25 + 0.1;
 
@@ -477,24 +483,16 @@ public class AprilTagVision extends SubsystemBase {
       Logger.recordOutput("AprilTagVision/AutoAutoScoreMeasurements", m_autoAutoScoreMeasurements);
     }
 
-    // TODO: tommy when you're doing AlertManager you can delete alertActive
-    boolean alertActive = false;
     if (Constants.kUseAlerts && m_alertDeadzoneTimer.hasElapsed(20.0)) {
       for (int i = 0; i < m_noReadingsAlerts.length; i++) {
         double lastTime = m_lastFrameTimes.get(i);
         double elapsed = Timer.getFPGATimestamp() - lastTime;
         if (elapsed > AprilTagVisionConstants.kDisconnectTimeout) {
           m_noReadingsAlerts[i].set(true);
-          alertActive = true;
         } else {
           m_noReadingsAlerts[i].set(false);
         }
       }
-    }
-    if (alertActive) {
-      RobotState.getInstance().triggerAlert(true);
-    } else {
-      RobotState.getInstance().cancelAlert();
     }
 
     Logger.recordOutput("PeriodicTime/AprilTagVision", (HALUtil.getFPGATime() - start) / 1000.0);

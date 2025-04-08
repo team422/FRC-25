@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
 import frc.robot.Constants.ClimbConstants;
-import frc.robot.RobotState;
+import frc.robot.util.AlertManager;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +58,8 @@ public class Climb extends SubsystemBase {
     m_profiles = new SubsystemProfiles<Climb.ClimbState>(periodicHash, ClimbState.kMatch);
 
     zeroEncoder();
+
+    AlertManager.registerAlert(m_motorDisconnectedAlert);
   }
 
   public boolean atSetpoint() {
@@ -88,7 +90,7 @@ public class Climb extends SubsystemBase {
 
     // update inputs and run periodic function for current state
     m_io.updateInputs(m_inputs);
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     // log inputs and profile
     Logger.processInputs("Climb", m_inputs);
@@ -96,7 +98,8 @@ public class Climb extends SubsystemBase {
 
     if (Constants.kUseAlerts && !m_inputs.motorIsConnected) {
       m_motorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_motorDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Climb", (HALUtil.getFPGATime() - start) / 1000.0);

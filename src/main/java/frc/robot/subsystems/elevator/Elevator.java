@@ -14,6 +14,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.AlertManager;
 import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -38,6 +39,7 @@ public class Elevator extends SubsystemBase {
     kAlgaeDescoringInitial,
     kAlgaeDescoringFinal,
     kBargeScore,
+    kLollipopIntake,
     kFullTuning,
     kSlamming,
     // we force a slam every time we go down
@@ -56,6 +58,7 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kAlgaeDescoringInitial, this::algaeDescoringInitialPeriodic);
     periodicHash.put(ElevatorState.kAlgaeDescoringFinal, this::algaeDescoringFinalPeriodic);
     periodicHash.put(ElevatorState.kBargeScore, this::bargeScorePeriodic);
+    periodicHash.put(ElevatorState.kLollipopIntake, this::lollipopIntakePeriodic);
     periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
     periodicHash.put(ElevatorState.kSlamming, this::slammingPeriodic);
 
@@ -110,6 +113,8 @@ public class Elevator extends SubsystemBase {
         ElevatorConstants.kMagicMotionCruiseVelocity.get(),
         ElevatorConstants.kMagicMotionAcceleration.get(),
         ElevatorConstants.kMagicMotionJerk.get());
+
+    AlertManager.registerAlert(m_leadingMotorDisconnectedAlert, m_followingMotorDisconnectedAlert);
   }
 
   @Override
@@ -209,19 +214,21 @@ public class Elevator extends SubsystemBase {
       updateState(ElevatorState.kSlamming);
     }
 
-    m_profiles.getPeriodicFunction().run();
+    m_profiles.getPeriodicFunctionTimed().run();
 
     Logger.processInputs("Elevator", m_inputs);
     Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());
 
     if (Constants.kUseAlerts && !m_inputs.isLeadingMotorConnected) {
       m_leadingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_leadingMotorDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.isFollowingMotorConnected) {
       m_followingMotorDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_followingMotorDisconnectedAlert.set(false);
     }
 
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);
@@ -283,6 +290,10 @@ public class Elevator extends SubsystemBase {
         m_io.setDesiredHeight(ElevatorConstants.kStowHeight.get());
       }
     }
+  }
+
+  public void lollipopIntakePeriodic() {
+    m_io.setDesiredHeight(ElevatorConstants.kLollipopIntakeHeight.get());
   }
 
   public void scoringPeriodic() {

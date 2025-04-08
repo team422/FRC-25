@@ -10,11 +10,13 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.lib.littletonUtils.AllianceFlipUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
-import frc.robot.RobotState;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
+import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
@@ -24,6 +26,9 @@ public class SetpointGenerator {
 
   public static record RobotSetpoint(
       Pose2d drivePose, Rotation2d manipulatorAngle, double elevatorHeight) {}
+
+  public static record MeshedSetpoint(
+      Pose2d desiredPose, double slope, double intercept, double minX, double maxX) {}
 
   private static final Map<ReefHeight, LoggedTunableNumber> kElevatorHeights =
       Map.of(
@@ -37,14 +42,27 @@ public class SetpointGenerator {
           ReefHeight.L1, new LoggedTunableNumber("Wrist L1 Angle", 112.0),
           ReefHeight.L2, new LoggedTunableNumber("Wrist L2 Angle", 55.0),
           ReefHeight.L3, new LoggedTunableNumber("Wrist L3 Angle", 55.0),
-          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 42.0));
+          ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 40.0));
 
   // we need to move back a bit from the raw branch pose
   private static final double kDriveXOffset =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
 
   private static final double kDriveXOffsetFinalAlgae =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(13.0);
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(25.0);
+
+  private static List<MeshedSetpoint> kIntakePositionsRed =
+      List.of(
+          new MeshedSetpoint(
+              new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(126)), .714, -10.50, 15.745, 16.73),
+          new MeshedSetpoint(
+              new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-126)), -.714, 18.55, 15.745, 16.73));
+  private static List<MeshedSetpoint> kIntakePositionsBlue =
+      List.of(
+          new MeshedSetpoint(
+              new Pose2d(1.0, 0.96, Rotation2d.fromDegrees(54)), -.714, 0.7419, 1.7269, 1.98214),
+          new MeshedSetpoint(
+              new Pose2d(1.0, 6.1, Rotation2d.fromDegrees(-54)), .714, 6.0678634, 0.7419, 1.7269));
 
   // we need to move sideways to get from the center to the branch
   // this number is taken from the calculations done in FieldConstants (but it's not a constant)
@@ -52,6 +70,8 @@ public class SetpointGenerator {
 
   private static final double kDriveYL1Offset = Units.inchesToMeters(13.469);
   private static final Rotation2d kRotationL1 = Rotation2d.fromDegrees(10.0);
+
+  private static final double kBargeXOffset = Units.inchesToMeters(48.0 + 28.0 / 2.0);
 
   private static final LoggedTunableNumber kElevatorL1Autoscore =
       new LoggedTunableNumber("Elevator L1 Autoscore Height", 11.5);
@@ -70,7 +90,7 @@ public class SetpointGenerator {
    * @param reefHeight The height of the reef to score on. Using the reef height enum to avoid
    *     confusion with indices.
    * @param autoScore Whether or not the robot is currently trying to autoscore. This changes the
-   *    manipulator angle and elevator height for L1 to score on the side instead of the middle.
+   *     manipulator angle and elevator height for L1 to score on the side instead of the middle.
    * @return A RobotSetpoint object with the desired pose, manipulator angle, and elevator height.
    */
   public static RobotSetpoint generate(int reefIndex, ReefHeight reefHeight, boolean autoScore) {
@@ -94,25 +114,25 @@ public class SetpointGenerator {
                     ? kDriveYL1Offset * ((reefIndex % 2 == 0) ? 1 : -1)
                     : kDriveYOffset * ((reefIndex % 2 == 0) ? 1 : -1),
                 (reefHeight == ReefHeight.L1)
-                    ? Rotation2d.fromDegrees(
-                        180).plus(kRotationL1.times((reefIndex % 2 == 0) ? -1 : 1))
+                    ? Rotation2d.fromDegrees(180)
+                        .plus(kRotationL1.times((reefIndex % 2 == 0) ? -1 : 1))
                     : Rotation2d.fromDegrees(180)));
 
     var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
-    if (RobotState.getInstance() != null && reefHeight == ReefHeight.L1
+    if (RobotState.getInstance() != null
+        && reefHeight == ReefHeight.L1
         && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-            || RobotState.getInstance().getCurrentAction()
-                == RobotAction.kAutoAutoScore)) {
+            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
       manipulatorAngle = kManipulatorL1Autoscore.get();
-      }
+    }
 
     var elevatorHeight = kElevatorHeights.get(reefHeight).get();
-      if (RobotState.getInstance() != null && reefHeight == ReefHeight.L1
-          && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-              || RobotState.getInstance().getCurrentAction()
-                  == RobotAction.kAutoAutoScore)) {
-        elevatorHeight = kElevatorL1Autoscore.get();
-      }
+    if (RobotState.getInstance() != null
+        && reefHeight == ReefHeight.L1
+        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+      elevatorHeight = kElevatorL1Autoscore.get();
+    }
 
     return new RobotSetpoint(
         drivePoseFinal, Rotation2d.fromDegrees(manipulatorAngle), elevatorHeight);
@@ -127,38 +147,6 @@ public class SetpointGenerator {
    *     the right reef, and the second index is the left reef.
    */
   public static Pair<Integer, Integer> getPossibleIndices(Pose2d drivePose) {
-    // var branchPoses = FieldConstants.Reef.kBranchPositions;
-    // double minLeftDistance = Double.POSITIVE_INFINITY;
-    // double minRightDistance = Double.POSITIVE_INFINITY;
-    // int leftIndex = -1;
-    // int rightIndex = -1;
-    // for (int i = 0; i < branchPoses.size(); i++) {
-    //   // the reef height doesn't matter here so we just use L1
-    //   Translation2d curr =
-    //
-    // AllianceFlipUtil.apply(branchPoses.get(i).get(ReefHeight.L1).toPose2d()).getTranslation();
-    //   double distance = drivePose.getTranslation().getDistance(curr);
-    //   if (AllianceFlipUtil.shouldFlip()) {
-    //     // if we're on red then i is off by one
-    //   }
-    //   if (i % 2 == 1) {
-    //     // left branch
-    //     if (distance < minLeftDistance) {
-    //       minLeftDistance = distance;
-    //       leftIndex = i;
-    //     }
-    //   } else {
-    //     // right branch
-    //     if (distance < minRightDistance) {
-    //       minRightDistance = distance;
-    //       rightIndex = i;
-    //     }
-    //   }
-    // }
-    // return new Pair<>(rightIndex, leftIndex);
-
-    // check if we're on red or blue
-
     // i used desmos to figure out these equations
     // blue:
     // x = 4.503
@@ -188,7 +176,7 @@ public class SetpointGenerator {
     Logger.recordOutput("SetpointGenerator/RightIndex", rightIndex);
     Logger.recordOutput("SetpointGenerator/LeftIndex", leftIndex);
 
-    return new Pair<>(rightIndex, leftIndex);
+    return Pair.of(rightIndex, leftIndex);
   }
 
   private static int findCommonElement(int[] arr1, int[] arr2, int[] arr3) {
@@ -211,7 +199,7 @@ public class SetpointGenerator {
 
   private static int[] checkVertical(Pose2d pose) {
     // check the alliance
-    Alliance alliance = DriverStation.getAlliance().get();
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
     if (alliance == Alliance.Red) {
       if (pose.getX() >= 13.062) {
         return new int[] {0, 1, 5};
@@ -228,7 +216,7 @@ public class SetpointGenerator {
   }
 
   private static int[] checkDiagonalPositive(Pose2d pose) {
-    Alliance alliance = DriverStation.getAlliance().get();
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
     double m = Math.sqrt(3) / 3;
     double b = alliance == Alliance.Red ? -3.53 : 1.4;
     double ty = m * pose.getX() + b;
@@ -248,7 +236,7 @@ public class SetpointGenerator {
   }
 
   private static int[] checkDiagonalNegative(Pose2d pose) {
-    Alliance alliance = DriverStation.getAlliance().get();
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
     double m = -Math.sqrt(3) / 3;
     double b = alliance == Alliance.Red ? 11.55 : 6.6;
     double ty = m * pose.getX() + b;
@@ -315,6 +303,22 @@ public class SetpointGenerator {
     return drivePoseFinal;
   }
 
+  public static MeshedSetpoint generateNearestIntake(Pose2d curPose) {
+    if (DriverStation.getAlliance().orElse(Alliance.Red) == Alliance.Red) {
+      if (curPose.getY() < FieldConstants.kFieldWidth / 2) {
+        return kIntakePositionsRed.get(0);
+      } else {
+        return kIntakePositionsRed.get(1);
+      }
+    } else {
+      if (curPose.getY() < FieldConstants.kFieldWidth / 2) {
+        return kIntakePositionsBlue.get(0);
+      } else {
+        return kIntakePositionsBlue.get(1);
+      }
+    }
+  }
+
   public static Pose2d generateAlgaeFinal(int algaeIndex) {
     Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
     // we need to move away from the center of the reef (regardless of angle)
@@ -337,5 +341,46 @@ public class SetpointGenerator {
     int commonIndex = findCommonElement(vertical, diagonalPositive, diagonalNegative);
 
     return commonIndex;
+  }
+
+  public static Pose2d generateBargeLeft() {
+    return new Pose2d(FieldConstants.Barge.kMiddleCage, new Rotation2d())
+        .rotateAround(
+            new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+            Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
+        .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+  }
+
+  public static Pose2d generateBargeRight() {
+    return new Pose2d(FieldConstants.Barge.kCloseCage, new Rotation2d())
+        .rotateAround(
+            new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+            Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
+        .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+  }
+
+  public static Rotation2d generateLollipopAngle(Translation2d driveTranslation) {
+    var lollipopPoses =
+        new ArrayList<>(
+            List.of(
+                FieldConstants.StagingPositions.kLeftIceCream,
+                FieldConstants.StagingPositions.kMiddleIceCream,
+                FieldConstants.StagingPositions.kRightIceCream));
+
+    lollipopPoses.replaceAll(AllianceFlipUtil::apply);
+
+    var closestTranslation = lollipopPoses.get(0).getTranslation();
+
+    for (var pose : lollipopPoses) {
+      if (pose.getTranslation().getDistance(driveTranslation)
+          < closestTranslation.getDistance(driveTranslation)) {
+        closestTranslation = pose.getTranslation();
+      }
+    }
+
+    double dy = closestTranslation.getY() - driveTranslation.getY();
+    double dx = closestTranslation.getX() - driveTranslation.getX();
+
+    return Rotation2d.fromRadians(Math.atan2(dy, dx));
   }
 }

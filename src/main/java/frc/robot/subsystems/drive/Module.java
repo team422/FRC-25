@@ -23,10 +23,9 @@ import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.RobotState;
+import frc.robot.util.AlertManager;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
@@ -49,11 +48,11 @@ public class Module {
     // Switch constants based on mode (the physics simulator is treated as a
     // separate robot with different tuning)
     if (RobotBase.isReal()) {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.229, 0.138, 0.0);
-      m_io.setDrivePID(1.0, 0.0, 0.0);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.22810, 0.13319, 0.0);
+      m_io.setDrivePID(2.0, 0.0, 0.0);
       m_io.setTurnPID(300.0, 0.0, 0.0);
     } else {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13, 0.13);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13, 0.0);
       m_io.setDrivePID(0.1, 0.0, 0.0);
       m_io.setTurnPID(10.0, 0.0, 0.0);
     }
@@ -66,6 +65,9 @@ public class Module {
         new Alert(String.format("Turn %d Disconnect", m_index), AlertType.kError);
     m_canCoderDisconnectedAlert =
         new Alert(String.format("Cancoder %d Disconnect", m_index), AlertType.kError);
+
+    AlertManager.registerAlert(
+        m_turnDisconnectedAlert, m_driveDisconnectedAlert, m_canCoderDisconnectedAlert);
   }
 
   /**
@@ -94,17 +96,20 @@ public class Module {
 
     if (Constants.kUseAlerts && !m_inputs.driveMotorIsConnected) {
       m_driveDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_driveDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.turnMotorIsConnected) {
       m_turnDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_turnDisconnectedAlert.set(false);
     }
 
     if (Constants.kUseAlerts && !m_inputs.turnEncoderIsConnected) {
       m_canCoderDisconnectedAlert.set(true);
-      RobotState.getInstance().triggerAlert(false);
+    } else {
+      m_canCoderDisconnectedAlert.set(false);
     }
   }
 
@@ -116,20 +121,25 @@ public class Module {
 
     m_io.setDriveVelocity(speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec));
     m_io.setTurnPosition(state.angle);
+
+    Logger.recordOutput(
+        "Module" + m_index + "/DriveFF", m_driveFeedforward.calculate(speedRadPerSec));
   }
 
-  /** */
+  /** Runs the module with the specified state and acceleration */
   public void runSetpoint(SwerveModuleState state, LinearAcceleration accel) {
     state.optimize(getAngle());
 
     double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.kWheelRadius;
-    double accelRadPerSec =
+    double accelRadPerSecSq =
         Math.signum(speedRadPerSec)
             * accel.in(MetersPerSecondPerSecond)
             / DriveConstants.kWheelRadius;
+    double nextSpeedRadPerSec = speedRadPerSec + accelRadPerSecSq * 0.02;
 
     m_io.setDriveVelocity(
-        speedRadPerSec, m_driveFeedforward.calculate(speedRadPerSec, accelRadPerSec));
+        speedRadPerSec,
+        m_driveFeedforward.calculateWithVelocities(speedRadPerSec, nextSpeedRadPerSec));
     m_io.setTurnPosition(state.angle);
   }
 
@@ -139,13 +149,11 @@ public class Module {
     m_io.setTurnPosition(new Rotation2d());
 
     // Open loop drive control
-    Logger.recordOutput("Module/character", Timer.getFPGATimestamp());
     m_io.setDriveRawOutput(output);
   }
 
   /** Disables all outputs to motors. */
   public void stop() {
-    Logger.recordOutput("Module/stop", Timer.getFPGATimestamp());
     m_io.setDriveRawOutput(0.0);
     m_io.setTurnRawOutput(0.0);
   }
@@ -154,6 +162,11 @@ public class Module {
   public void setBrakeMode(boolean enabled) {
     m_io.setDriveBrakeMode(enabled);
     m_io.setTurnBrakeMode(enabled);
+  }
+
+  /** Sets whether brake mode is enabled, only for the drive motor. */
+  public void setDriveBrakeMode(boolean enabled) {
+    m_io.setDriveBrakeMode(enabled);
   }
 
   /** Returns the current turn angle of the module. */

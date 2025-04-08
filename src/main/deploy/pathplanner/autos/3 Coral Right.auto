@@ -7,6 +7,18 @@
         {
           "type": "named",
           "data": {
+            "name": "Coral Auto"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Non-citrus Auto"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
             "name": "Right side"
           }
         },

@@ -14,6 +14,7 @@ import frc.robot.commands.auto.AutoFactory;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
+import frc.robot.oi.TestingController;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.climb.Climb;
@@ -39,7 +40,6 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.pivot.PivotIOKraken;
 import frc.robot.subsystems.intake.pivot.PivotIOReplay;
 import frc.robot.subsystems.intake.pivot.PivotIOSim;
-import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
 import frc.robot.subsystems.led.Led;
@@ -77,6 +77,7 @@ public class RobotContainer {
 
   // Controller
   private DriverControls m_driverControls;
+  private TestingController m_testingController;
 
   // Dashboard inputs
   private LoggedDashboardChooser<Command> m_autoChooser;
@@ -113,17 +114,23 @@ public class RobotContainer {
         // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
         m_intake =
             new Intake(
-                new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                // new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                new IntakeRollerIOReplay(),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
-        m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+        m_indexer =
+            new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
         // m_indexer = new Indexer(new IndexerIOReplay());
 
         m_manipulator =
             new Manipulator(
                 new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
                 new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
-                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                new CoralDetectorIOPhotoelectric(
+                    Ports.kManipulatorPhotoElectricOne,
+                    Ports.kManipulatorPhotoElectricTwo,
+                    Ports.kFunnelPhotoElectricOne,
+                    Ports.kFunnelPhotoElectricTwo));
         // new ManipulatorRollerIOReplay(), new WristIOReplay(), new CoralDetectorIOReplay());
 
         m_climb = new Climb(new ClimbIOKraken(Constants.Ports.kClimbMotor));
@@ -157,14 +164,16 @@ public class RobotContainer {
         if (ProtoConstants.kRealIntake) {
           m_intake =
               new Intake(
-                  new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                  // new IntakeRollerIOKraken(Ports.kIntakeRoller),
+                  new IntakeRollerIOReplay(),
                   new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
         } else {
           m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
         }
 
         if (ProtoConstants.kRealIndexer) {
-          m_indexer = new Indexer(new IndexerIOKraken(Ports.kIndexerMotor));
+          m_indexer =
+              new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
         } else {
           m_indexer = new Indexer(new IndexerIOSim());
         }
@@ -175,14 +184,20 @@ public class RobotContainer {
                   new ManipulatorRollerIOKraken(Ports.kManipulatorRoller),
                   new WristIOKraken(Ports.kManipulatorWrist, Ports.kManipulatorAbsoluteEncoder),
                   new CoralDetectorIOPhotoelectric(
-                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                      Ports.kManipulatorPhotoElectricOne,
+                      Ports.kManipulatorPhotoElectricTwo,
+                      Ports.kFunnelPhotoElectricOne,
+                      Ports.kFunnelPhotoElectricTwo));
         } else {
           m_manipulator =
               new Manipulator(
                   new ManipulatorRollerIOSim(),
                   new WristIOSim(),
                   new CoralDetectorIOPhotoelectric(
-                      Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                      Ports.kManipulatorPhotoElectricOne,
+                      Ports.kManipulatorPhotoElectricTwo,
+                      Ports.kFunnelPhotoElectricOne,
+                      Ports.kFunnelPhotoElectricTwo));
         }
 
         if (ProtoConstants.kRealClimb) {
@@ -217,7 +232,11 @@ public class RobotContainer {
             new Manipulator(
                 new ManipulatorRollerIOSim(),
                 new WristIOSim(),
-                new CoralDetectorIOPhotoelectric(Ports.kPhotoElectricOne, Ports.kPhotoElectricTwo));
+                new CoralDetectorIOPhotoelectric(
+                    Ports.kManipulatorPhotoElectricOne,
+                    Ports.kManipulatorPhotoElectricTwo,
+                    Ports.kFunnelPhotoElectricOne,
+                    Ports.kFunnelPhotoElectricTwo));
 
         m_climb = new Climb(new ClimbIOSim());
 
@@ -292,6 +311,7 @@ public class RobotContainer {
   private void configureControllers() {
     // m_driverControls = new DriverControlsXbox(0);
     m_driverControls = new DriverControlsPS5(0);
+    m_testingController = new TestingController(5);
   }
 
   /** Configure the button bindings. */
@@ -376,9 +396,18 @@ public class RobotContainer {
                 () -> {
                   // if we are in autoscore and we are on a left branch (autoscore left already
                   // pressed), then cancel
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 1) {
+                  if ((RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 1)) {
                     RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getCurrentAction()
+                          == RobotAction.kBargeAutoScore
+                      && RobotState.getInstance().getBargeLeftCage()) {
+                    m_manipulator.updateState(ManipulatorState.kStow);
+                    RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getManipulatorState()
+                      == ManipulatorState.kAlgaeHold) {
+                    RobotState.getInstance().setBargeScoreLeft();
+                    RobotState.getInstance().updateRobotAction(RobotAction.kBargeAutoScore);
                   } else {
                     RobotState.getInstance().setReefIndexLeft();
                     RobotState.getInstance().manageAutoScoreButton();
@@ -392,9 +421,18 @@ public class RobotContainer {
                 () -> {
                   // if we are in autoscore and we are on a right branch (autoscore right already
                   // pressed), then cancel
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 0) {
+                  if ((RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+                      && RobotState.getInstance().getDesiredBranchIndex() % 2 == 0)) {
                     RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getCurrentAction()
+                          == RobotAction.kBargeAutoScore
+                      && !RobotState.getInstance().getBargeLeftCage()) {
+                    m_manipulator.updateState(ManipulatorState.kStow);
+                    RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getManipulatorState()
+                      == ManipulatorState.kAlgaeHold) {
+                    RobotState.getInstance().setBargeScoreRight();
+                    RobotState.getInstance().updateRobotAction(RobotAction.kBargeAutoScore);
                   } else {
                     RobotState.getInstance().setReefIndexRight();
                     RobotState.getInstance().manageAutoScoreButton();
@@ -408,6 +446,10 @@ public class RobotContainer {
                 () -> {
                   // this is much simpler, we can just check if we are in manual score and cancel
                   if (RobotState.getInstance().getCurrentAction() == RobotAction.kManualScore) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else if (RobotState.getInstance().getCurrentAction()
+                      == RobotAction.kBargeScore) {
+                    m_manipulator.updateState(ManipulatorState.kStow);
                     RobotState.getInstance().setDefaultAction();
                   } else {
                     if (RobotState.getInstance().getManipulatorState()
@@ -442,7 +484,7 @@ public class RobotContainer {
         .onFalse(
             Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().setDefaultAction();
+                  RobotState.getInstance().manageAlgaeIntakeRelease();
                 }));
 
     m_driverControls
@@ -472,8 +514,99 @@ public class RobotContainer {
         .toggleVision()
         .onTrue(
             Commands.runOnce(
+                    () -> {
+                      RobotState.getInstance().toggleUsingVision();
+                    })
+                .ignoringDisable(true));
+
+    m_driverControls
+        .coralEject()
+        .onTrue(
+            Commands.runOnce(
                 () -> {
-                  RobotState.getInstance().toggleUsingVision();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kCoralEject);
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setDefaultAction();
+                }));
+
+    m_driverControls
+        .lollipop()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kLollipopIntake) {
+                    RobotState.getInstance().setDefaultAction();
+                  } else {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kLollipopIntake);
+                  }
+                }));
+
+    m_testingController
+        .toggleTestingMode()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().toggleTestingMode();
+                }));
+
+    m_testingController
+        .autoAutoscoreLeft()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexLeft();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                }));
+    m_testingController
+        .autoAutoscoreRight()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexRight();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                }));
+
+    m_testingController
+        .autoCoralIntake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().testAutoCoralIntake();
+                }));
+
+    m_testingController
+        .autoLeft()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setAutoSideLeft();
+                }));
+
+    m_testingController
+        .autoRight()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setAutoSideRight();
+                }));
+
+    m_testingController
+        .incrementCoralScored()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().incrementCoralScoredAuto();
+                }));
+
+    m_testingController
+        .decrementCoralScored()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().decrementCoralScoredAuto();
                 }));
   }
 

@@ -84,7 +84,7 @@ public class BasicTrapezoid {
     // Compute the "next" velocity if we apply desiredAccel for dt
     double nextVelo = curVelo + desiredAccel * kDt;
 
-    // Clamp the new velocity to ±maxVelo (remove sign checks if you only move forward)
+    // Clamp the new velocity to [0, maxVelo] (remove sign checks if you only move forward)
     nextVelo = MathUtil.clamp(nextVelo, 0.0, m_maxVelocity);
 
     // Because we might have clamped velocity, figure out the actual acceleration

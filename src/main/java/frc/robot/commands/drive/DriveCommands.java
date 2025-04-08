@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
@@ -171,6 +172,7 @@ public class DriveCommands {
             () -> {
               velocitySamples.clear();
               voltageSamples.clear();
+              drive.updateProfile(DriveProfiles.kDefault);
             }),
 
         // Allow modules to orient
@@ -225,7 +227,11 @@ public class DriveCommands {
         // Drive control sequence
         Commands.sequence(
             // Reset acceleration limiter
-            Commands.runOnce(() -> limiter.reset(0.0)),
+            Commands.runOnce(
+                () -> {
+                  limiter.reset(0.0);
+                  drive.updateProfile(DriveProfiles.kDefault);
+                }),
 
             // Turn in place, accelerating up to full speed
             Commands.run(
@@ -254,17 +260,6 @@ public class DriveCommands {
                       var rotation = drive.getGyroRotation();
                       state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                       state.lastAngle = rotation;
-
-                      double[] positions = drive.getWheelRadiusCharacterizationPositions();
-                      double wheelDelta = 0.0;
-                      for (int i = 0; i < 4; i++) {
-                        wheelDelta += Math.abs(positions[i] - state.positions[i]) / 4.0;
-                      }
-                      double wheelRadius =
-                          (state.gyroDelta * DriveConstants.kDriveBaseRadius) / wheelDelta;
-
-                      Logger.recordOutput("Drive/WheelDelta", wheelDelta);
-                      Logger.recordOutput("Drive/WheelRadius", wheelRadius);
                     })
 
                 // When cancelled, calculate and print results

@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.LedConstants;
@@ -18,6 +19,11 @@ public class Led extends SubsystemBase {
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
 
+  private Timer m_mismatchTimer = new Timer();
+  private static final double kMismatchFrequency = 5.0; // Hz
+  private static final double kMismatchPeriod = 1.0 / kMismatchFrequency; // seconds
+  private double m_lastMismatchTime = 0.0; // seconds
+
   public static enum LedState {
     kLocationCheck,
     kL1,
@@ -28,7 +34,8 @@ public class Led extends SubsystemBase {
     kFullTuning,
     kAutoscoreMeasurementsBad,
     kAutoscoreMeasurementsGood,
-    kOff
+    kTargetMismatch,
+    kOff,
   }
 
   public Led(int port, int length) {
@@ -36,6 +43,8 @@ public class Led extends SubsystemBase {
     m_buffer = new AddressableLEDBuffer(length);
     m_strip.setLength(length);
     m_strip.start();
+
+    m_mismatchTimer.start();
   }
 
   @Override
@@ -44,6 +53,11 @@ public class Led extends SubsystemBase {
     // if (m_state == LedState.kLocationCheck) {
     //   locationCheck();
     // }
+
+    if (m_state == LedState.kTargetMismatch) {
+      // if the mismatch timer is running, check if it has elapsed
+      targetMismatch();
+    }
 
     Logger.recordOutput("LED/State", m_state.toString());
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
@@ -110,7 +124,25 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/LocationCheck/NumDistanceLeds", numDistanceLeds);
   }
 
-  private void updateLEDState() {
+  private void targetMismatch() {
+    if (m_mismatchTimer.get() - m_lastMismatchTime >= kMismatchPeriod) {
+      // random colors
+      for (int i = 0; i < m_buffer.getLength(); i++) {
+        m_buffer.setLED(
+            i,
+            new Color(
+                (int) (Math.random() * 255),
+                (int) (Math.random() * 255),
+                (int) (Math.random() * 255)));
+      }
+
+      m_strip.setData(m_buffer);
+
+      m_lastMismatchTime = m_mismatchTimer.get();
+    }
+  }
+
+  public void updateLEDState() {
     LEDPattern pattern;
     switch (m_state) {
       case kLocationCheck:
@@ -141,6 +173,9 @@ public class Led extends SubsystemBase {
       case kAutoscoreMeasurementsGood:
         pattern = LEDPattern.solid(convertColor(LedConstants.kAutoscoreMeasurementsGood));
         break;
+      case kTargetMismatch:
+        pattern = null;
+        break;
       case kOff:
       default:
         pattern = LEDPattern.kOff;
@@ -148,6 +183,11 @@ public class Led extends SubsystemBase {
     }
     if (pattern != null) {
       pattern.applyTo(m_buffer);
+    }
+    if (!RobotState.getInstance().getUsingVision()) {
+      for (int i = 9; i <= 15; i++) {
+        m_buffer.setLED(i, convertColor(LedConstants.kVisionOff));
+      }
     }
     m_strip.setData(m_buffer);
   }

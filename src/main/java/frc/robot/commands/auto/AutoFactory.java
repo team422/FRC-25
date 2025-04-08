@@ -106,12 +106,26 @@ public class AutoFactory {
                   RobotState.getInstance().setReefIndexLeft();
                   RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
                 }));
+    new EventTrigger("Autoscore Right")
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setReefIndexRight();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                }));
 
     NamedCommands.registerCommand(
         "Autoscore Left",
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setReefIndexLeft();
+              RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+            }));
+    NamedCommands.registerCommand(
+        "Autoscore Right",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setReefIndexRight();
               RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
             }));
     NamedCommands.registerCommand(
@@ -128,20 +142,39 @@ public class AutoFactory {
             }));
 
     NamedCommands.registerCommand(
+        "Barge Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setBargeAuto(true);
+            }));
+
+    NamedCommands.registerCommand(
+        "Coral Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setBargeAuto(false);
+            }));
+
+    NamedCommands.registerCommand(
+        "Citrus Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setCitrusAuto(true);
+            }));
+    NamedCommands.registerCommand(
+        "Non-citrus Auto",
+        Commands.runOnce(
+            () -> {
+              RobotState.getInstance().setCitrusAuto(false);
+            }));
+
+    NamedCommands.registerCommand(
         "autoscoreFinish",
         Commands.waitUntil(
             () -> {
               RobotAction s = RobotState.getInstance().getCurrentAction();
               return s != RobotAction.kCoralOuttaking && s != RobotAction.kAutoAutoScore;
             }));
-    NamedCommands.registerCommand(
-        "Autoscore Right",
-        Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setReefIndexRight();
-                })
-            .andThen(new AutoAutoScore())
-            .andThen(Commands.waitSeconds(2)));
 
     new EventTrigger("Coral Intake Left")
         .onTrue(

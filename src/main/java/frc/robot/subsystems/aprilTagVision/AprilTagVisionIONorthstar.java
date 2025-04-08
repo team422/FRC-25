@@ -10,9 +10,11 @@ package frc.robot.subsystems.aprilTagVision;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.networktables.DoubleArraySubscriber;
+import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.PubSubOption;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.Constants.AprilTagVisionConstants;
 
 public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
@@ -20,16 +22,19 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
   private static final int cameraResolutionHeight = 1200;
   private static final int cameraAutoExposure = 1;
   private static final int cameraExposure = 10;
-  private static final int cameraGain = 80;
-  private static final int cameraBrightness = 10;
+  private static final int cameraGain = 60;
+  private static final int cameraBrightness = 20;
   private static final int cameraContrast = 64;
-  private static final int cameraGamma = 80;
+  private static final int cameraGamma = 85;
   // all non-ground tags
   private static final long[] tagIDBlacklist = new long[] {1, 2, 3, 4, 5, 12, 13, 14, 15, 16};
 
   private final DoubleArraySubscriber observationSubscriber;
   private final DoubleArraySubscriber demoObservationSubscriber;
   private final IntegerSubscriber fpsSubscriber;
+
+  private final IntegerPublisher enabledPublisher;
+  private int enabledValue = 0;
 
   public AprilTagVisionIONorthstar(String instanceId, String cameraId) {
     var northstarTable = NetworkTableInstance.getDefault().getTable(instanceId);
@@ -44,13 +49,14 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
     configTable.getIntegerTopic("camera_brightness").publish().set(cameraBrightness);
     configTable.getIntegerTopic("camera_contrast").publish().set(cameraContrast);
     configTable.getIntegerTopic("camera_gamma").publish().set(cameraGamma);
-    // TODO: we need to rethink this because if the code is not running, this will not work
-    configTable.getIntegerTopic("kys").publish().set(0);
     configTable
         .getDoubleTopic("fiducial_size_m")
         .publish()
         .set(AprilTagVisionConstants.kAprilTagWidth);
     configTable.getIntegerArrayTopic("tag_id_blacklist").publish().set(tagIDBlacklist);
+
+    enabledPublisher = configTable.getIntegerTopic("robot_enabled").publish();
+    enabledPublisher.set(0);
 
     try {
       configTable
@@ -73,6 +79,10 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
             .subscribe(
                 new double[] {}, PubSubOption.keepDuplicates(true), PubSubOption.sendAll(true));
     fpsSubscriber = outputTable.getIntegerTopic("fps").subscribe(0);
+
+    var genericNorthstarTable = NetworkTableInstance.getDefault().getTable("northstar");
+    var commandsTable = genericNorthstarTable.getSubTable("commands");
+    commandsTable.getIntegerTopic("kys").publish().set(0);
   }
 
   public void updateInputs(AprilTagVisionInputs inputs) {
@@ -88,5 +98,9 @@ public class AprilTagVisionIONorthstar implements AprilTagVisionIO {
       inputs.demoFrame = demoFrame;
     }
     inputs.fps = fpsSubscriber.get();
+
+    if (enabledValue != (DriverStation.isEnabled() ? 1 : 0)) {
+      enabledPublisher.set(DriverStation.isEnabled() ? 1 : 0);
+    }
   }
 }
