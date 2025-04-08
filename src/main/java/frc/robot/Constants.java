@@ -37,7 +37,7 @@ import java.util.Map;
  * (log replay from a file).
  */
 public final class Constants {
-  public static final boolean kTuningMode = false;
+  public static final boolean kTuningMode = true;
 
   public static final Mode kRealMode = Mode.REAL;
   public static final Mode kSimMode = Mode.SIM;

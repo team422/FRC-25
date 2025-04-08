@@ -22,7 +22,6 @@ import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -85,8 +84,6 @@ public class Drive extends SubsystemBase {
     kPathplanner,
     kAutoAlign,
     kDriveToPoint,
-    kIntakeMesh,
-    kBargeMesh,
     kCharacterization,
     kMeshedUserControls,
     kStop
@@ -193,8 +190,6 @@ public class Drive extends SubsystemBase {
     periodicHash.put(DriveProfiles.kPathplanner, this::pathplannerPeriodic);
     periodicHash.put(DriveProfiles.kAutoAlign, this::autoAlignPeriodic);
     periodicHash.put(DriveProfiles.kDriveToPoint, this::driveToPointPeriodic);
-    periodicHash.put(DriveProfiles.kIntakeMesh, this::intakeMeshPeriodic);
-    periodicHash.put(DriveProfiles.kBargeMesh, this::bargeMeshPeriodic);
     periodicHash.put(DriveProfiles.kCharacterization, this::defaultPeriodic);
     periodicHash.put(DriveProfiles.kMeshedUserControls, this::meshedUserControlsPeriodic);
     periodicHash.put(DriveProfiles.kStop, this::stopPeriodic);
@@ -225,8 +220,6 @@ public class Drive extends SubsystemBase {
     m_odometryLock.unlock();
     Logger.recordOutput(
         "PeriodicTime/DriveUpdateInputs", (HALUtil.getFPGATime() - updateInputsStart) / 1000.0);
-    Logger.recordOutput(
-        "FUCKYOUDRIVE/1UpdateInputsCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -286,13 +279,7 @@ public class Drive extends SubsystemBase {
         DriveConstants.kDriveToPointMaxAcceleration,
         DriveConstants.kDriveToPointMaxDeceleration);
 
-    Logger.recordOutput(
-        "FUCKYOUDRIVE/2LoggedTunableCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
-
     m_profiles.getPeriodicFunctionTimed().run();
-
-    Logger.recordOutput(
-        "FUCKYOUDRIVE/3SubsystemProfilesCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     Logger.processInputs("Drive/Gyro", m_gyroInputs);
 
@@ -302,8 +289,6 @@ public class Drive extends SubsystemBase {
     }
     Logger.recordOutput(
         "PeriodicTime/ModulePeriodic", (HALUtil.getFPGATime() - modulePeriodicStart) / 1000.0);
-    Logger.recordOutput(
-        "FUCKYOUDRIVE/4ModulePeriodicCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     // Stop moving when disabled
     if (DriverStation.isDisabled()) {
@@ -316,9 +301,6 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
-
-    Logger.recordOutput(
-        "FUCKYOUDRIVE/5RandomShitCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     double odometryUpdateStart = HALUtil.getFPGATime();
     // Update odometry
@@ -373,8 +355,6 @@ public class Drive extends SubsystemBase {
 
     Logger.recordOutput(
         "PeriodicTime/OdometryUpdate", (HALUtil.getFPGATime() - odometryUpdateStart) / 1000.0);
-    Logger.recordOutput(
-        "FUCKYOUDRIVE/6OdometryUpdateCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
     // m_poseEstimatorNoSlowVision.addDriveData(Timer.getTimestamp(), totalTwist);
 
     // Logger.recordOutput("VisionSlow/Pose", m_poseEstimatorNoSlowVision.getLatestPose());
@@ -411,7 +391,6 @@ public class Drive extends SubsystemBase {
         m_gyroInputs.zAcceleration < DriveConstants.kFreefallAccelerationThreshold);
 
     Logger.recordOutput("PeriodicTime/DriveSlip", (HALUtil.getFPGATime() - slipStart) / 1000.0);
-    Logger.recordOutput("FUCKYOUDRIVE/7SlipCheckpoint", (HALUtil.getFPGATime() - start) / 1000.0);
 
     Logger.recordOutput("Drive/Profile", m_profiles.getCurrentProfile());
 
@@ -422,7 +401,6 @@ public class Drive extends SubsystemBase {
     }
 
     Logger.recordOutput("PeriodicTime/Drive", (HALUtil.getFPGATime() - start) / 1000.0);
-    Logger.recordOutput("FUCKYOUDRIVE/8Final", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void characterizationPeriodic() {
@@ -485,18 +463,6 @@ public class Drive extends SubsystemBase {
 
   public void autoAlignPeriodic() {
     m_desiredChassisSpeeds = calculateAutoAlignSpeeds();
-
-    defaultPeriodic();
-  }
-
-  public void intakeMeshPeriodic() {
-    // TODO: implement
-
-    defaultPeriodic();
-  }
-
-  public void bargeMeshPeriodic() {
-    // TODO: implement
 
     defaultPeriodic();
   }
@@ -755,6 +721,18 @@ public class Drive extends SubsystemBase {
     }
   }
 
+  public void setDriveCoast() {
+    for (int i = 0; i < m_modules.length; i++) {
+      m_modules[i].setDriveBrakeMode(false);
+    }
+  }
+
+  public void setDriveBrake() {
+    for (int i = 0; i < m_modules.length; i++) {
+      m_modules[i].setDriveBrakeMode(true);
+    }
+  }
+
   /**
    * Stops the drive and turns the modules to an X arrangement to resist movement. The modules will
    * return to their normal orientations the next time a nonzero velocity is requested.
@@ -843,10 +821,10 @@ public class Drive extends SubsystemBase {
 
     if (newProfile == DriveProfiles.kMeshedUserControls) {
       if (RobotState.getInstance().getCurrentAction() == RobotAction.kCoralIntaking) {
-        Pair<Pose2d, List<Double>> desPose = SetpointGenerator.generateNearestIntake(getPose());
+        var setpoint = SetpointGenerator.generateNearestIntake(getPose());
         m_meshedController =
             new MeshedDrivingController(
-                desPose.getFirst(),
+                setpoint.desiredPose(),
                 true,
                 DriveConstants.kDebounceAmount.get(),
                 DriveConstants.kMeshDrivePriority.get());
@@ -856,10 +834,7 @@ public class Drive extends SubsystemBase {
             DriveConstants.kDriveToIntakeThetaMeshedP.get(),
             DriveConstants.kDriveToIntakeThetaMeshedD.get());
         m_meshedController.setAxisLocked(
-            desPose.getSecond().get(0),
-            desPose.getSecond().get(1),
-            desPose.getSecond().get(2),
-            desPose.getSecond().get(3));
+            setpoint.slope(), setpoint.intercept(), setpoint.minX(), setpoint.maxX());
       } else {
         Pose2d desPose;
         if (RobotState.getInstance().getBargeLeftCage()) {

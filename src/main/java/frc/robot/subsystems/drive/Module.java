@@ -164,6 +164,11 @@ public class Module {
     m_io.setTurnBrakeMode(enabled);
   }
 
+  /** Sets whether brake mode is enabled, only for the drive motor. */
+  public void setDriveBrakeMode(boolean enabled) {
+    m_io.setDriveBrakeMode(enabled);
+  }
+
   /** Returns the current turn angle of the module. */
   public Rotation2d getAngle() {
     return m_inputs.turnPosition;

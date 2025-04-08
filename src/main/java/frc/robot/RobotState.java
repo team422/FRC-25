@@ -1170,7 +1170,7 @@ public class RobotState {
 
   public void onDisable() {
     if (m_profiles.getCurrentProfile() == RobotAction.kAutoCoralIntaking) {
-      m_drive.setCoast();
+      m_drive.setDriveCoast();
     }
   }
 
