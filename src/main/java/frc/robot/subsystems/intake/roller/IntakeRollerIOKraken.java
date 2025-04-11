@@ -16,6 +16,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.IntakeConstants;
@@ -44,14 +45,14 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     var currentLimits =
         new CurrentLimitsConfigs()
             .withSupplyCurrentLimitEnable(true)
-            .withSupplyCurrentLimit(CurrentLimitConstants.kIntakeRollerDefaultSupplyLimit)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kIntakeRollerDefaultSupplyLimit.get())
             .withStatorCurrentLimitEnable(true)
-            .withStatorCurrentLimit(CurrentLimitConstants.kIntakeRollerDefaultStatorLimit);
+            .withStatorCurrentLimit(CurrentLimitConstants.kIntakeRollerDefaultStatorLimit.get());
 
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kRollerGearRatio);
 
-    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Coast);
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
 
     m_config =
         new TalonFXConfiguration()
@@ -99,6 +100,21 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
 
   @Override
   public void updateInputs(IntakeRollerInputs inputs) {
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> {
+          m_motor
+              .getConfigurator()
+              .apply(
+                  m_config.CurrentLimits.withSupplyCurrentLimit(
+                          CurrentLimitConstants.kIntakeRollerDefaultSupplyLimit.get())
+                      .withStatorCurrentLimit(
+                          CurrentLimitConstants.kIntakeRollerDefaultStatorLimit.get()),
+                  0.0);
+        },
+        CurrentLimitConstants.kIntakeRollerDefaultStatorLimit,
+        CurrentLimitConstants.kIntakeRollerDefaultSupplyLimit);
+
     if (!Constants.kUseBaseRefreshManager) {
       BaseStatusSignal.refreshAll(
           m_motorVelocity,
@@ -129,13 +145,5 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     m_motor
         .getConfigurator()
         .apply(m_config.CurrentLimits.withSupplyCurrentLimit(supplyLimit), 0.0);
-  }
-
-  @Override
-  public boolean hasGamePiece() {
-    double current = m_motorCurrent.getValueAsDouble();
-    double accel = m_motorAcceleration.getValueAsDouble();
-    return current > IntakeConstants.kRollerCurrentGamepieceThreshold
-        && accel > IntakeConstants.kRollerAccelGamepieceThreshold;
   }
 }

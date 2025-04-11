@@ -81,6 +81,8 @@ public class RobotState {
     kProcessorOuttake,
     kCoralEject,
     kLollipopIntake,
+    kCoralOTB,
+    kCoralOTBL1,
 
     // algae descore sequence
     kAlgaeDescoringInitial,
@@ -117,6 +119,10 @@ public class RobotState {
   private boolean m_isCitrusAuto = false;
 
   private boolean m_autoTestingMode = false;
+
+  // true - run through to funnel after intaking otb
+  // false - hold position to score L1
+  private boolean m_otbRunThrough = false;
 
   private Timer m_threadPriorityTimer = new Timer();
 
@@ -171,6 +177,8 @@ public class RobotState {
     periodicHash.put(RobotAction.kBargeAutoScore, this::bargeAutoScorePeriodic);
     periodicHash.put(RobotAction.kCoralEject, () -> {});
     periodicHash.put(RobotAction.kLollipopIntake, this::lollipopIntakePeriodic);
+    periodicHash.put(RobotAction.kCoralOTB, this::coralOTBPeriodic);
+    periodicHash.put(RobotAction.kCoralOTBL1, this::coralOTBL1Periodic);
     periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
@@ -309,11 +317,6 @@ public class RobotState {
   public void algaeIntakingOuttakingPeriodic() {
     // we could be intaking or outtaking here
     // if we're outtaking we don't want to go to hold
-    if (m_intake.getCurrentState() == IntakeState.kIntake) {
-      if (m_intake.hasGamePiece()) {
-        m_intake.updateState(IntakeState.kGamepieceHold);
-      }
-    }
   }
 
   public void autoScorePeriodic() {
@@ -773,6 +776,10 @@ public class RobotState {
     // m_drive.setDesiredHeading(heading);
   }
 
+  public void coralOTBPeriodic() {}
+
+  public void coralOTBL1Periodic() {}
+
   // this is a hack but trust
   private boolean m_hasRunASingleCycle = false;
 
@@ -885,7 +892,7 @@ public class RobotState {
 
       case kAutoCoralIntaking:
         newDriveProfiles = DriveProfiles.kDriveToPoint;
-        newIntakeState = IntakeState.kCoralIntaking;
+        newIntakeState = IntakeState.kFunnelIntaking;
         newElevatorState = ElevatorState.kIntaking;
         newManipulatorState = ManipulatorState.kIntaking;
         break;
@@ -896,7 +903,7 @@ public class RobotState {
         break;
 
       case kCoralIntaking:
-        newIntakeState = IntakeState.kCoralIntaking;
+        newIntakeState = IntakeState.kFunnelIntaking;
         newElevatorState = ElevatorState.kIntaking;
         newManipulatorState = ManipulatorState.kIntaking;
         if (getUsingVision()) {
@@ -969,6 +976,16 @@ public class RobotState {
       case kLollipopIntake:
         newManipulatorState = ManipulatorState.kAlgaeHold;
         newElevatorState = ElevatorState.kLollipopIntake;
+
+        break;
+
+      case kCoralOTB:
+        newIntakeState = IntakeState.kIntaking;
+
+        break;
+
+      case kCoralOTBL1:
+        newIntakeState = IntakeState.kOuttaking;
 
         break;
 
@@ -1143,11 +1160,28 @@ public class RobotState {
       updateRobotAction(RobotAction.kProcessorOuttake);
       // }
     } else {
-      updateRobotAction(RobotAction.kAlgaeIntakingOuttaking);
+      // first press - run intake
+      // second press - L1
+      if (!m_otbRunThrough && m_intake.getCurrentState() == IntakeState.kCoralHold) {
+        updateRobotAction(RobotAction.kCoralOTBL1);
+      } else {
+        updateRobotAction(RobotAction.kCoralOTB);
+      }
     }
   }
 
   public void manageAlgaeIntakeRelease() {
+    if (m_otbRunThrough) {
+      m_intake.updateState(IntakeState.kCoralRunThrough);
+    } else {
+      // if we're L1 then stow
+      // otherwise hold
+      if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTBL1) {
+        m_intake.updateState(IntakeState.kStow);
+      } else if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTB) {
+        m_intake.updateState(IntakeState.kCoralHold);
+      }
+    }
     setDefaultAction();
   }
 
@@ -1382,6 +1416,10 @@ public class RobotState {
   public void toggleUsingVision() {
     m_usingVision = !m_usingVision;
     m_led.updateLEDState();
+  }
+
+  public void toggleOtbRunthrough() {
+    m_otbRunThrough = !m_otbRunThrough;
   }
 
   public boolean manipulatorAtSetpoint() {

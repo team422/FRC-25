@@ -10,7 +10,6 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
@@ -29,6 +28,7 @@ import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
 import java.util.List;
+import org.littletonrobotics.junction.Logger;
 
 public class PivotIOKraken implements PivotIO {
   private TalonFX m_motor;
@@ -134,6 +134,10 @@ public class PivotIOKraken implements PivotIO {
       resetRelativeEncoder();
     }
 
+    Logger.recordOutput("Pivot/AbsoluteEncoder", Units.rotationsToDegrees(m_absoluteEncoder.get()));
+    Logger.recordOutput("Pivot/WrapAround", getAbsoluteWrapAround().getDegrees());
+    Logger.recordOutput("Pivot/Final", getAbsoluteFinal().getDegrees());
+
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
@@ -147,7 +151,7 @@ public class PivotIOKraken implements PivotIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
+  public void setPIDFF(double kP, double kI, double kD, double kS) {
     m_motor
         .getConfigurator()
         .apply(
@@ -155,14 +159,12 @@ public class PivotIOKraken implements PivotIO {
                 .withKI(kI)
                 .withKD(kD)
                 .withKS(kS)
-                .withKG(kG)
-                .withGravityType(GravityTypeValue.Arm_Cosine)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
             0.0);
   }
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {
     double value = angle.getRadians();
     value =
         MathUtil.clamp(
@@ -172,7 +174,8 @@ public class PivotIOKraken implements PivotIO {
     angle = Rotation2d.fromRadians(value);
 
     m_desiredAngle = angle;
-    m_motor.setControl(m_positionControl.withPosition(angle.getRotations()));
+    m_motor.setControl(
+        m_positionControl.withPosition(angle.getRotations()).withFeedForward(feedforward));
   }
 
   @Override
@@ -206,8 +209,8 @@ public class PivotIOKraken implements PivotIO {
     double rawValue = m_absoluteEncoder.get();
     rawValue += IntakeConstants.kPivotOffset.getRotations();
     // fix wrap around after offset applied
-    // 140 is the range of the absolute encoder before it wraps around
-    rawValue %= Units.degreesToRotations(140);
+    // 360 is the range of the absolute encoder before it wraps around
+    rawValue %= Units.degreesToRotations(360);
     if (rawValue < 0) {
       rawValue += 1.0;
     }

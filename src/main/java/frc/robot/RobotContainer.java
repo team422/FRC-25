@@ -40,6 +40,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.pivot.PivotIOKraken;
 import frc.robot.subsystems.intake.pivot.PivotIOReplay;
 import frc.robot.subsystems.intake.pivot.PivotIOSim;
+import frc.robot.subsystems.intake.roller.IntakeRollerIOKraken;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOReplay;
 import frc.robot.subsystems.intake.roller.IntakeRollerIOSim;
 import frc.robot.subsystems.led.Led;
@@ -114,8 +115,7 @@ public class RobotContainer {
         // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
         m_intake =
             new Intake(
-                // new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                new IntakeRollerIOReplay(),
+                new IntakeRollerIOKraken(Ports.kIntakeRoller),
                 new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer =
@@ -164,8 +164,7 @@ public class RobotContainer {
         if (ProtoConstants.kRealIntake) {
           m_intake =
               new Intake(
-                  // new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                  new IntakeRollerIOReplay(),
+                  new IntakeRollerIOKraken(Ports.kIntakeRoller),
                   new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
         } else {
           m_intake = new Intake(new IntakeRollerIOSim(), new PivotIOSim());
@@ -537,11 +536,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  if (RobotState.getInstance().getCurrentAction() == RobotAction.kLollipopIntake) {
-                    RobotState.getInstance().setDefaultAction();
-                  } else {
-                    RobotState.getInstance().updateRobotAction(RobotAction.kLollipopIntake);
-                  }
+                  RobotState.getInstance().toggleOtbRunthrough();
                 }));
 
     m_testingController

@@ -7,10 +7,10 @@ public class PivotIOReplay implements PivotIO {
   public void updateInputs(PivotInputs inputs) {}
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {}
+  public void setPIDFF(double kP, double kI, double kD, double kS) {}
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {}
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {}
 
   @Override
   public Rotation2d getCurrAngle() {

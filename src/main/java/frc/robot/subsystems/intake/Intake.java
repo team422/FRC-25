@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -33,12 +34,15 @@ public class Intake extends SubsystemBase {
   public final IntakeRollerInputsAutoLogged m_rollerInputs = new IntakeRollerInputsAutoLogged();
   public final PivotInputsAutoLogged m_pivotInputs = new PivotInputsAutoLogged();
 
+  private Timer m_timer = new Timer();
+
   public static enum IntakeState {
     kStow,
-    kIntake,
-    kGamepieceHold,
-    kOuttake,
-    kCoralIntaking,
+    kIntaking,
+    kCoralHold,
+    kCoralRunThrough,
+    kOuttaking,
+    kFunnelIntaking,
     kFullTuning,
   }
 
@@ -50,10 +54,11 @@ public class Intake extends SubsystemBase {
 
     Map<IntakeState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(IntakeState.kStow, this::stowPeriodic);
-    periodicHash.put(IntakeState.kIntake, this::intakePeriodic);
-    periodicHash.put(IntakeState.kGamepieceHold, this::gamepieceHoldPeriodic);
-    periodicHash.put(IntakeState.kOuttake, this::outtakePeriodic);
-    periodicHash.put(IntakeState.kCoralIntaking, this::coralIntakingPeriodic);
+    periodicHash.put(IntakeState.kIntaking, this::intakingPeriodic);
+    periodicHash.put(IntakeState.kCoralHold, this::coralHoldPeriodic);
+    periodicHash.put(IntakeState.kOuttaking, this::outtakingPeriodic);
+    periodicHash.put(IntakeState.kFunnelIntaking, this::funnelIntakingPeriodic);
+    periodicHash.put(IntakeState.kCoralRunThrough, this::coralRunThroughPeriodic);
     periodicHash.put(IntakeState.kFullTuning, this::fullTuningPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IntakeState.kStow);
@@ -64,11 +69,10 @@ public class Intake extends SubsystemBase {
           IntakeConstants.kPivotP.get(),
           IntakeConstants.kPivotI.get(),
           IntakeConstants.kPivotD.get(),
-          IntakeConstants.kPivotKS.get(),
-          IntakeConstants.kPivotKG.get());
+          IntakeConstants.kPivotKS.get());
     } else {
       m_pivotIO.setPIDFF(
-          IntakeConstants.kPivotSimP, IntakeConstants.kPivotSimI, IntakeConstants.kPivotSimD, 0, 0);
+          IntakeConstants.kPivotSimP, IntakeConstants.kPivotSimI, IntakeConstants.kPivotSimD, 0);
     }
 
     AlertManager.registerAlert(m_pivotMotorDisconnectedAlert, m_rollerMotorDisconnectedAlert);
@@ -79,6 +83,9 @@ public class Intake extends SubsystemBase {
       // if we are in full tuning mode we don't want to change the state
       return;
     }
+
+    m_timer.stop();
+    m_timer.reset();
 
     m_profiles.setCurrentProfile(state);
   }
@@ -99,22 +106,19 @@ public class Intake extends SubsystemBase {
                 IntakeConstants.kPivotP.get(),
                 IntakeConstants.kPivotI.get(),
                 IntakeConstants.kPivotD.get(),
-                IntakeConstants.kPivotKS.get(),
-                IntakeConstants.kPivotKG.get());
+                IntakeConstants.kPivotKS.get());
           } else {
             m_pivotIO.setPIDFF(
                 IntakeConstants.kPivotSimP,
                 IntakeConstants.kPivotSimI,
                 IntakeConstants.kPivotSimD,
-                0.0,
                 0.0);
           }
         },
         IntakeConstants.kPivotP,
         IntakeConstants.kPivotI,
         IntakeConstants.kPivotD,
-        IntakeConstants.kPivotKS,
-        IntakeConstants.kPivotKG);
+        IntakeConstants.kPivotKS);
 
     m_rollerIO.updateInputs(m_rollerInputs);
     m_pivotIO.updateInputs(m_pivotInputs);
@@ -126,8 +130,7 @@ public class Intake extends SubsystemBase {
     Logger.recordOutput("Intake/State", m_profiles.getCurrentProfile());
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
-      // TODO: re-enable later if roller is added back
-      // m_rollerMotorDisconnectedAlert.set(true);
+      m_rollerMotorDisconnectedAlert.set(true);
     } else {
       m_rollerMotorDisconnectedAlert.set(false);
     }
@@ -143,45 +146,77 @@ public class Intake extends SubsystemBase {
 
   public void stowPeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerStowVoltage.get());
-    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()));
+    m_pivotIO.setDesiredAngle(
+        Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()),
+        computeKG(IntakeConstants.kPivotKGNoCoral.get()));
   }
 
-  public void intakePeriodic() {
+  public void intakingPeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeVoltage.get());
-    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
+    m_pivotIO.setDesiredAngle(
+        Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()),
+        computeKG(IntakeConstants.kPivotKGCoral.get()));
   }
 
-  public void gamepieceHoldPeriodic() {
+  public void coralHoldPeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerHoldVoltage.get());
-    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotHoldAngle.get()));
+    m_pivotIO.setDesiredAngle(
+        Rotation2d.fromDegrees(IntakeConstants.kPivotHoldAngle.get()),
+        computeKG(IntakeConstants.kPivotKGCoral.get()));
   }
 
-  public void outtakePeriodic() {
+  public void outtakingPeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerOuttakeVoltage.get());
-    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()));
+    m_pivotIO.setDesiredAngle(
+        Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()),
+        computeKG(IntakeConstants.kPivotKGCoral.get()));
   }
 
-  public void coralIntakingPeriodic() {
+  public void funnelIntakingPeriodic() {
     // when we have a game piece (update to indexing) the intake can come back
     if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kIntaking) {
       m_pivotIO.setDesiredAngle(
-          Rotation2d.fromDegrees(IntakeConstants.kPivotCoralIntakeAngle.get()));
-      m_rollerIO.setVoltage(IntakeConstants.kRollerCoralIntakeVoltage.get());
+          Rotation2d.fromDegrees(IntakeConstants.kPivotFunnelIntakeAngle.get()),
+          computeKG(IntakeConstants.kPivotKGCoral.get()));
+      m_rollerIO.setVoltage(IntakeConstants.kRollerFunnelIntakeVoltage.get());
     } else {
-      m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()));
+      m_pivotIO.setDesiredAngle(
+          Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()),
+          computeKG(IntakeConstants.kPivotKGNoCoral.get()));
       m_rollerIO.setVoltage(IntakeConstants.kRollerStowVoltage.get());
     }
   }
 
+  public void coralRunThroughPeriodic() {
+    m_pivotIO.setDesiredAngle(
+        Rotation2d.fromDegrees(IntakeConstants.kPivotCoralRunThroughAngle.get()),
+        computeKG(IntakeConstants.kPivotKGCoral.get()));
+    // once we're in position we can run the roller
+    if (m_pivotIO.atSetpoint()) {
+      if (!m_timer.isRunning()) {
+        m_timer.restart();
+      }
+      if (m_timer.hasElapsed(IntakeConstants.kCoralRunThroughTimeout.get())) {
+        updateState(IntakeState.kStow);
+        return;
+      }
+
+      m_rollerIO.setVoltage(IntakeConstants.kRollerCoralRunThroughVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(0.0);
+    }
+  }
+
   public void fullTuningPeriodic() {
-    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
+    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()), 0.0);
   }
 
   public IntakeState getStowOrHold() {
-    // if we have a game piece, do nothing and continue to hold
+    // if we are in the coral hold or run through state, we want to keep doing that
     // otherwise, stow
-    if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
-      return IntakeState.kGamepieceHold;
+    if (m_profiles.getCurrentProfile() == IntakeState.kCoralHold
+        || m_profiles.getCurrentProfile() == IntakeState.kCoralRunThrough) {
+      return m_profiles.getCurrentProfile();
     }
     return IntakeState.kStow;
   }
@@ -189,18 +224,22 @@ public class Intake extends SubsystemBase {
   public IntakeState getIntakeOrOuttake() {
     // our button is a toggle, so we need to check if we are holding a game piece
     // if we are, outtake
-    if (m_profiles.getCurrentProfile() == IntakeState.kGamepieceHold) {
-      return IntakeState.kOuttake;
+    if (m_profiles.getCurrentProfile() == IntakeState.kCoralHold) {
+      return IntakeState.kOuttaking;
     } else {
-      return IntakeState.kIntake;
+      return IntakeState.kIntaking;
     }
-  }
-
-  public boolean hasGamePiece() {
-    return m_rollerIO.hasGamePiece();
   }
 
   public Rotation2d getRotation() {
     return m_pivotIO.getCurrAngle();
+  }
+
+  private double computeKG(double kG) {
+    Rotation2d angle = m_pivotIO.getCurrAngle();
+    Rotation2d offset = IntakeConstants.kPivotFakeToRealOffset;
+    angle = angle.plus(offset);
+    Logger.recordOutput("Intake/KGCos", angle.getCos());
+    return kG * angle.getCos();
   }
 }

@@ -56,7 +56,7 @@ public class ClimbIOKraken implements ClimbIO {
     var motorOutput =
         new MotorOutputConfigs()
             .withNeutralMode(NeutralModeValue.Brake)
-            .withInverted(InvertedValue.Clockwise_Positive);
+            .withInverted(InvertedValue.CounterClockwise_Positive);
 
     m_config =
         new TalonFXConfiguration()

@@ -45,10 +45,4 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
   public void setCurrentLimits(double supplyLimit) {
     // Not needed for simulation
   }
-
-  @Override
-  public boolean hasGamePiece() {
-    // Possibly implement later
-    return false;
-  }
 }
