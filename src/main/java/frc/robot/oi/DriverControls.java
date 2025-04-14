@@ -31,7 +31,7 @@ public interface DriverControls {
 
   public Trigger climb();
 
-  public Trigger algaeIntakeOuttake();
+  public Trigger otbMagic();
 
   public Trigger algaeDescore();
 
@@ -41,5 +41,7 @@ public interface DriverControls {
 
   public Trigger coralEject();
 
-  public Trigger lollipop();
+  public Trigger toggleOtbRunthrough();
+
+  public Trigger zeroClimb();
 }

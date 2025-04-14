@@ -19,10 +19,22 @@ public class Led extends SubsystemBase {
   private AddressableLEDBuffer m_buffer;
   private LedState m_state = LedState.kOff;
 
-  private Timer m_mismatchTimer = new Timer();
   private static final double kMismatchFrequency = 5.0; // Hz
   private static final double kMismatchPeriod = 1.0 / kMismatchFrequency; // seconds
   private double m_lastMismatchTime = 0.0; // seconds
+
+  private static final double kOTBL1Frequency = 5.0; // Hz
+  private static final double kOTBL1Period = 1.0 / kOTBL1Frequency; // seconds
+  private double m_lastOTBL1Time = 0.0;
+  private boolean m_otbOn = true;
+
+  private static final double kGamepieceFlashFrequency = 5.0; // Hz
+  private static final double kGamepieceFlashPeriod = 1.0 / kGamepieceFlashFrequency; // seconds
+  private double m_lastGamepieceFlashTime = 0.0;
+  private boolean m_flashColor = false;
+  private boolean m_gamePieceFlash = false;
+  private double m_flashStartTime = 0.0;
+  private static final double kFlashDuration = 2.0; // seconds
 
   public static enum LedState {
     kLocationCheck,
@@ -43,8 +55,6 @@ public class Led extends SubsystemBase {
     m_buffer = new AddressableLEDBuffer(length);
     m_strip.setLength(length);
     m_strip.start();
-
-    m_mismatchTimer.start();
   }
 
   @Override
@@ -59,8 +69,30 @@ public class Led extends SubsystemBase {
       targetMismatch();
     }
 
+    if (m_gamePieceFlash) {
+      if (Timer.getFPGATimestamp() - m_flashStartTime > kFlashDuration) {
+        m_gamePieceFlash = false;
+        m_flashColor = false;
+        updateLEDState();
+      } else {
+        gamepieceFlash();
+      }
+    }
+
+    if (!RobotState.getInstance().getOtbRunthrough()) {
+      blink();
+    } else {
+      if (!m_otbOn) {
+        m_otbOn = true;
+        updateLEDState();
+      }
+    }
+
     Logger.recordOutput("LED/State", m_state.toString());
     Logger.recordOutput("LED/Color", m_buffer.getLED(0).toString());
+    Logger.recordOutput("LED/OtbOn", m_otbOn);
+    Logger.recordOutput("LED/GamepieceFlash", m_gamePieceFlash);
+    Logger.recordOutput("LED/FlashColor", m_flashColor);
   }
 
   public void updateState(LedState state) {
@@ -79,7 +111,10 @@ public class Led extends SubsystemBase {
       return;
     }
     m_state = state;
-    updateLEDState();
+
+    if (m_otbOn && !m_flashColor) {
+      updateLEDState();
+    }
   }
 
   public LedState getCurrentState() {
@@ -125,7 +160,7 @@ public class Led extends SubsystemBase {
   }
 
   private void targetMismatch() {
-    if (m_mismatchTimer.get() - m_lastMismatchTime >= kMismatchPeriod) {
+    if (Timer.getFPGATimestamp() - m_lastMismatchTime >= kMismatchPeriod) {
       // random colors
       for (int i = 0; i < m_buffer.getLength(); i++) {
         m_buffer.setLED(
@@ -138,7 +173,48 @@ public class Led extends SubsystemBase {
 
       m_strip.setData(m_buffer);
 
-      m_lastMismatchTime = m_mismatchTimer.get();
+      m_lastMismatchTime = Timer.getFPGATimestamp();
+    }
+  }
+
+  private void blink() {
+    if (Timer.getFPGATimestamp() - m_lastOTBL1Time >= kOTBL1Period) {
+      m_lastOTBL1Time = Timer.getFPGATimestamp();
+
+      m_otbOn = !m_otbOn;
+      if (m_otbOn) {
+        updateLEDState();
+      } else if (m_flashColor) {
+        LEDPattern.solid(LedConstants.kHasGamePiece).applyTo(m_buffer);
+        if (!RobotState.getInstance().getUsingVision()) {
+          for (int i = 9; i <= 15; i++) {
+            m_buffer.setLED(i, convertColor(LedConstants.kVisionOff));
+          }
+        }
+        m_strip.setData(m_buffer);
+      } else {
+        LEDPattern.kOff.applyTo(m_buffer);
+        m_strip.setData(m_buffer);
+      }
+    }
+  }
+
+  private void gamepieceFlash() {
+    if (Timer.getFPGATimestamp() - m_lastGamepieceFlashTime >= kGamepieceFlashPeriod) {
+      m_lastGamepieceFlashTime = Timer.getFPGATimestamp();
+
+      m_flashColor = !m_flashColor;
+      if (m_flashColor) {
+        LEDPattern.solid(LedConstants.kHasGamePiece).applyTo(m_buffer);
+        if (!RobotState.getInstance().getUsingVision()) {
+          for (int i = 9; i <= 15; i++) {
+            m_buffer.setLED(i, convertColor(LedConstants.kVisionOff));
+          }
+        }
+        m_strip.setData(m_buffer);
+      } else {
+        updateLEDState();
+      }
     }
   }
 
@@ -190,6 +266,13 @@ public class Led extends SubsystemBase {
       }
     }
     m_strip.setData(m_buffer);
+  }
+
+  public void gamepiece() {
+    m_flashStartTime = Timer.getFPGATimestamp();
+    m_gamePieceFlash = true;
+    m_flashColor = m_otbOn;
+    m_lastGamepieceFlashTime = m_lastOTBL1Time;
   }
 
   private static Color convertColor(Color color) {

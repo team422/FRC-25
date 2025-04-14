@@ -474,7 +474,7 @@ public class RobotContainer {
                 }));
 
     m_driverControls
-        .algaeIntakeOuttake()
+        .otbMagic()
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -532,12 +532,23 @@ public class RobotContainer {
                 }));
 
     m_driverControls
-        .lollipop()
+        .toggleOtbRunthrough()
         .onTrue(
             Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().toggleOtbRunthrough();
-                }));
+                    () -> {
+                      RobotState.getInstance().toggleOtbRunthrough();
+                    })
+                .ignoringDisable(true));
+
+    m_driverControls
+        .zeroClimb()
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      m_climb.zeroEncoder();
+                      m_climb.updateState(ClimbState.kMatch);
+                    })
+                .ignoringDisable(true));
 
     m_testingController
         .toggleTestingMode()

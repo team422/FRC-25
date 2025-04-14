@@ -405,6 +405,17 @@ public class AprilTagVision extends SubsystemBase {
           // xyStandardDeviation *= 0.1;
         }
 
+        // divide standard deviations by number of missing cameras
+        int numMissing = 0;
+        for (int i = 0; i < m_noReadingsAlerts.length; i++) {
+          if (m_noReadingsAlerts[i].get()) {
+            numMissing++;
+          }
+        }
+        if (numMissing != 0) {
+          xyStandardDeviation /= numMissing;
+        }
+
         Logger.recordOutput(
             "AprilTagVision/Inst" + instanceIndex + "/Transform",
             AprilTagVisionConstants.kCameraTransforms[instanceIndex]);
@@ -463,7 +474,9 @@ public class AprilTagVision extends SubsystemBase {
       }
     }
 
-    if (m_firstMeasurement && !allVisionUpdates.isEmpty()) {
+    if (RobotState.getInstance().getUsingVision()
+        && m_firstMeasurement
+        && !allVisionUpdates.isEmpty()) {
       // for (int i = 0; i < allVisionUpdates.size(); i++) {
       //   var curr = allVisionUpdates.get(i);
       //   curr = new TimestampedVisionUpdate(curr.timestamp(), curr.pose(), VecBuilder.fill(0, 0,

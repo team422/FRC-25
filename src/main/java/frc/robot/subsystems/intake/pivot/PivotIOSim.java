@@ -4,9 +4,9 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants.IntakeConstants;
-import org.littletonrobotics.junction.Logger;
 
 public class PivotIOSim implements PivotIO {
   private SingleJointedArmSim m_sim;
@@ -38,9 +38,6 @@ public class PivotIOSim implements PivotIO {
   public void updateInputs(PivotInputs inputs) {
     double pidVoltage = m_controller.calculate(getCurrAngle().getDegrees());
 
-    Logger.recordOutput("Intake/PIDVoltage", pidVoltage);
-    Logger.recordOutput("Intake/FFVoltage", m_feedforward);
-
     m_sim.setInputVoltage(pidVoltage + m_feedforward);
     m_sim.update(0.020);
 
@@ -58,8 +55,10 @@ public class PivotIOSim implements PivotIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS) {
-    m_controller.setPID(kP, kI, kD);
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kS) {
+    if (slot == 0) {
+      m_controller.setPID(kP, kI, kD);
+    }
     // kS is not used in simulation
   }
 
@@ -82,5 +81,15 @@ public class PivotIOSim implements PivotIO {
   @Override
   public void setCurrentLimits(double supplyLimit) {
     // Not needed for simulation
+  }
+
+  @Override
+  public void setSlot(int slot) {
+    // Not used in simulation
+  }
+
+  @Override
+  public void zeroEncoder(Angle value) {
+    // Not used in simulation
   }
 }

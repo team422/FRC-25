@@ -122,7 +122,10 @@ public class RobotState {
 
   // true - run through to funnel after intaking otb
   // false - hold position to score L1
-  private boolean m_otbRunThrough = false;
+  private boolean m_otbRunThrough = true;
+
+  // only in ohio :skull:
+  private boolean m_gamepieceUpdate = false;
 
   private Timer m_threadPriorityTimer = new Timer();
 
@@ -177,7 +180,7 @@ public class RobotState {
     periodicHash.put(RobotAction.kBargeAutoScore, this::bargeAutoScorePeriodic);
     periodicHash.put(RobotAction.kCoralEject, () -> {});
     periodicHash.put(RobotAction.kLollipopIntake, this::lollipopIntakePeriodic);
-    periodicHash.put(RobotAction.kCoralOTB, this::coralOTBPeriodic);
+    periodicHash.put(RobotAction.kCoralOTB, this::coralIntakingPeriodic);
     periodicHash.put(RobotAction.kCoralOTBL1, this::coralOTBL1Periodic);
     periodicHash.put(RobotAction.kAlgaeDescoringInitial, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringDeployManipulator, this::algaeDescoringPeriodic);
@@ -282,11 +285,17 @@ public class RobotState {
 
   public void coralIntakingPeriodic() {
     // when we have a game piece don't runm
-    if (m_manipulator.hasGamePiece()) {
-      m_indexer.updateState(IndexerState.kIdle);
+    if (m_manipulator.gamePieceInFunnel() || m_manipulator.fullyIndexed()) {
       if (!(DriverStation.isAutonomous() || m_autoTestingMode)) {
         m_drive.updateProfile(DriveProfiles.kDefault);
       }
+    }
+    if (m_manipulator.hasGamePiece()) {
+      if (!m_gamepieceUpdate) {
+        m_gamepieceUpdate = true;
+        m_led.gamepiece();
+      }
+      m_indexer.updateState(IndexerState.kIdle);
     }
     // wait until the manipulator is in position before we intake
     else if (m_manipulator.atSetpoint() && m_elevator.atSetpoint()) {
@@ -970,6 +979,7 @@ public class RobotState {
         newManipulatorState = ManipulatorState.kCoralEject;
         newElevatorState = ElevatorState.kIntaking;
         newIndexerState = IndexerState.kCoralEject;
+        newIntakeState = IntakeState.kCoralEject;
 
         break;
 
@@ -981,6 +991,8 @@ public class RobotState {
 
       case kCoralOTB:
         newIntakeState = IntakeState.kIntaking;
+        newElevatorState = ElevatorState.kIntaking;
+        newManipulatorState = ManipulatorState.kIntaking;
 
         break;
 
@@ -1103,6 +1115,8 @@ public class RobotState {
 
     m_hasMovedOnFromTheIntermediateToTheDescore = false;
 
+    m_gamepieceUpdate = false;
+
     m_aprilTagVision.resetAutoAutoScoreMeasurements();
 
     // reset the scoring angles
@@ -1150,7 +1164,8 @@ public class RobotState {
   }
 
   public void manageAlgaeIntake() {
-    if (m_profiles.getCurrentProfile() == RobotAction.kBargeAutoScore) {
+    if (m_profiles.getCurrentProfile() == RobotAction.kBargeAutoScore
+        || m_profiles.getCurrentProfile() == RobotAction.kProcessorOuttake) {
       m_elevator.updateState(ElevatorState.kBargeScore);
     } else if (m_manipulator.getCurrentState() == ManipulatorState.kAlgaeHold) {
       // if we're near the processor then initiate a drive to point
@@ -1171,6 +1186,9 @@ public class RobotState {
   }
 
   public void manageAlgaeIntakeRelease() {
+    if (m_profiles.getCurrentProfile() == RobotAction.kBargeAutoScore) {
+      setDefaultAction();
+    }
     if (m_otbRunThrough) {
       m_intake.updateState(IntakeState.kCoralRunThrough);
     } else {
@@ -1181,8 +1199,8 @@ public class RobotState {
       } else if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTB) {
         m_intake.updateState(IntakeState.kCoralHold);
       }
+      setDefaultAction();
     }
-    setDefaultAction();
   }
 
   public void manageAlgaeDescoreRelease() {
@@ -1191,6 +1209,21 @@ public class RobotState {
       m_manipulator.updateState(ManipulatorState.kAlgaeHold);
     }
     setDefaultAction();
+  }
+
+  public void manageIntakeHasGamePiece() {
+    if (m_otbRunThrough) {
+      m_intake.updateState(IntakeState.kCoralRunThrough);
+    } else {
+      // if we're L1 then stow
+      // otherwise hold
+      if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTBL1) {
+        return;
+      } else if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTB) {
+        m_intake.updateState(IntakeState.kCoralHold);
+      }
+      setDefaultAction();
+    }
   }
 
   public void onEnable() {
@@ -1420,6 +1453,14 @@ public class RobotState {
 
   public void toggleOtbRunthrough() {
     m_otbRunThrough = !m_otbRunThrough;
+    if (m_otbRunThrough && m_intake.getCurrentState() == IntakeState.kCoralHold) {
+      updateRobotAction(RobotAction.kCoralOTB);
+      m_intake.updateState(IntakeState.kCoralRunThrough);
+    }
+  }
+
+  public boolean getOtbRunthrough() {
+    return m_otbRunThrough;
   }
 
   public boolean manipulatorAtSetpoint() {

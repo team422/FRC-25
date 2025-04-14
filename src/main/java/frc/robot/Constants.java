@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -241,6 +242,7 @@ public final class Constants {
     public static final Color kVisionOff = Color.kBlack;
     public static final Color kAutoscoreMeasurementsBad = Color.kOrange;
     public static final Color kAutoscoreMeasurementsGood = Color.kDarkOliveGreen;
+    public static final Color kHasGamePiece = Color.kBrown;
   }
 
   public static final class ElevatorConstants {
@@ -254,11 +256,11 @@ public final class Constants {
 
     public static final LoggedTunableNumber kP1 = new LoggedTunableNumber("Elevator P1", 2.0);
     public static final LoggedTunableNumber kKV1 = new LoggedTunableNumber("Elevator kV1", 0.0);
-    public static final LoggedTunableNumber kKG1 = new LoggedTunableNumber("Elevator kG1", 0.22);
+    public static final LoggedTunableNumber kKG1 = new LoggedTunableNumber("Elevator kG1", 0.28);
 
     public static final LoggedTunableNumber kP2 = new LoggedTunableNumber("Elevator P2", 2.0);
     public static final LoggedTunableNumber kKV2 = new LoggedTunableNumber("Elevator kV2", 0.0);
-    public static final LoggedTunableNumber kKG2 = new LoggedTunableNumber("Elevator kG2", 0.22);
+    public static final LoggedTunableNumber kKG2 = new LoggedTunableNumber("Elevator kG2", 0.40);
 
     public static final LoggedTunableNumber kMagicMotionCruiseVelocity =
         new LoggedTunableNumber("Elevator MagicMotion cruise velocity", 5.0);
@@ -578,10 +580,10 @@ public final class Constants {
     // transform from center of robot to camera
     public static final Transform3d[] kCameraTransforms =
         // NEW:
-        // 0 - front right facing out, 10.4.22.29:8000, camera 3
-        // 1 - front left facing out, 10.4.22.228:8000, camera 6
-        // 2 - front left facing in, 10.4.22.29:8001, camera 4
-        // 3 - front right facing in, 10.4.22.228:8001, camera 5
+        // 0 - front right facing out, 10.4.22.229:1182, camera 3
+        // 1 - front left facing out, 10.4.22.228:1182, camera 6
+        // 2 - front left facing in, 10.4.22.229:1181, camera 4
+        // 3 - front right facing in, 10.4.22.228:1181, camera 5
         new Transform3d[] {
           // front right (facing out)
           new Transform3d(
@@ -624,20 +626,33 @@ public final class Constants {
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
 
-    public static final double kPivotTolerance = 5.0; // degrees
+    public static final double kPivotTolerance = 75.0; // degrees
 
     // the offset needs to be so that it starts at 90 degrees (top)
     // public static final Rotation2d kPivotOffset =
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees(-126.0 * kPivotAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees(
+            (77.8 - 88.29 - 11.26 - 9.0 - 11.6 - 11.75) * kPivotAbsoluteEncoderGearRatio);
 
     public static final Rotation2d kPivotFakeToRealOffset = Rotation2d.fromDegrees(75.0);
 
-    public static final LoggedTunableNumber kPivotP = new LoggedTunableNumber("Pivot P", 50.0);
+    public static final double kZeroEncoderThreshold = 122.0; // degrees
+
+    public static final Angle kZeroEncoderValue = Degrees.of(137.0);
+
+    // current to be considered holding a game piece
+    // unused rn
+    public static final double kRollerCoralCurrentThreshold = 99.0;
+
+    public static final double kRollerCoralCurrentDebounce = 0.2; // seconds
+
+    public static final LoggedTunableNumber kPivotP0 = new LoggedTunableNumber("Pivot P0", 20.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
-    public static final LoggedTunableNumber kPivotD = new LoggedTunableNumber("Pivot D", 0.6);
+    public static final LoggedTunableNumber kPivotD0 = new LoggedTunableNumber("Pivot D0", 0.0);
+    public static final LoggedTunableNumber kPivotP1 = new LoggedTunableNumber("Pivot P1", 35.0);
+    public static final LoggedTunableNumber kPivotD1 = new LoggedTunableNumber("Pivot D1", 0.0);
     public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.23);
     public static final LoggedTunableNumber kPivotKGNoCoral =
         new LoggedTunableNumber("Pivot kG No Coral", 0.0);
@@ -645,33 +660,39 @@ public final class Constants {
         new LoggedTunableNumber("Pivot kG Coral", 0.0);
 
     public static final LoggedTunableNumber kPivotStowAngle =
-        new LoggedTunableNumber("Pivot Stow Angle", 25.0);
+        new LoggedTunableNumber("Pivot Stow Angle", 30.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
-        new LoggedTunableNumber("Pivot Intake Angle", 136.0);
+        new LoggedTunableNumber("Pivot Intake Angle", 142.0);
     public static final LoggedTunableNumber kPivotHoldAngle =
-        new LoggedTunableNumber("Pivot Hold Angle", 25.0);
+        new LoggedTunableNumber("Pivot Hold Angle", 30.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =
         new LoggedTunableNumber("Pivot Outtake Angle", 40.0);
     public static final LoggedTunableNumber kPivotFunnelIntakeAngle =
-        new LoggedTunableNumber("Pivot Funnel Intake Angle", 60.0);
+        new LoggedTunableNumber("Pivot Funnel Intake Angle", 64.0);
     public static final LoggedTunableNumber kPivotCoralRunThroughAngle =
-        new LoggedTunableNumber("Pivot Coral Run Through Angle", 25.0);
+        new LoggedTunableNumber("Pivot Coral Run Through Angle", 30.0);
+    public static final LoggedTunableNumber kPivotClimbAngle =
+        new LoggedTunableNumber("Pivot Climb Angle", 50.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Intake Roller Intake Voltage", 5.0);
+        new LoggedTunableNumber("Intake Roller Intake Voltage", 3.5);
     public static final LoggedTunableNumber kRollerHoldVoltage =
-        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.5);
+        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.39);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
         new LoggedTunableNumber("Intake Roller Outtake Voltage", -2.0);
     public static final LoggedTunableNumber kRollerFunnelIntakeVoltage =
         new LoggedTunableNumber("Intake Roller Funnel Intake Voltage", -2.0);
     public static final LoggedTunableNumber kRollerCoralRunThroughVoltage =
-        new LoggedTunableNumber("Intake Roller Coral Run Through Voltage", 2.0);
+        new LoggedTunableNumber("Intake Roller Coral Run Through Voltage", 4.0);
+    public static final LoggedTunableNumber kRollerEjectVoltage =
+        new LoggedTunableNumber("Intake Roller Coral Eject Voltage", -3.0);
 
     public static final LoggedTunableNumber kCoralRunThroughTimeout =
         new LoggedTunableNumber("Coral Runthrough Timeout", 0.5);
+    public static final LoggedTunableNumber kCoralRaiseTimeout =
+        new LoggedTunableNumber("Coral Raise Timeout", 0.1);
 
     // Simulation constants
     public static final DCMotor kPivotSimGearbox = DCMotor.getKrakenX60Foc(1);
@@ -716,7 +737,7 @@ public final class Constants {
 
     // how many degrees to move after photoelectric is tripped
     public static final LoggedTunableNumber kRollerIndexingPosition =
-        new LoggedTunableNumber("Manipulator Roller Indexing Position", 75.0);
+        new LoggedTunableNumber("Manipulator Roller Indexing Position", 150.0);
 
     public static final LoggedTunableNumber kWristP = new LoggedTunableNumber("Wrist P", 55.0);
     public static final LoggedTunableNumber kWristI = new LoggedTunableNumber("Wrist I", 0.0);
@@ -809,10 +830,8 @@ public final class Constants {
     public static final double kIntakePivotDefaultSupplyLimit = 80.0;
     public static final double kIntakePivotDefaultStatorLimit = 120.0;
 
-    public static final LoggedTunableNumber kIntakeRollerDefaultSupplyLimit =
-        new LoggedTunableNumber("AA Roller Supply", 3.0);
-    public static final LoggedTunableNumber kIntakeRollerDefaultStatorLimit =
-        new LoggedTunableNumber("AA Roller Stator", 40.0);
+    public static final double kIntakeRollerDefaultSupplyLimit = 80.0;
+    public static final double kIntakeRollerDefaultStatorLimit = 120.0;
 
     // Indexer
     public static final double kIndexerDefaultSupplyLimit = 30.0;
@@ -842,7 +861,7 @@ public final class Constants {
     public static final LoggedTunableNumber kIndexerIdleVoltage =
         new LoggedTunableNumber("Indexer Idle Voltage", 0.0);
     public static final LoggedTunableNumber kIndexerIndexingVoltage =
-        new LoggedTunableNumber("Indexer Indexing Voltage", 5.0);
+        new LoggedTunableNumber("Indexer Indexing Voltage", 3.71);
     public static final LoggedTunableNumber kIndexerTopIndexingVoltage =
         new LoggedTunableNumber("Indexer Top Indexing Voltage", 2.5);
     public static final LoggedTunableNumber kIndexerEjectVoltage =

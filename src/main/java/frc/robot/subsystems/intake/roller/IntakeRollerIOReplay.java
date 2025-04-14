@@ -9,4 +9,9 @@ public class IntakeRollerIOReplay implements IntakeRollerIO {
 
   @Override
   public void setCurrentLimits(double supplyLimit) {}
+
+  @Override
+  public boolean hasGamePiece() {
+    return false;
+  }
 }

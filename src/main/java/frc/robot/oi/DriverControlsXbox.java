@@ -82,7 +82,7 @@ public class DriverControlsXbox implements DriverControls {
   }
 
   @Override
-  public Trigger algaeIntakeOuttake() {
+  public Trigger otbMagic() {
     return m_controller.rightTrigger(0.1);
   }
 
@@ -107,7 +107,12 @@ public class DriverControlsXbox implements DriverControls {
   }
 
   @Override
-  public Trigger lollipop() {
+  public Trigger toggleOtbRunthrough() {
+    return m_controller.leftStick();
+  }
+
+  @Override
+  public Trigger zeroClimb() {
     return new Trigger(() -> false);
   }
 }

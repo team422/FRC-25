@@ -5,6 +5,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
@@ -28,7 +29,6 @@ import frc.robot.Constants.IntakeConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
 import java.util.List;
-import org.littletonrobotics.junction.Logger;
 
 public class PivotIOKraken implements PivotIO {
   private TalonFX m_motor;
@@ -134,9 +134,10 @@ public class PivotIOKraken implements PivotIO {
       resetRelativeEncoder();
     }
 
-    Logger.recordOutput("Pivot/AbsoluteEncoder", Units.rotationsToDegrees(m_absoluteEncoder.get()));
-    Logger.recordOutput("Pivot/WrapAround", getAbsoluteWrapAround().getDegrees());
-    Logger.recordOutput("Pivot/Final", getAbsoluteFinal().getDegrees());
+    // Logger.recordOutput("Pivot/AbsoluteEncoder",
+    // Units.rotationsToDegrees(m_absoluteEncoder.get()));
+    // Logger.recordOutput("Pivot/WrapAround", getAbsoluteWrapAround().getDegrees());
+    // Logger.recordOutput("Pivot/Final", getAbsoluteFinal().getDegrees());
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
@@ -151,16 +152,16 @@ public class PivotIOKraken implements PivotIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS) {
-    m_motor
-        .getConfigurator()
-        .apply(
-            m_config.Slot0.withKP(kP)
-                .withKI(kI)
-                .withKD(kD)
-                .withKS(kS)
-                .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
-            0.0);
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kS) {
+    var slotConfigs =
+        new SlotConfigs()
+            .withKP(kP)
+            .withKI(kI)
+            .withKD(kD)
+            .withKS(kS)
+            .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
+    slotConfigs.SlotNumber = slot;
+    m_motor.getConfigurator().apply(slotConfigs, 0.0);
   }
 
   @Override
@@ -219,5 +220,15 @@ public class PivotIOKraken implements PivotIO {
 
   private Rotation2d getAbsoluteFinal() {
     return getAbsoluteWrapAround().div(IntakeConstants.kPivotAbsoluteEncoderGearRatio);
+  }
+
+  @Override
+  public void setSlot(int slot) {
+    m_positionControl.withSlot(slot);
+  }
+
+  @Override
+  public void zeroEncoder(Angle value) {
+    m_motor.getConfigurator().setPosition(value);
   }
 }
