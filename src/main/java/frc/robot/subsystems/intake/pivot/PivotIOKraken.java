@@ -187,7 +187,7 @@ public class PivotIOKraken implements PivotIO {
   @Override
   public boolean atSetpoint() {
     return Math.abs(m_desiredAngle.getDegrees() - getCurrAngle().getDegrees())
-        < IntakeConstants.kPivotTolerance;
+        < IntakeConstants.kPivotTolerance.get();
   }
 
   @Override

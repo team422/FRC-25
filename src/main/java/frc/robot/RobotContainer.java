@@ -564,7 +564,7 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setReefIndexLeft();
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                  RobotState.getInstance().testAutoAutoScore();
                 }));
     m_testingController
         .autoAutoscoreRight()
@@ -572,7 +572,7 @@ public class RobotContainer {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setReefIndexRight();
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                  RobotState.getInstance().testAutoAutoScore();
                 }));
 
     m_testingController

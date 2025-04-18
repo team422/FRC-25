@@ -938,4 +938,12 @@ public class Drive extends SubsystemBase {
   public double getYawVelocity() {
     return m_gyroInputs.yawVelocityRadPerSec;
   }
+
+  public double getMaxWheelSpeed() {
+    double maxVelo = 0.0;
+    for (var module : m_modules) {
+      maxVelo = Math.max(maxVelo, Math.abs(module.getDriveVelocity()));
+    }
+    return maxVelo;
+  }
 }

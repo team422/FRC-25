@@ -31,7 +31,7 @@ public class PivotIOSim implements PivotIO {
             IntakeConstants.kSimSimulateGravity,
             IntakeConstants.kSimStartingAngle.getRadians());
 
-    m_controller.setTolerance(IntakeConstants.kPivotTolerance);
+    m_controller.setTolerance(IntakeConstants.kPivotTolerance.get());
   }
 
   @Override

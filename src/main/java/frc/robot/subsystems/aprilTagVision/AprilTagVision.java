@@ -348,10 +348,11 @@ public class AprilTagVision extends SubsystemBase {
         // Add observation to list
         double xyStandardDeviation = 1;
         if (averageDistance < Units.inchesToMeters(50)) {
-          xyStandardDeviation = 0.01;
+          // TODO: if doing replay make these not tunable
+          xyStandardDeviation = AprilTagVisionConstants.kCloseStandardDeviation.get();
         } else if (averageDistance < Units.inchesToMeters(999999)) {
           xyStandardDeviation =
-              0.01
+              AprilTagVisionConstants.kFarStandardDeviation.get()
                   // back to normal math
                   * averageDistance
                   / tagPoses.size();

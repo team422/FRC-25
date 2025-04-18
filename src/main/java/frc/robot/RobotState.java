@@ -280,6 +280,8 @@ public class RobotState {
 
     Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
 
+    Logger.recordOutput("RobotState/NumCoralScoredAuto", m_numCoralScoredAuto);
+
     Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
@@ -379,6 +381,8 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get()));
     Logger.recordOutput(
+        "Auto/DriveSlow", m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get());
+    Logger.recordOutput(
         "Auto/DriveDistance",
         Units.metersToInches(
             m_drive
@@ -392,7 +396,8 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get())
         && m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
+        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())
+        && m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get()) {
       updateRobotAction(RobotAction.kCoralOuttaking);
     }
   }
@@ -499,6 +504,8 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get()));
     Logger.recordOutput(
+        "Auto/DriveSlow", m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get());
+    Logger.recordOutput(
         "Auto/DriveDistance",
         Units.metersToInches(
             m_drive
@@ -512,7 +519,8 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get())
         && m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
+        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())
+        && m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get()) {
       m_numCoralScoredAuto++;
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
@@ -928,7 +936,8 @@ public class RobotState {
       case kAutoCoralOuttaking:
       case kCoralOuttaking:
         // don't change any other states since we want everything to stay in place
-        newDriveProfiles = m_drive.getCurrentProfile();
+        // newDriveProfiles = m_drive.getCurrentProfile();
+        newDriveProfiles = DriveProfiles.kStop;
         newIntakeState = m_intake.getCurrentState();
         newIndexerState = m_indexer.getCurrentState();
         newElevatorState = m_elevator.getCurrentState();
@@ -1584,6 +1593,52 @@ public class RobotState {
 
   public void testAutoCoralIntake() {
     updateRobotAction(RobotAction.kAutoCoralIntaking);
+  }
+
+  public void testAutoAutoScore() {
+    if (m_numCoralScoredAuto < 2) {
+      if (m_autoLeft) {
+        setReefIndexLeft();
+      } else {
+        setReefIndexRight();
+      }
+    } else if (m_numCoralScoredAuto < 3) {
+      if (m_autoLeft) {
+        setReefIndexRight();
+      } else {
+        setReefIndexLeft();
+      }
+    } else {
+      // I. Hate. Math.
+      Pose2d pose;
+      if (m_isCitrusAuto) {
+        if (m_autoLeft) {
+          pose =
+              new Pose2d(
+                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                      Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
+                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+        } else {
+          pose =
+              new Pose2d(
+                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                      Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
+                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+        }
+      } else {
+        pose =
+            new Pose2d(
+                    AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+                    AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
+                .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+      }
+      if (m_autoLeft) {
+        setReefIndexLeft(pose);
+      } else {
+        setReefIndexRight(pose);
+      }
+    }
+    updateRobotAction(RobotAction.kAutoAutoScore);
   }
 
   public DriveProfiles getDriveProfile() {

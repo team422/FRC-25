@@ -28,9 +28,11 @@ import frc.lib.littletonUtils.GeomUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.lib.littletonUtils.SwerveSetpointGenerator.ModuleLimits;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -41,7 +43,7 @@ public final class Constants {
   public static final boolean kTuningMode = true;
 
   public static final Mode kRealMode = Mode.REAL;
-  public static final Mode kSimMode = Mode.SIM;
+  public static final Mode kSimMode = Mode.REPLAY;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
   public static final boolean kUsePhoenixDiagnosticServer = false;
@@ -175,6 +177,9 @@ public final class Constants {
         new LoggedTunableNumber("Autoscore Outtake Distance", 2.0);
     public static final LoggedTunableNumber kAutoscoreL1OuttakeDistance =
         new LoggedTunableNumber("Autoscore L1 Outtake Distance", 18.0);
+    public static final LoggedTunableNumber kAutoscoreWheelSpeed =
+        // new LoggedTunableNumber("Autoscore Wheel Speed", 0.04 / DriveConstants.kWheelRadius);
+        new LoggedTunableNumber("Autoscore Wheel Speed", 999);
     public static final LoggedTunableNumber kBargeScoreThrowDistance =
         new LoggedTunableNumber("Barge Score Throw Distance", 10.0);
     public static final LoggedTunableNumber kLoaderStationTimeout =
@@ -308,6 +313,9 @@ public final class Constants {
     public static final LoggedTunableNumber kSlamTime = new LoggedTunableNumber("Slam Time", 0.2);
     public static final LoggedTunableNumber kSlamVoltage =
         new LoggedTunableNumber("Slam Voltage", -3.0);
+
+    public static final double kZeroVelocityThreshold = 0.03;
+    public static final double kZeroCurrentTheshold = 10.0;
 
     // Simulation constants
     public static final double kSimGearing = kGearRatio;
@@ -574,6 +582,10 @@ public final class Constants {
 
     public static final LoggedTunableNumber kXYStandardDeviationCoefficient =
         new LoggedTunableNumber("xyStandardDeviationCoefficient", 0.01);
+    public static final LoggedTunableNumber kCloseStandardDeviation =
+        new LoggedTunableNumber("AprilTagVision Close Standard Deviation", 0.01);
+    public static final LoggedTunableNumber kFarStandardDeviation =
+        new LoggedTunableNumber("AprilTagVision Far Standard Deviation", 0.01);
     public static final LoggedTunableNumber kThetaStandardDeviationCoefficient =
         new LoggedTunableNumber("thetaStandardDeviationCoefficient", 0.03);
 
@@ -626,7 +638,8 @@ public final class Constants {
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
 
-    public static final double kPivotTolerance = 75.0; // degrees
+    public static final LoggedTunableNumber kPivotTolerance =
+        new LoggedTunableNumber("Pivot Tolerance", 65.0); // degrees
 
     // the offset needs to be so that it starts at 90 degrees (top)
     // public static final Rotation2d kPivotOffset =
@@ -634,7 +647,7 @@ public final class Constants {
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
         Rotation2d.fromDegrees(
-            (77.8 - 88.29 - 11.26 - 9.0 - 11.6 - 11.75) * kPivotAbsoluteEncoderGearRatio);
+            (77.8 - 88.29 - 11.26 - 9.0 - 11.6 - 11.75 + 5.0) * kPivotAbsoluteEncoderGearRatio);
 
     public static final Rotation2d kPivotFakeToRealOffset = Rotation2d.fromDegrees(75.0);
 
@@ -931,22 +944,36 @@ public final class Constants {
     public static final boolean kRealElevator = false;
   }
 
-  public class FieldConstants {
+  public static final class FieldConstants {
+    public static final FieldType kFieldType = FieldType.WELDED;
 
-    // FieldConstants taken from 6328 Mechanical Advantage
-    // Please don't sue me jwbonner
-    // I love your code
-    public static final double kFieldLength = Units.inchesToMeters(690.876);
-    public static final double kFieldWidth = Units.inchesToMeters(317);
+    public static final double kFieldLength =
+        AprilTagVisionConstants.kAprilTagLayout.getFieldLength();
+    public static final double kFieldWidth =
+        AprilTagVisionConstants.kAprilTagLayout.getFieldWidth();
     public static final double kStartingLineX =
         Units.inchesToMeters(299.438); // Measured from the inside of starting line
+    public static final double kAlgaeDiameter = Units.inchesToMeters(16);
+    public static final double kCoralDiameter = Units.inchesToMeters(4.5);
 
     public static class Processor {
       public static final Pose2d kCenterFace =
-          new Pose2d(Units.inchesToMeters(235.726), 0, Rotation2d.fromDegrees(90));
+          new Pose2d(
+              AprilTagVisionConstants.kAprilTagLayout.getTagPose(16).get().getX(),
+              0,
+              Rotation2d.fromDegrees(90));
+      public static final Pose2d kOpposingCenterFace =
+          new Pose2d(
+              AprilTagVisionConstants.kAprilTagLayout.getTagPose(3).get().getX(),
+              kFieldWidth,
+              Rotation2d.fromDegrees(-90));
     }
 
     public static class Barge {
+      public static final double kNetWidth = Units.inchesToMeters(40.0);
+      public static final double kNetHeight = Units.inchesToMeters(88.0);
+
+      public static final double kCageWidth = Units.inchesToMeters(6.0);
       public static final Translation2d kFarCage =
           new Translation2d(Units.inchesToMeters(345.428), Units.inchesToMeters(286.779));
       public static final Translation2d kMiddleCage =
@@ -960,131 +987,137 @@ public final class Constants {
     }
 
     public static class CoralStation {
-      public static final Pose2d kLeftCenterFace =
-          new Pose2d(
-              Units.inchesToMeters(33.526),
-              Units.inchesToMeters(291.176),
-              Rotation2d.fromDegrees(90 - 144.011));
+      public static final double kStationLength = Units.inchesToMeters(79.750);
       public static final Pose2d kRightCenterFace =
           new Pose2d(
               Units.inchesToMeters(33.526),
               Units.inchesToMeters(25.824),
               Rotation2d.fromDegrees(144.011 - 90));
+      public static final Pose2d kLeftCenterFace =
+          new Pose2d(
+              kRightCenterFace.getX(),
+              kFieldWidth - kRightCenterFace.getY(),
+              Rotation2d.fromRadians(-kRightCenterFace.getRotation().getRadians()));
     }
 
     public static class Reef {
+      public static final double kFaceLength = Units.inchesToMeters(36.792600);
       public static final Translation2d kCenter =
-          new Translation2d(Units.inchesToMeters(176.746), Units.inchesToMeters(158.501));
+          new Translation2d(Units.inchesToMeters(176.746), kFieldWidth / 2.0);
       public static final double kFaceToZoneLine =
           Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
 
       public static final Pose2d[] kCenterFaces =
           new Pose2d[6]; // Starting facing the driver station in clockwise order
-      public static final List<Map<ReefHeight, Pose3d>> kBranchPositions =
+      public static final List<Map<ReefHeight, Pose3d>> branchPositions =
           new ArrayList<>(); // Starting at the right branch facing the driver station in clockwise
+      public static final List<Map<ReefHeight, Pose2d>> branchPositions2d = new ArrayList<>();
 
       static {
         // Initialize faces
-        kCenterFaces[0] =
-            new Pose2d(
-                Units.inchesToMeters(144.003),
-                Units.inchesToMeters(158.500),
-                Rotation2d.fromDegrees(180));
-        kCenterFaces[1] =
-            new Pose2d(
-                Units.inchesToMeters(160.373),
-                Units.inchesToMeters(186.857),
-                Rotation2d.fromDegrees(120));
-        kCenterFaces[2] =
-            new Pose2d(
-                Units.inchesToMeters(193.116),
-                Units.inchesToMeters(186.858),
-                Rotation2d.fromDegrees(60));
-        kCenterFaces[3] =
-            new Pose2d(
-                Units.inchesToMeters(209.489),
-                Units.inchesToMeters(158.502),
-                Rotation2d.fromDegrees(0));
-        kCenterFaces[4] =
-            new Pose2d(
-                Units.inchesToMeters(193.118),
-                Units.inchesToMeters(130.145),
-                Rotation2d.fromDegrees(-60));
-        kCenterFaces[5] =
-            new Pose2d(
-                Units.inchesToMeters(160.375),
-                Units.inchesToMeters(130.144),
-                Rotation2d.fromDegrees(-120));
+        var aprilTagLayout = AprilTagVisionConstants.kAprilTagLayout;
+        kCenterFaces[0] = aprilTagLayout.getTagPose(18).get().toPose2d();
+        kCenterFaces[1] = aprilTagLayout.getTagPose(19).get().toPose2d();
+        kCenterFaces[2] = aprilTagLayout.getTagPose(20).get().toPose2d();
+        kCenterFaces[3] = aprilTagLayout.getTagPose(21).get().toPose2d();
+        kCenterFaces[4] = aprilTagLayout.getTagPose(22).get().toPose2d();
+        kCenterFaces[5] = aprilTagLayout.getTagPose(17).get().toPose2d();
 
         // Initialize branch positions
         for (int face = 0; face < 6; face++) {
           Map<ReefHeight, Pose3d> fillRight = new HashMap<>();
           Map<ReefHeight, Pose3d> fillLeft = new HashMap<>();
+          Map<ReefHeight, Pose2d> fillRight2d = new HashMap<>();
+          Map<ReefHeight, Pose2d> fillLeft2d = new HashMap<>();
           for (var level : ReefHeight.values()) {
             Pose2d poseDirection = new Pose2d(kCenter, Rotation2d.fromDegrees(180 - (60 * face)));
             double adjustX = Units.inchesToMeters(30.738);
             double adjustY = Units.inchesToMeters(6.469);
 
-            fillRight.put(
-                level,
+            var rightBranchPose =
                 new Pose3d(
                     new Translation3d(
                         poseDirection
-                            .transformBy(new Transform2d(adjustX, adjustY, new Rotation2d()))
+                            .transformBy(new Transform2d(adjustX, adjustY, Rotation2d.kZero))
                             .getX(),
                         poseDirection
-                            .transformBy(new Transform2d(adjustX, adjustY, new Rotation2d()))
+                            .transformBy(new Transform2d(adjustX, adjustY, Rotation2d.kZero))
                             .getY(),
                         level.height),
                     new Rotation3d(
                         0,
                         Units.degreesToRadians(level.pitch),
-                        poseDirection.getRotation().getRadians())));
-            fillLeft.put(
-                level,
+                        poseDirection.getRotation().getRadians()));
+            var leftBranchPose =
                 new Pose3d(
                     new Translation3d(
                         poseDirection
-                            .transformBy(new Transform2d(adjustX, -adjustY, new Rotation2d()))
+                            .transformBy(new Transform2d(adjustX, -adjustY, Rotation2d.kZero))
                             .getX(),
                         poseDirection
-                            .transformBy(new Transform2d(adjustX, -adjustY, new Rotation2d()))
+                            .transformBy(new Transform2d(adjustX, -adjustY, Rotation2d.kZero))
                             .getY(),
                         level.height),
                     new Rotation3d(
                         0,
                         Units.degreesToRadians(level.pitch),
-                        poseDirection.getRotation().getRadians())));
+                        poseDirection.getRotation().getRadians()));
+
+            fillRight.put(level, rightBranchPose);
+            fillLeft.put(level, leftBranchPose);
+            fillRight2d.put(level, rightBranchPose.toPose2d());
+            fillLeft2d.put(level, leftBranchPose.toPose2d());
           }
-          kBranchPositions.add(fillRight);
-          kBranchPositions.add(fillLeft);
+          branchPositions.add(fillRight);
+          branchPositions.add(fillLeft);
+          branchPositions2d.add(fillRight2d);
+          branchPositions2d.add(fillLeft2d);
         }
       }
     }
 
     public static class StagingPositions {
       // Measured from the center of the ice cream
-      public static final Pose2d kLeftIceCream =
-          new Pose2d(Units.inchesToMeters(48), Units.inchesToMeters(230.5), new Rotation2d());
-      public static final Pose2d kMiddleIceCream =
-          new Pose2d(Units.inchesToMeters(48), Units.inchesToMeters(158.5), new Rotation2d());
-      public static final Pose2d kRightIceCream =
-          new Pose2d(Units.inchesToMeters(48), Units.inchesToMeters(86.5), new Rotation2d());
+      public static final double kSeparation = Units.inchesToMeters(72.0);
+      public static final Translation2d[] kIceCreams = new Translation2d[3];
+
+      static {
+        for (int i = 0; i < 3; i++) {
+          kIceCreams[i] =
+              new Translation2d(
+                  Units.inchesToMeters(48), kFieldWidth / 2.0 - kSeparation + kSeparation * i);
+        }
+      }
     }
 
     public enum ReefHeight {
-      L4(Units.inchesToMeters(72), -90),
-      L3(Units.inchesToMeters(47.625), -35),
-      L2(Units.inchesToMeters(31.875), -35),
-      L1(Units.inchesToMeters(18), 0);
+      L1(0, Units.inchesToMeters(25.0), 0),
+      L2(1, Units.inchesToMeters(31.875 - Math.cos(Math.toRadians(35.0)) * 0.625), -35),
+      L3(2, Units.inchesToMeters(47.625 - Math.cos(Math.toRadians(35.0)) * 0.625), -35),
+      L4(3, Units.inchesToMeters(72), -90);
 
-      ReefHeight(double height, double pitch) {
+      ReefHeight(int levelNumber, double height, double pitch) {
+        this.levelNumber = levelNumber;
         this.height = height;
-        this.pitch = pitch; // in degrees
+        this.pitch = pitch; // Degrees
       }
 
+      public static ReefHeight fromLevel(int level) {
+        return Arrays.stream(values())
+            .filter(height -> height.ordinal() == level)
+            .findFirst()
+            .orElse(L4);
+      }
+
+      public final int levelNumber;
       public final double height;
       public final double pitch;
+    }
+
+    @RequiredArgsConstructor
+    public enum FieldType {
+      ANDYMARK,
+      WELDED,
     }
   }
 }
