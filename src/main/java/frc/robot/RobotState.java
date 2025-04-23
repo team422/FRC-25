@@ -101,6 +101,7 @@ public class RobotState {
 
   private Timer m_timer = new Timer();
   private Timer m_secondaryTimer = new Timer();
+  private Timer m_tertiaryTimer = new Timer();
 
   private ReefHeight m_desiredReefHeight = ReefHeight.L1;
   private int m_desiredBranchIndex = 0;
@@ -277,6 +278,8 @@ public class RobotState {
 
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());
+    Logger.recordOutput("RobotState/SecondaryTimerValue", m_secondaryTimer.get());
+    Logger.recordOutput("RobotState/TertiaryTimerValue", m_tertiaryTimer.get());
 
     Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
 
@@ -410,20 +413,36 @@ public class RobotState {
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
 
+    // Logger.recordOutput(
+    //     "NewPoses",
+    //     new Pose2d[] {
+    //       new Pose2d(12.92, 1.56, Rotation2d.fromDegrees(90)),
+    //       new Pose2d(12.92, 6.39, Rotation2d.fromDegrees(270)),
+    //       new Pose2d(4.3519, 6.39, Rotation2d.fromDegrees(270)),
+    //       new Pose2d(4.3519, 1.56, Rotation2d.fromDegrees(90)),
+    //     });
+    // Logger.recordOutput(
+    //     "OldPoses",
+    //     new Pose2d[] {
+    //       new Pose2d(12.92, 1.96, Rotation2d.fromDegrees(90)),
+    //       new Pose2d(12.92, 5.99, Rotation2d.fromDegrees(270)),
+    //       new Pose2d(4.3519, 5.99, Rotation2d.fromDegrees(270)),
+    //       new Pose2d(4.3519, 1.96, Rotation2d.fromDegrees(90)),
+    //     });
     if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_secondaryTimer.get() < 0.75) {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
         if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(12.92, 1.96, Rotation2d.fromDegrees(90)));
+          m_drive.setTargetPose(new Pose2d(12.92, 1.56, Rotation2d.fromDegrees(90)));
         } else {
-          m_drive.setTargetPose(new Pose2d(12.92, 5.99, Rotation2d.fromDegrees(270)));
+          m_drive.setTargetPose(new Pose2d(12.92, 6.39, Rotation2d.fromDegrees(270)));
         }
       } else {
         // we are on blue
         if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(4.3519, 5.99, Rotation2d.fromDegrees(270)));
+          m_drive.setTargetPose(new Pose2d(4.3519, 6.39, Rotation2d.fromDegrees(270)));
         } else {
-          m_drive.setTargetPose(new Pose2d(4.3519, 1.96, Rotation2d.fromDegrees(90)));
+          m_drive.setTargetPose(new Pose2d(4.3519, 1.56, Rotation2d.fromDegrees(90)));
         }
       }
     } else if (m_drive.getTargetPose() == null
@@ -464,9 +483,23 @@ public class RobotState {
         updateRobotAction(RobotAction.kAutoCoralIntaking);
       }
       return;
-    } else {
+    } else if (m_manipulator.rollerWithinTolerance()) {
+      // } else {
+      // we are fully in the manipulator
       m_manipulator.updateState(ManipulatorState.kScoring);
       m_elevator.updateState(ElevatorState.kScoring);
+    } else if (m_manipulator.getCurrentState() == ManipulatorState.kIndexing
+        && Math.abs(m_manipulator.getRollerError())
+            < ManipulatorConstants.kRollerFeedErrorTolerance.get()) {
+      if (!m_tertiaryTimer.isRunning()) {
+        m_tertiaryTimer.restart();
+      }
+
+      if (m_tertiaryTimer.get() > 0.1) {
+        m_manipulator.updateState(ManipulatorState.kScoring);
+        m_elevator.updateState(ElevatorState.kScoring);
+        Logger.recordOutput("Autoscore/SkippedIndexing", Timer.getFPGATimestamp());
+      }
     }
 
     // we don't want to deploy elevator or manipulator until we're close to the setpoint
@@ -505,6 +538,12 @@ public class RobotState {
                     : DriveConstants.kAutoscoreOuttakeDistance.get()));
     Logger.recordOutput(
         "Auto/DriveSlow", m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get());
+    Logger.recordOutput(
+        "Auto/HeadingRight",
+        EqualsUtil.epsilonEquals(
+            m_drive.getRotation().getDegrees(),
+            m_setpoint.drivePose().getRotation().getDegrees(),
+            DriveConstants.kAutoscoreHeadingTolerance));
     Logger.recordOutput(
         "Auto/DriveDistance",
         Units.metersToInches(
@@ -936,8 +975,8 @@ public class RobotState {
       case kAutoCoralOuttaking:
       case kCoralOuttaking:
         // don't change any other states since we want everything to stay in place
-        // newDriveProfiles = m_drive.getCurrentProfile();
-        newDriveProfiles = DriveProfiles.kStop;
+        newDriveProfiles = m_drive.getCurrentProfile();
+        // newDriveProfiles = DriveProfiles.kStop;
         newIntakeState = m_intake.getCurrentState();
         newIndexerState = m_indexer.getCurrentState();
         newElevatorState = m_elevator.getCurrentState();
@@ -1117,6 +1156,9 @@ public class RobotState {
     m_secondaryTimer.stop();
     m_secondaryTimer.reset();
 
+    m_tertiaryTimer.stop();
+    m_tertiaryTimer.reset();
+
     m_loaderStationTimer.stop();
     m_loaderStationTimer.reset();
 
@@ -1195,7 +1237,8 @@ public class RobotState {
   }
 
   public void manageAlgaeIntakeRelease() {
-    if (m_profiles.getCurrentProfile() == RobotAction.kBargeAutoScore) {
+    if (m_profiles.getCurrentProfile() == RobotAction.kBargeAutoScore
+        || m_profiles.getCurrentProfile() == RobotAction.kProcessorOuttake) {
       setDefaultAction();
     }
     if (m_otbRunThrough) {
@@ -1245,9 +1288,9 @@ public class RobotState {
   }
 
   public void onDisable() {
-    if (m_profiles.getCurrentProfile() == RobotAction.kAutoCoralIntaking) {
-      m_drive.setDriveCoast();
-    }
+    // if (m_profiles.getCurrentProfile() == RobotAction.kAutoCoralIntaking) {
+    //   m_drive.setDriveCoast();
+    // }
   }
 
   public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
@@ -1266,6 +1309,15 @@ public class RobotState {
     m_odometryTrustFactor = MathUtil.clamp(m_odometryTrustFactor, 0.0, 1.0);
     m_drive.addTimestampedVisionObservations(observations);
   }
+
+  // public void addTimestampedVisionObservationsCameras(
+  //     List<List<TimestampedVisionUpdate>> observations) {
+  //   if (!m_usingVision) {
+  //     return;
+  //   }
+
+  //   m_drive.addTimestampedVisionObservationsCameras(observations);
+  // }
 
   public void registerSlip() {
     m_odometryTrustFactor -= AprilTagVisionConstants.kOdometryTrustFactorSlip;
@@ -1639,6 +1691,10 @@ public class RobotState {
       }
     }
     updateRobotAction(RobotAction.kAutoAutoScore);
+  }
+
+  public boolean getManipulatorAutoReversing() {
+    return m_manipulator.getAutoReversing();
   }
 
   public DriveProfiles getDriveProfile() {

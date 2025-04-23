@@ -46,8 +46,9 @@ public class SetpointGenerator {
           ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 40.0));
 
   // we need to move back a bit from the raw branch pose
-  private static final double kDriveXOffset =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
+  static LoggedTunableNumber incha = new LoggedTunableNumber("AAAA inch", 6.5);
+  private static double kDriveXOffset =
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
 
   private static final double kDriveXOffsetFinalAlgae =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(25.0);
@@ -103,6 +104,10 @@ public class SetpointGenerator {
     }
 
     var centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[reefIndex / 2]);
+
+    if (incha.hasChanged(0x00b259)) {
+      kDriveXOffset = DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
+    }
 
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
@@ -298,6 +303,9 @@ public class SetpointGenerator {
   public static Pose2d generateAlgae(int algaeIndex) {
     Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
     // we need to move away from the center of the reef (regardless of angle)
+    if (incha.hasChanged(0x00b259)) {
+      kDriveXOffset = DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
+    }
     var drivePoseFinal =
         centerFacePose.transformBy(
             new Transform2d(kDriveXOffset, 0.0, Rotation2d.fromDegrees(180)));

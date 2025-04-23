@@ -43,7 +43,7 @@ public final class Constants {
   public static final boolean kTuningMode = true;
 
   public static final Mode kRealMode = Mode.REAL;
-  public static final Mode kSimMode = Mode.REPLAY;
+  public static final Mode kSimMode = Mode.SIM;
   public static final Mode kCurrentMode = RobotBase.isReal() ? kRealMode : kSimMode;
 
   public static final boolean kUsePhoenixDiagnosticServer = false;
@@ -174,12 +174,15 @@ public final class Constants {
     public static final LoggedTunableNumber kAutoscoreDeployDistance =
         new LoggedTunableNumber("Autoscore Deploy Distance", 42.0);
     public static final LoggedTunableNumber kAutoscoreOuttakeDistance =
-        new LoggedTunableNumber("Autoscore Outtake Distance", 2.0);
+        new LoggedTunableNumber("Autoscore Outtake Distance", 1.25);
     public static final LoggedTunableNumber kAutoscoreL1OuttakeDistance =
         new LoggedTunableNumber("Autoscore L1 Outtake Distance", 18.0);
     public static final LoggedTunableNumber kAutoscoreWheelSpeed =
         // new LoggedTunableNumber("Autoscore Wheel Speed", 0.04 / DriveConstants.kWheelRadius);
         new LoggedTunableNumber("Autoscore Wheel Speed", 999);
+    public static final double kAutoscoreHeadingTolerance =
+        // new LoggedTunableNumber("Autoscore Heading Tolerance", 1.0);
+        1.0;
     public static final LoggedTunableNumber kBargeScoreThrowDistance =
         new LoggedTunableNumber("Barge Score Throw Distance", 10.0);
     public static final LoggedTunableNumber kLoaderStationTimeout =
@@ -594,7 +597,7 @@ public final class Constants {
         // NEW:
         // 0 - front right facing out, 10.4.22.229:1182, camera 3
         // 1 - front left facing out, 10.4.22.228:1182, camera 6
-        // 2 - front left facing in, 10.4.22.229:1181, camera 4
+        // 2 - front left facing in, 10.4.22.229:1181, camera 11
         // 3 - front right facing in, 10.4.22.228:1181, camera 5
         new Transform3d[] {
           // front right (facing out)
@@ -742,11 +745,13 @@ public final class Constants {
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
     public static final Rotation2d kWristOffset =
-        Rotation2d.fromDegrees(-37.3 * kWristAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees((-37.2) * kWristAbsoluteEncoderGearRatio);
     // get owned shrihari - sri b is a better coder
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
     public static final double kRollerPositionTolerance = 10.0; // degrees
+    public static final LoggedTunableNumber kRollerFeedErrorTolerance =
+        new LoggedTunableNumber("Manipulator Roller Feed Error Tolerance", 75.0);
 
     // how many degrees to move after photoelectric is tripped
     public static final LoggedTunableNumber kRollerIndexingPosition =

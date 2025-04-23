@@ -7,7 +7,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.Constants.DriveConstants;
 import org.littletonrobotics.junction.Logger;
 
-// A new object should be able to be made every time auto intake or auto net is called
 /**
  * This class is used to control the robot's movement in a meshed driving style. It takes user input
  * and desired pose and calculates the appropriate speeds for the robot to follow the desired path.

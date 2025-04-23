@@ -149,6 +149,14 @@ public class Drive extends SubsystemBase {
   // private final PoseEstimator m_poseEstimatorNoSlowVision =
   //     new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002));
 
+  // private final PoseEstimator[] m_cameraPoseEstimators =
+  //     new PoseEstimator[] {
+  //       new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002)),
+  //       new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002)),
+  //       new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002)),
+  //       new PoseEstimator(VecBuilder.fill(0.003, 0.003, 0.0002)),
+  //     };
+
   private MeshedDrivingController m_meshedController;
 
   private ChassisSpeeds m_userChassisSpeeds;
@@ -352,10 +360,17 @@ public class Drive extends SubsystemBase {
       lastGyroYaw = m_rawGyroRotation;
     }
     m_poseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
+    // for (var estimator : m_cameraPoseEstimators) {
+    //   estimator.addDriveData(Timer.getTimestamp(), totalTwist);
+    // }
 
     Logger.recordOutput(
         "PeriodicTime/OdometryUpdate", (HALUtil.getFPGATime() - odometryUpdateStart) / 1000.0);
     // m_poseEstimatorNoSlowVision.addDriveData(Timer.getTimestamp(), totalTwist);
+
+    // for (int i = 0; i < m_cameraPoseEstimators.length; i++) {
+    //   Logger.recordOutput("CameraEstimators/" + i, m_cameraPoseEstimators[i].getLatestPose());
+    // }
 
     // Logger.recordOutput("VisionSlow/Pose", m_poseEstimatorNoSlowVision.getLatestPose());
     // Logger.recordOutput("VisionSlow/Time", Timer.getTimestamp());
@@ -790,6 +805,9 @@ public class Drive extends SubsystemBase {
   /** Resets the current odometry pose. */
   public void setPose(Pose2d pose) {
     m_poseEstimator.resetPose(pose);
+    // for (var estimator : m_cameraPoseEstimators) {
+    //   estimator.resetPose(pose);
+    // }
     // m_poseEstimatorNoSlowVision.resetPose(pose);
   }
 
@@ -809,6 +827,13 @@ public class Drive extends SubsystemBase {
     // }
     m_poseEstimator.addVisionData(observations);
   }
+
+  // public void addTimestampedVisionObservationsCameras(
+  //     List<List<TimestampedVisionUpdate>> observations) {
+  //   for (int i = 0; i < observations.size(); i++) {
+  //     m_cameraPoseEstimators[i].addVisionData(observations.get(i));
+  //   }
+  // }
 
   public void updateProfile(DriveProfiles newProfile) {
     m_profiles.setCurrentProfile(newProfile);

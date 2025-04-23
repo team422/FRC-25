@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.Constants.IndexerConstants;
+import frc.robot.RobotState;
 import frc.robot.util.AlertManager;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
@@ -85,9 +86,15 @@ public class Indexer extends SubsystemBase {
   }
 
   public void indexingPeriodic() {
-    m_io.setVoltage(
-        IndexerConstants.kIndexerIndexingVoltage.get(),
-        IndexerConstants.kIndexerTopIndexingVoltage.get());
+    if (RobotState.getInstance().getManipulatorAutoReversing()) {
+      m_io.setVoltage(
+          IndexerConstants.kIndexerEjectVoltage.get(),
+          IndexerConstants.kIndexerTopEjectVoltage.get());
+    } else {
+      m_io.setVoltage(
+          IndexerConstants.kIndexerIndexingVoltage.get(),
+          IndexerConstants.kIndexerTopIndexingVoltage.get());
+    }
   }
 
   public void coralEjectPeriodic() {
