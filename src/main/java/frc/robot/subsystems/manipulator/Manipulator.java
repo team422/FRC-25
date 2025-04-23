@@ -6,7 +6,9 @@ import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants;
@@ -43,6 +45,10 @@ public class Manipulator extends SubsystemBase {
   private boolean m_runRollerAlgaeDescoring = false;
   private boolean m_runRollerBargeScoring = false;
   private boolean m_rollerPositionControlSet = false;
+
+  private Timer m_timer = new Timer();
+  private Timer m_secondaryTimer = new Timer();
+  private boolean m_autoReversing = false;
 
   public final ManipulatorRollerInputsAutoLogged m_rollerInputs =
       new ManipulatorRollerInputsAutoLogged();
@@ -177,6 +183,8 @@ public class Manipulator extends SubsystemBase {
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
     Logger.processInputs("Manipulator/CoralDetector", m_coralDetectorInputs);
     Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
+    Logger.recordOutput("Manipulator/RollerAtSetpoint", rollerWithinTolerance());
+    Logger.recordOutput("Manipulator/RollerError", getRollerError());
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
@@ -203,6 +211,14 @@ public class Manipulator extends SubsystemBase {
     m_runRollerAlgaeDescoring = true;
     m_runRollerBargeScoring = false;
     m_rollerPositionControlSet = false;
+
+    m_timer.stop();
+    m_timer.reset();
+
+    m_secondaryTimer.stop();
+    m_secondaryTimer.reset();
+
+    m_autoReversing = false;
 
     m_profiles.setCurrentProfile(state);
   }
@@ -233,8 +249,28 @@ public class Manipulator extends SubsystemBase {
       updateState(ManipulatorState.kIndexing);
     } else if (RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
       m_rollerIO.setVoltage(0.0);
+    } else if (m_secondaryTimer.isRunning()) {
+      if (m_secondaryTimer.hasElapsed(0.25)) {
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
+        m_autoReversing = false;
+      }
     } else {
-      m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
+      if (m_coralDetectorIO.gamePieceInFunnel()) {
+        if (!m_timer.isRunning()) {
+          m_timer.restart();
+        }
+        if (m_timer.hasElapsed(DriverStation.isAutonomous() ? 1.0 : 0.5)) {
+          m_autoReversing = true;
+          if (!m_secondaryTimer.isRunning()) {
+            m_secondaryTimer.start();
+          }
+          m_rollerIO.setVoltage(-ManipulatorConstants.kRollerIntakeVoltage.get());
+        } else {
+          m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
+        }
+      } else {
+        m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
+      }
     }
   }
 
@@ -368,6 +404,14 @@ public class Manipulator extends SubsystemBase {
   }
 
   public boolean rollerWithinTolerance() {
-    return m_rollerIO.withinPositionTolerance();
+    return m_rollerInputs.positionControl && m_rollerIO.withinPositionTolerance();
+  }
+
+  public double getRollerError() {
+    return m_rollerInputs.desiredPositionDegrees - m_rollerInputs.positionDegrees;
+  }
+
+  public boolean getAutoReversing() {
+    return m_autoReversing;
   }
 }

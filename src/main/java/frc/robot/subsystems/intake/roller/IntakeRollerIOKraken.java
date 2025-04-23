@@ -51,7 +51,7 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     var feedbackConfig =
         new FeedbackConfigs().withSensorToMechanismRatio(IntakeConstants.kRollerGearRatio);
 
-    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Coast);
+    var motorOutput = new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake);
 
     m_config =
         new TalonFXConfiguration()
@@ -133,9 +133,6 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
 
   @Override
   public boolean hasGamePiece() {
-    double current = m_motorCurrent.getValueAsDouble();
-    double accel = m_motorAcceleration.getValueAsDouble();
-    return current > IntakeConstants.kRollerCurrentGamepieceThreshold
-        && accel > IntakeConstants.kRollerAccelGamepieceThreshold;
+    return m_motorCurrent.getValueAsDouble() > IntakeConstants.kRollerCoralCurrentThreshold;
   }
 }

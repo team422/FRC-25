@@ -48,7 +48,7 @@ public class IntakeRollerIOSim implements IntakeRollerIO {
 
   @Override
   public boolean hasGamePiece() {
-    // Possibly implement later
+    // Not used in simulation
     return false;
   }
 }

@@ -4,13 +4,14 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import frc.robot.Constants.IntakeConstants;
 
 public class PivotIOSim implements PivotIO {
   private SingleJointedArmSim m_sim;
   private PIDController m_controller = new PIDController(0, 0, 0);
-  private double m_kG = 0.0;
+  private double m_feedforward = 0.0;
 
   public PivotIOSim() {
     var plant =
@@ -30,15 +31,14 @@ public class PivotIOSim implements PivotIO {
             IntakeConstants.kSimSimulateGravity,
             IntakeConstants.kSimStartingAngle.getRadians());
 
-    m_controller.setTolerance(IntakeConstants.kPivotTolerance);
+    m_controller.setTolerance(IntakeConstants.kPivotTolerance.get());
   }
 
   @Override
   public void updateInputs(PivotInputs inputs) {
     double pidVoltage = m_controller.calculate(getCurrAngle().getDegrees());
-    double feedforwardVoltage = m_kG * Math.cos(getCurrAngle().getRadians());
 
-    m_sim.setInputVoltage(pidVoltage + feedforwardVoltage);
+    m_sim.setInputVoltage(pidVoltage + m_feedforward);
     m_sim.update(0.020);
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
@@ -46,7 +46,7 @@ public class PivotIOSim implements PivotIO {
     inputs.atSetpoint = atSetpoint();
     inputs.velocityRPS = Units.radiansToRotations(m_sim.getVelocityRadPerSec());
     inputs.current = m_sim.getCurrentDrawAmps();
-    inputs.voltage = pidVoltage + feedforwardVoltage;
+    inputs.voltage = pidVoltage + m_feedforward;
 
     // these don't matter in sim
     inputs.statorCurrent = 0.0;
@@ -55,15 +55,17 @@ public class PivotIOSim implements PivotIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
-    m_controller.setPID(kP, kI, kD);
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kS) {
+    if (slot == 0) {
+      m_controller.setPID(kP, kI, kD);
+    }
     // kS is not used in simulation
-    m_kG = kG;
   }
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {
     m_controller.setSetpoint(angle.getDegrees());
+    m_feedforward = feedforward;
   }
 
   @Override
@@ -79,5 +81,15 @@ public class PivotIOSim implements PivotIO {
   @Override
   public void setCurrentLimits(double supplyLimit) {
     // Not needed for simulation
+  }
+
+  @Override
+  public void setSlot(int slot) {
+    // Not used in simulation
+  }
+
+  @Override
+  public void zeroEncoder(Angle value) {
+    // Not used in simulation
   }
 }

@@ -180,6 +180,7 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_desiredHeight = inches;
     // m_leadingMotor.setControl(m_magicMotion.withPosition(meters));
     m_leadingMotor.setControl(m_positionControl.withPosition(inches));
+    // m_followingMotor.setControl(m_positionControl.withPosition(inches));
     // m_leadingMotor.setControl(new MotionMagicVoltage(meters).withSlot(0));
     // m_leadingMotor.setControl(new VoltageOut(3));
     m_b001 = true;
@@ -199,6 +200,7 @@ public class ElevatorIOKraken implements ElevatorIO {
             .withKG(kG);
     slotConfigs.SlotNumber = slot;
     m_leadingMotor.getConfigurator().apply(slotConfigs, 0.0);
+    m_followingMotor.getConfigurator().apply(slotConfigs, 0.0);
   }
 
   @Override

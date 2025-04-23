@@ -16,6 +16,7 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
@@ -45,8 +46,9 @@ public class SetpointGenerator {
           ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 40.0));
 
   // we need to move back a bit from the raw branch pose
-  private static final double kDriveXOffset =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(7.0);
+  static LoggedTunableNumber incha = new LoggedTunableNumber("AAAA inch", 6.5);
+  private static double kDriveXOffset =
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
 
   private static final double kDriveXOffsetFinalAlgae =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(25.0);
@@ -60,7 +62,7 @@ public class SetpointGenerator {
   private static List<MeshedSetpoint> kIntakePositionsBlue =
       List.of(
           new MeshedSetpoint(
-              new Pose2d(1.0, 0.96, Rotation2d.fromDegrees(54)), -.714, 0.7419, 1.7269, 1.98214),
+              new Pose2d(1.0, 0.96, Rotation2d.fromDegrees(54)), -.714, 1.98214, 0.7419, 1.7269),
           new MeshedSetpoint(
               new Pose2d(1.0, 6.1, Rotation2d.fromDegrees(-54)), .714, 6.0678634, 0.7419, 1.7269));
 
@@ -102,6 +104,10 @@ public class SetpointGenerator {
     }
 
     var centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[reefIndex / 2]);
+
+    if (incha.hasChanged(0x00b259)) {
+      kDriveXOffset = DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
+    }
 
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
@@ -297,6 +303,9 @@ public class SetpointGenerator {
   public static Pose2d generateAlgae(int algaeIndex) {
     Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
     // we need to move away from the center of the reef (regardless of angle)
+    if (incha.hasChanged(0x00b259)) {
+      kDriveXOffset = DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
+    }
     var drivePoseFinal =
         centerFacePose.transformBy(
             new Transform2d(kDriveXOffset, 0.0, Rotation2d.fromDegrees(180)));
@@ -360,21 +369,15 @@ public class SetpointGenerator {
   }
 
   public static Rotation2d generateLollipopAngle(Translation2d driveTranslation) {
-    var lollipopPoses =
-        new ArrayList<>(
-            List.of(
-                FieldConstants.StagingPositions.kLeftIceCream,
-                FieldConstants.StagingPositions.kMiddleIceCream,
-                FieldConstants.StagingPositions.kRightIceCream));
+    var lollipopPoses = new ArrayList<>(Arrays.asList(FieldConstants.StagingPositions.kIceCreams));
 
     lollipopPoses.replaceAll(AllianceFlipUtil::apply);
 
-    var closestTranslation = lollipopPoses.get(0).getTranslation();
+    var closestTranslation = lollipopPoses.get(0);
 
     for (var pose : lollipopPoses) {
-      if (pose.getTranslation().getDistance(driveTranslation)
-          < closestTranslation.getDistance(driveTranslation)) {
-        closestTranslation = pose.getTranslation();
+      if (pose.getDistance(driveTranslation) < closestTranslation.getDistance(driveTranslation)) {
+        closestTranslation = pose;
       }
     }
 

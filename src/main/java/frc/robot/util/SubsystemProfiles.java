@@ -10,12 +10,12 @@ import org.littletonrobotics.junction.Logger;
 
 public class SubsystemProfiles<T extends Enum<T>> {
   private T m_currentProfile;
-  private Map<T, Runnable> m_profilePeriodicFunctions;
+  private final Map<T, Runnable> m_profilePeriodicFunctions;
   private T m_lastProfile;
-  private Class<T> m_profileEnum;
+  private final Class<T> m_profileEnum;
 
   // for logging
-  private List<String> m_currMessages = new ArrayList<>();
+  private final List<String> m_currMessages = new ArrayList<>();
   private int m_maxMessagesLength = 0;
 
   @SuppressWarnings("unchecked")

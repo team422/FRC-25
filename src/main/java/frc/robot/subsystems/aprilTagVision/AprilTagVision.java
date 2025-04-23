@@ -95,6 +95,7 @@ public class AprilTagVision extends SubsystemBase {
     // }
     // Logger.recordOutput("AprilTagVision/TooFast", false);
 
+    // List<Integer> allInstanceIDs = new ArrayList<>();
     List<Pose3d> allCameraPoses = new ArrayList<>();
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<Pose3d> allRobotPoses3d = new ArrayList<>();
@@ -348,10 +349,11 @@ public class AprilTagVision extends SubsystemBase {
         // Add observation to list
         double xyStandardDeviation = 1;
         if (averageDistance < Units.inchesToMeters(50)) {
-          xyStandardDeviation = 0.01;
+          // TODO: if doing replay make these not tunable
+          xyStandardDeviation = AprilTagVisionConstants.kCloseStandardDeviation.get();
         } else if (averageDistance < Units.inchesToMeters(999999)) {
           xyStandardDeviation =
-              0.01
+              AprilTagVisionConstants.kFarStandardDeviation.get()
                   // back to normal math
                   * averageDistance
                   / tagPoses.size();
@@ -405,6 +407,17 @@ public class AprilTagVision extends SubsystemBase {
           // xyStandardDeviation *= 0.1;
         }
 
+        // divide standard deviations by number of missing cameras
+        // int numMissing = 0;
+        // for (int i = 0; i < m_noReadingsAlerts.length; i++) {
+        //   if (m_noReadingsAlerts[i].get()) {
+        //     numMissing++;
+        //   }
+        // }
+        // if (numMissing != 0) {
+        //   xyStandardDeviation /= numMissing;
+        // }
+
         Logger.recordOutput(
             "AprilTagVision/Inst" + instanceIndex + "/Transform",
             AprilTagVisionConstants.kCameraTransforms[instanceIndex]);
@@ -427,6 +440,7 @@ public class AprilTagVision extends SubsystemBase {
                 robotPose,
                 VecBuilder.fill(xyStandardDeviation, xyStandardDeviation, thetaStandardDeviation)));
         // }
+        // allInstanceIDs.add(instanceIndex);
         allRobotPoses.add(robotPose);
         allRobotPoses3d.add(robotPose3d);
 
@@ -463,7 +477,9 @@ public class AprilTagVision extends SubsystemBase {
       }
     }
 
-    if (m_firstMeasurement && !allVisionUpdates.isEmpty()) {
+    if (RobotState.getInstance().getUsingVision()
+        && m_firstMeasurement
+        && !allVisionUpdates.isEmpty()) {
       // for (int i = 0; i < allVisionUpdates.size(); i++) {
       //   var curr = allVisionUpdates.get(i);
       //   curr = new TimestampedVisionUpdate(curr.timestamp(), curr.pose(), VecBuilder.fill(0, 0,
@@ -477,6 +493,17 @@ public class AprilTagVision extends SubsystemBase {
 
     // Send to RobotState
     RobotState.getInstance().addTimestampedVisionObservations(allVisionUpdates);
+
+    // List<List<TimestampedVisionUpdate>> visionUpdatesId = new ArrayList<>();
+    // for (int i = 0; i < 4; i++) {
+    //   visionUpdatesId.add(new ArrayList<>());
+    // }
+    // for (int i = 0; i < allVisionUpdates.size(); i++) {
+    //   int instanceIndex = allInstanceIDs.get(i);
+    //   var update = allVisionUpdates.get(i);
+    //   visionUpdatesId.get(instanceIndex).add(update);
+    // }
+    // RobotState.getInstance().addTimestampedVisionObservationsCameras(visionUpdatesId);
 
     if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore) {
       m_autoAutoScoreMeasurements += allVisionUpdates.size();

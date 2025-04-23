@@ -81,7 +81,7 @@ public class DriverControlsPS5 implements DriverControls {
   }
 
   @Override
-  public Trigger algaeIntakeOuttake() {
+  public Trigger otbMagic() {
     return m_controller.R2();
   }
 
@@ -106,7 +106,12 @@ public class DriverControlsPS5 implements DriverControls {
   }
 
   @Override
-  public Trigger lollipop() {
+  public Trigger toggleOtbRunthrough() {
+    return m_controller.L3();
+  }
+
+  @Override
+  public Trigger zeroClimb() {
     return m_controller.create();
   }
 }

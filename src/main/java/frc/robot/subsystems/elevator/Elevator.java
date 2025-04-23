@@ -210,7 +210,7 @@ public class Elevator extends SubsystemBase {
       m_io.setDesiredHeight(m_inputs.desiredLocation);
     }
 
-    if (shouldZeroElevator()) {
+    if (shouldSlamElevator()) {
       updateState(ElevatorState.kSlamming);
     }
 
@@ -218,6 +218,10 @@ public class Elevator extends SubsystemBase {
 
     Logger.processInputs("Elevator", m_inputs);
     Logger.recordOutput("Elevator/State", m_profiles.getCurrentProfile());
+
+    if (shouldZeroElevator()) {
+      m_io.zeroElevator();
+    }
 
     if (Constants.kUseAlerts && !m_inputs.isLeadingMotorConnected) {
       m_leadingMotorDisconnectedAlert.set(true);
@@ -258,6 +262,12 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean shouldZeroElevator() {
+    return m_profiles.getCurrentProfile() != ElevatorState.kSlamming
+        && Math.abs(m_inputs.leadingVelocity) < ElevatorConstants.kZeroVelocityThreshold
+        && m_inputs.leadingSupplyCurrent > ElevatorConstants.kZeroCurrentTheshold;
+  }
+
+  public boolean shouldSlamElevator() {
     // I AM JAMES BAE AND I WROTE THIS
     // if the position is between tolerance and max skip amount we cut power so it slams and hard
     // resets only when velocity is going down
