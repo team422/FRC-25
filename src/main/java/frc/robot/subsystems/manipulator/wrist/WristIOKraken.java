@@ -1,5 +1,10 @@
 package frc.robot.subsystems.manipulator.wrist;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -10,7 +15,6 @@ import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
-import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
@@ -46,8 +50,6 @@ public class WristIOKraken implements WristIO {
 
   private boolean m_relativeEncoderReset = false;
 
-  // private PositionTorqueCurrentFOC m_positionControl =
-  //     new PositionTorqueCurrentFOC(0.0).withSlot(0);
   private PositionVoltage m_positionControl =
       new PositionVoltage(0.0).withSlot(0).withEnableFOC(true);
   private Rotation2d m_desiredAngle = new Rotation2d();
@@ -139,15 +141,15 @@ public class WristIOKraken implements WristIO {
     inputs.currAngleDeg = getCurrAngle().getDegrees();
     inputs.desiredAngleDeg = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
-    inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
-    inputs.current = m_motorCurrent.getValueAsDouble();
-    inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
-    inputs.voltage = m_motorVoltage.getValueAsDouble();
-    inputs.temperature = m_motorTemperature.getValueAsDouble();
+    inputs.velocityRPS = m_motorVelocity.getValue().in(RotationsPerSecond);
+    inputs.current = m_motorCurrent.getValue().in(Amps);
+    inputs.statorCurrent = m_motorStatorCurrent.getValue().in(Amps);
+    inputs.voltage = m_motorVoltage.getValue().in(Volts);
+    inputs.temperature = m_motorTemperature.getValue().in(Celsius);
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
+  public void setPIDFF(double kP, double kI, double kD, double kS) {
     m_motor
         .getConfigurator()
         .apply(
@@ -155,8 +157,6 @@ public class WristIOKraken implements WristIO {
                 .withKI(kI)
                 .withKD(kD)
                 .withKS(kS)
-                .withKG(kG)
-                .withGravityType(GravityTypeValue.Arm_Cosine)
                 .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign),
             0.0);
   }
@@ -175,20 +175,12 @@ public class WristIOKraken implements WristIO {
     m_motor.setControl(m_positionControl.withPosition(angle.getRotations()));
   }
 
-  @Override
-  public Rotation2d getCurrAngle() {
+  private Rotation2d getCurrAngle() {
     return Rotation2d.fromRotations(m_motorPosition.getValueAsDouble());
   }
 
-  @Override
-  public boolean atSetpoint() {
+  private boolean atSetpoint() {
     return Math.abs(m_desiredAngle.getDegrees() - getCurrAngle().getDegrees())
-        < ManipulatorConstants.kWristTolerance;
-  }
-
-  @Override
-  public boolean atSetpoint(Rotation2d r) {
-    return Math.abs(r.getDegrees() - getCurrAngle().getDegrees())
         < ManipulatorConstants.kWristTolerance;
   }
 

@@ -384,8 +384,6 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get()));
     Logger.recordOutput(
-        "Auto/DriveSlow", m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get());
-    Logger.recordOutput(
         "Auto/DriveDistance",
         Units.metersToInches(
             m_drive
@@ -399,8 +397,7 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get())
         && m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())
-        && m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get()) {
+        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
       updateRobotAction(RobotAction.kCoralOuttaking);
     }
   }
@@ -413,22 +410,6 @@ public class RobotState {
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
     // only set the setpoints if they're different so we don't reset the motion profile or drive pid
 
-    // Logger.recordOutput(
-    //     "NewPoses",
-    //     new Pose2d[] {
-    //       new Pose2d(12.92, 1.56, Rotation2d.fromDegrees(90)),
-    //       new Pose2d(12.92, 6.39, Rotation2d.fromDegrees(270)),
-    //       new Pose2d(4.3519, 6.39, Rotation2d.fromDegrees(270)),
-    //       new Pose2d(4.3519, 1.56, Rotation2d.fromDegrees(90)),
-    //     });
-    // Logger.recordOutput(
-    //     "OldPoses",
-    //     new Pose2d[] {
-    //       new Pose2d(12.92, 1.96, Rotation2d.fromDegrees(90)),
-    //       new Pose2d(12.92, 5.99, Rotation2d.fromDegrees(270)),
-    //       new Pose2d(4.3519, 5.99, Rotation2d.fromDegrees(270)),
-    //       new Pose2d(4.3519, 1.96, Rotation2d.fromDegrees(90)),
-    //     });
     if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_secondaryTimer.get() < 0.75) {
       if (AllianceFlipUtil.shouldFlip()) {
         // we are on red
@@ -537,14 +518,6 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get()));
     Logger.recordOutput(
-        "Auto/DriveSlow", m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get());
-    Logger.recordOutput(
-        "Auto/HeadingRight",
-        EqualsUtil.epsilonEquals(
-            m_drive.getRotation().getDegrees(),
-            m_setpoint.drivePose().getRotation().getDegrees(),
-            DriveConstants.kAutoscoreHeadingTolerance));
-    Logger.recordOutput(
         "Auto/DriveDistance",
         Units.metersToInches(
             m_drive
@@ -558,8 +531,7 @@ public class RobotState {
                     ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
                     : DriveConstants.kAutoscoreOuttakeDistance.get())
         && m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())
-        && m_drive.getMaxWheelSpeed() < DriveConstants.kAutoscoreWheelSpeed.get()) {
+        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
       m_numCoralScoredAuto++;
       updateRobotAction(RobotAction.kAutoCoralOuttaking);
     }
@@ -571,7 +543,7 @@ public class RobotState {
   private int m_numAlgaeScoredAuto = 0;
 
   public void autoCoralIntakingPeriodic() {
-    // TODO: make auto setpoint generator to make this cleaner
+
     if (!m_timer.isRunning()) {
       m_timer.restart();
     }
@@ -964,6 +936,10 @@ public class RobotState {
         newManipulatorState = ManipulatorState.kIntaking;
         if (getUsingVision()) {
           newDriveProfiles = DriveProfiles.kMeshedUserControls;
+          var setpoint = SetpointGenerator.generateNearestIntake(m_drive.getPose());
+          m_drive.setMeshedTargetPose(setpoint.desiredPose());
+          m_drive.setMeshedAxisLocked(
+              setpoint.slope(), setpoint.intercept(), setpoint.minX(), setpoint.maxX());
         }
 
         break;
@@ -1013,6 +989,15 @@ public class RobotState {
                   : SetpointGenerator.generateBargeRight());
         } else {
           newDriveProfiles = DriveProfiles.kMeshedUserControls;
+
+          Pose2d desPose;
+          if (m_bargeLeftCage) {
+            desPose = SetpointGenerator.generateBargeLeft();
+          } else {
+            desPose = SetpointGenerator.generateBargeRight();
+          }
+          m_drive.setMeshedTargetPose(desPose);
+          m_drive.setMeshedAxisUnlocked();
         }
         newManipulatorState = ManipulatorState.kAlgaeHold;
 
@@ -1261,21 +1246,6 @@ public class RobotState {
       m_manipulator.updateState(ManipulatorState.kAlgaeHold);
     }
     setDefaultAction();
-  }
-
-  public void manageIntakeHasGamePiece() {
-    if (m_otbRunThrough) {
-      m_intake.updateState(IntakeState.kCoralRunThrough);
-    } else {
-      // if we're L1 then stow
-      // otherwise hold
-      if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTBL1) {
-        return;
-      } else if (m_profiles.getCurrentProfile() == RobotAction.kCoralOTB) {
-        m_intake.updateState(IntakeState.kCoralHold);
-      }
-      setDefaultAction();
-    }
   }
 
   public void onEnable() {

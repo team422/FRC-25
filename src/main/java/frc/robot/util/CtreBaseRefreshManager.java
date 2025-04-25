@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
+// Tommy - this class should not be used because it does not work
+// feel free to debug it if you have time, but it is not a priority
 public class CtreBaseRefreshManager {
   // this is a static class and may not be instantiated
   private CtreBaseRefreshManager() {}

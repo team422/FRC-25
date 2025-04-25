@@ -65,8 +65,7 @@ public class ElevatorIOSim implements ElevatorIO {
   }
 
   @Override
-  public void setPIDFF(
-      int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG) {
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kG) {
     m_controller.setPID(kP, kI, kD);
     m_kG = kG;
   }
@@ -77,32 +76,13 @@ public class ElevatorIOSim implements ElevatorIO {
   @Override
   public void setCurrentLimits(double supplyLimit) {}
 
-  @Override
-  public void setMagic(double velocity, double acceleration, double jerk) {}
-
-  @Override
-  public boolean atSetpoint() {
+  private boolean atSetpoint() {
     return m_controller.atSetpoint();
-  }
-
-  @Override
-  public boolean atSetpoint(double tolerance) {
-    return Math.abs(m_controller.getSetpoint() - m_sim.getPositionMeters()) <= tolerance;
-  }
-
-  @Override
-  public double getCurrHeight() {
-    return m_sim.getPositionMeters();
   }
 
   @Override
   public void zeroElevator() {
     // not needed for sim
-  }
-
-  @Override
-  public double getVelocity() {
-    return m_sim.getVelocityMetersPerSecond();
   }
 
   @Override

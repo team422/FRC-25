@@ -19,6 +19,4 @@ public interface IntakeRollerIO {
   public void setVoltage(double voltage);
 
   public void setCurrentLimits(double supplyLimit);
-
-  public boolean hasGamePiece();
 }

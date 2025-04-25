@@ -19,15 +19,9 @@ public interface WristIO {
 
   public void updateInputs(WristInputs inputs);
 
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kG);
+  public void setPIDFF(double kP, double kI, double kD, double kS);
 
   public void setDesiredAngle(Rotation2d angle);
-
-  public Rotation2d getCurrAngle();
-
-  public boolean atSetpoint();
-
-  public boolean atSetpoint(Rotation2d r);
 
   public void setCurrentLimits(double supplyLimit);
 }

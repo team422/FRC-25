@@ -27,7 +27,6 @@ import frc.robot.subsystems.drive.Drive;
 import org.littletonrobotics.junction.Logger;
 
 public class AutoFactory {
-  // TODO: pretty much delete this entire file and just have the auto setup in the robot container
 
   public static final PIDConstants kLinearPID = new PIDConstants(3.0, 0.0, 0.0);
   public static final PIDConstants kAngularPID = new PIDConstants(0.0, 0.0, 0.00);

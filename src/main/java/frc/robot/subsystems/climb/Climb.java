@@ -63,7 +63,8 @@ public class Climb extends SubsystemBase {
   }
 
   public boolean atSetpoint() {
-    return m_io.atSetpoint();
+    return Math.abs(m_inputs.desiredPositionDegrees - m_inputs.currPositionDegrees)
+        < ClimbConstants.kClimbTolerance;
   }
 
   @Override

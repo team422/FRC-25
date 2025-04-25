@@ -1,7 +1,6 @@
 package frc.robot.subsystems.elevator;
 
 import edu.wpi.first.hal.HALUtil;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -70,9 +69,6 @@ public class Elevator extends SubsystemBase {
           ElevatorConstants.kP0.getAsDouble(),
           ElevatorConstants.kI.getAsDouble(),
           ElevatorConstants.kD.getAsDouble(),
-          ElevatorConstants.kKS.getAsDouble(),
-          ElevatorConstants.kKV0.getAsDouble(),
-          ElevatorConstants.kKA.getAsDouble(),
           ElevatorConstants.kKG0.getAsDouble());
 
       m_io.setPIDFF(
@@ -80,9 +76,6 @@ public class Elevator extends SubsystemBase {
           ElevatorConstants.kP1.getAsDouble(),
           ElevatorConstants.kI.getAsDouble(),
           ElevatorConstants.kD.getAsDouble(),
-          ElevatorConstants.kKS.getAsDouble(),
-          ElevatorConstants.kKV1.getAsDouble(),
-          ElevatorConstants.kKA.getAsDouble(),
           ElevatorConstants.kKG1.getAsDouble());
 
       m_io.setPIDFF(
@@ -90,9 +83,6 @@ public class Elevator extends SubsystemBase {
           ElevatorConstants.kP2.getAsDouble(),
           ElevatorConstants.kI.getAsDouble(),
           ElevatorConstants.kD.getAsDouble(),
-          ElevatorConstants.kKS.getAsDouble(),
-          ElevatorConstants.kKV2.getAsDouble(),
-          ElevatorConstants.kKA.getAsDouble(),
           ElevatorConstants.kKG2.getAsDouble());
     } else {
       m_io.setPIDFF(
@@ -100,19 +90,11 @@ public class Elevator extends SubsystemBase {
           ElevatorConstants.kSimElevatorP,
           ElevatorConstants.kSimElevatorI,
           ElevatorConstants.kSimElevatorD,
-          0,
-          0,
-          0,
           ElevatorConstants.kSimElevatorkG);
     }
 
     // to set the setpoint
     updateState(ElevatorState.kStow);
-
-    m_io.setMagic(
-        ElevatorConstants.kMagicMotionCruiseVelocity.get(),
-        ElevatorConstants.kMagicMotionAcceleration.get(),
-        ElevatorConstants.kMagicMotionJerk.get());
 
     AlertManager.registerAlert(m_leadingMotorDisconnectedAlert, m_followingMotorDisconnectedAlert);
   }
@@ -134,9 +116,6 @@ public class Elevator extends SubsystemBase {
                 ElevatorConstants.kP0.getAsDouble(),
                 ElevatorConstants.kI.getAsDouble(),
                 ElevatorConstants.kD.getAsDouble(),
-                ElevatorConstants.kKS.getAsDouble(),
-                ElevatorConstants.kKV0.getAsDouble(),
-                ElevatorConstants.kKA.getAsDouble(),
                 ElevatorConstants.kKG0.getAsDouble());
 
             m_io.setPIDFF(
@@ -144,9 +123,6 @@ public class Elevator extends SubsystemBase {
                 ElevatorConstants.kP1.getAsDouble(),
                 ElevatorConstants.kI.getAsDouble(),
                 ElevatorConstants.kD.getAsDouble(),
-                ElevatorConstants.kKS.getAsDouble(),
-                ElevatorConstants.kKV1.getAsDouble(),
-                ElevatorConstants.kKA.getAsDouble(),
                 ElevatorConstants.kKG1.getAsDouble());
 
             m_io.setPIDFF(
@@ -154,9 +130,6 @@ public class Elevator extends SubsystemBase {
                 ElevatorConstants.kP2.getAsDouble(),
                 ElevatorConstants.kI.getAsDouble(),
                 ElevatorConstants.kD.getAsDouble(),
-                ElevatorConstants.kKS.getAsDouble(),
-                ElevatorConstants.kKV2.getAsDouble(),
-                ElevatorConstants.kKA.getAsDouble(),
                 ElevatorConstants.kKG2.getAsDouble());
           } else {
             m_io.setPIDFF(
@@ -164,9 +137,6 @@ public class Elevator extends SubsystemBase {
                 ElevatorConstants.kSimElevatorP,
                 ElevatorConstants.kSimElevatorI,
                 ElevatorConstants.kSimElevatorD,
-                0.0,
-                0.0,
-                0.0,
                 ElevatorConstants.kSimElevatorkG);
           }
         },
@@ -175,30 +145,13 @@ public class Elevator extends SubsystemBase {
         ElevatorConstants.kP2,
         ElevatorConstants.kI,
         ElevatorConstants.kD,
-        ElevatorConstants.kKS,
-        ElevatorConstants.kKV0,
-        ElevatorConstants.kKV1,
-        ElevatorConstants.kKV2,
-        ElevatorConstants.kKA,
         ElevatorConstants.kKG0,
         ElevatorConstants.kKG1,
         ElevatorConstants.kKG2);
 
-    LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> {
-          m_io.setMagic(
-              Units.inchesToMeters(ElevatorConstants.kMagicMotionCruiseVelocity.get()),
-              Units.inchesToMeters(ElevatorConstants.kMagicMotionAcceleration.get()),
-              Units.inchesToMeters(ElevatorConstants.kMagicMotionJerk.get()));
-        },
-        ElevatorConstants.kMagicMotionCruiseVelocity,
-        ElevatorConstants.kMagicMotionAcceleration,
-        ElevatorConstants.kMagicMotionJerk);
-
     m_io.updateInputs(m_inputs);
 
-    double currHeight = m_io.getCurrHeight();
+    double currHeight = m_inputs.leadingPosition;
     if (currHeight < 18) {
       m_io.setSlot(0);
       m_io.setDesiredHeight(m_inputs.desiredLocation);
@@ -273,9 +226,9 @@ public class Elevator extends SubsystemBase {
     // resets only when velocity is going down
 
     if (m_profiles.getCurrentProfile() != ElevatorState.kSlamming
-        && m_io.getCurrHeight() > ElevatorConstants.kHeightTolerance
-        && m_io.getCurrHeight() < ElevatorConstants.kMaxSkip
-        && m_io.getVelocity() < 0) {
+        && m_inputs.leadingPosition > ElevatorConstants.kHeightTolerance
+        && m_inputs.leadingPosition < ElevatorConstants.kMaxSkip
+        && m_inputs.leadingVelocity < 0) {
       return true;
     }
     return false;
@@ -286,7 +239,7 @@ public class Elevator extends SubsystemBase {
   }
 
   public double getCurrHeight() {
-    return m_io.getCurrHeight();
+    return m_inputs.leadingPosition;
   }
 
   public void stowPeriodic() {
@@ -329,8 +282,6 @@ public class Elevator extends SubsystemBase {
   }
 
   public void algaeDescoringFinalPeriodic() {
-    // ReefHeight currHeight =
-    //     SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
     ReefHeight currHeight;
     if (RobotState.getInstance().getUsingVision()) {
       currHeight = SetpointGenerator.getAlgaeHeight(RobotState.getInstance().getRobotPose());
@@ -362,11 +313,12 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean atSetpoint() {
-    return m_io.atSetpoint();
+    return Math.abs(m_inputs.leadingPosition - m_inputs.desiredLocation)
+        <= ElevatorConstants.kHeightTolerance;
   }
 
   public boolean atSetpoint(double tolerance) {
-    return m_io.atSetpoint(tolerance);
+    return Math.abs(m_inputs.leadingPosition - m_inputs.desiredLocation) <= tolerance;
   }
 
   public void zeroElevator() {

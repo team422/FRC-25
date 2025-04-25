@@ -36,14 +36,15 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
     inputs.manipulatorSensorTwo = manipulatorTwoDetected();
     inputs.funnelSensorOne = funnelOneDetected();
     inputs.funnelSensorTwo = funnelTwoDetected();
+    inputs.hasGamePiece = hasGamePiece();
+    inputs.gamePieceInFunnel = gamePieceInFunnel();
   }
 
-  @Override
-  public boolean hasGamePiece() {
+  private boolean hasGamePiece() {
     return manipulatorOneDetected() && manipulatorTwoDetected();
   }
 
-  public boolean gamePieceInFunnel() {
+  private boolean gamePieceInFunnel() {
     return funnelOneDetected() || funnelTwoDetected();
   }
 

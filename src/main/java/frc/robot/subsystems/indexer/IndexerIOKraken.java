@@ -1,5 +1,11 @@
 package frc.robot.subsystems.indexer;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -45,7 +51,6 @@ public class IndexerIOKraken implements IndexerIO {
   private final TalonFXConfiguration m_config;
 
   private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(true);
-  // private VoltageOut m_voltageOut = new VoltageOut(0.0).withEnableFOC(false);
 
   public IndexerIOKraken(int sidePort, int topPort) {
     m_sideMotor = new TalonFX(sidePort, Ports.kMainCanivoreName);
@@ -126,8 +131,6 @@ public class IndexerIOKraken implements IndexerIO {
               m_topMotorVoltage,
               m_topMotorTemperature));
     }
-
-    // m_topMotor.setControl(new Follower(sidePort, false));
   }
 
   @Override
@@ -154,19 +157,19 @@ public class IndexerIOKraken implements IndexerIO {
     inputs.sideMotorIsConnected = m_sideConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
     inputs.topMotorIsConnected = m_topConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
-    inputs.sidePosition = m_sideMotorPosition.getValueAsDouble();
-    inputs.sideVelocityRPS = m_sideMotorVelocity.getValueAsDouble();
-    inputs.sideCurrent = m_sideMotorCurrent.getValueAsDouble();
-    inputs.sideStatorCurrent = m_sideMotorStatorCurrent.getValueAsDouble();
-    inputs.sideVoltage = m_sideMotorVoltage.getValueAsDouble();
-    inputs.sideTemperature = m_sideMotorTemperature.getValueAsDouble();
+    inputs.sidePosition = m_sideMotorPosition.getValue().in(Rotations);
+    inputs.sideVelocityRPS = m_sideMotorVelocity.getValue().in(RotationsPerSecond);
+    inputs.sideCurrent = m_sideMotorCurrent.getValue().in(Amps);
+    inputs.sideStatorCurrent = m_sideMotorStatorCurrent.getValue().in(Amps);
+    inputs.sideVoltage = m_sideMotorVoltage.getValue().in(Volts);
+    inputs.sideTemperature = m_sideMotorTemperature.getValue().in(Celsius);
 
-    inputs.topPosition = m_topMotorPosition.getValueAsDouble();
-    inputs.topVelocityRPS = m_topMotorVelocity.getValueAsDouble();
-    inputs.topCurrent = m_topMotorCurrent.getValueAsDouble();
-    inputs.topStatorCurrent = m_topMotorStatorCurrent.getValueAsDouble();
-    inputs.topVoltage = m_topMotorVoltage.getValueAsDouble();
-    inputs.topTemperature = m_topMotorTemperature.getValueAsDouble();
+    inputs.topPosition = m_topMotorPosition.getValue().in(Rotations);
+    inputs.topVelocityRPS = m_topMotorVelocity.getValue().in(RotationsPerSecond);
+    inputs.topCurrent = m_topMotorCurrent.getValue().in(Amps);
+    inputs.topStatorCurrent = m_topMotorStatorCurrent.getValue().in(Amps);
+    inputs.topVoltage = m_topMotorVoltage.getValue().in(Volts);
+    inputs.topTemperature = m_topMotorTemperature.getValue().in(Celsius);
   }
 
   @Override

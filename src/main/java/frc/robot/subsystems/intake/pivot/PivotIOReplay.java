@@ -11,17 +11,7 @@ public class PivotIOReplay implements PivotIO {
   public void setPIDFF(int slot, double kP, double kI, double kD, double kS) {}
 
   @Override
-  public void setDesiredAngle(Rotation2d angle, double feedforward) {}
-
-  @Override
-  public Rotation2d getCurrAngle() {
-    return new Rotation2d();
-  }
-
-  @Override
-  public boolean atSetpoint() {
-    return false;
-  }
+  public void setDesiredAngle(Rotation2d angle) {}
 
   @Override
   public void setCurrentLimits(double supplyLimit) {}

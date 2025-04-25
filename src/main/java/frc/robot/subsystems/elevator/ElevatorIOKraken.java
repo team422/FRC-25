@@ -1,5 +1,9 @@
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -32,10 +36,7 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   private final TalonFXConfiguration m_config;
 
-  // private MotionMagicTorqueCurrentFOC m_magicMotion = new MotionMagicTorqueCurrentFOC(0);
-  // private PositionTorqueCurrentFOC m_positionControl = new PositionTorqueCurrentFOC(0.0);
   private PositionVoltage m_positionControl = new PositionVoltage(0.0);
-  // private MotionMagicVoltage m_magicMotion = new MotionMagicVoltage(0).withEnableFOC(true);
   private VoltageOut m_voltageOut = new VoltageOut(0);
 
   // Status Signals
@@ -58,7 +59,7 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   private double m_desiredHeight;
 
-  private boolean m_b001;
+  private boolean m_isPositionControl;
 
   public ElevatorIOKraken(int leadPort, int followerPort) {
     m_leadingMotor = new TalonFX(leadPort, Ports.kMainCanivoreName);
@@ -153,6 +154,8 @@ public class ElevatorIOKraken implements ElevatorIO {
     inputs.isFollowingMotorConnected =
         m_followingConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
+    // we need to use getValueAsDouble here since the sensor to mechanism ratio converts rotations
+    // to inches already
     inputs.atSetpoint = atSetpoint();
     inputs.desiredLocation = m_desiredHeight;
     inputs.leadingPosition = m_leadingPosition.getValueAsDouble();
@@ -161,15 +164,15 @@ public class ElevatorIOKraken implements ElevatorIO {
     inputs.followingVelocity = m_followingVelocity.getValueAsDouble();
     inputs.leadingAcceleration = m_leadingAcceleration.getValueAsDouble();
     inputs.followingAcceleration = m_followingAcceleration.getValueAsDouble();
-    inputs.leadingVoltage = m_leadingVoltage.getValueAsDouble();
-    inputs.followingVoltage = m_followingVoltage.getValueAsDouble();
-    inputs.leadingSupplyCurrent = m_leadingSupplyCurrent.getValueAsDouble();
-    inputs.followingSupplyCurrent = m_followingSupplyCurrent.getValueAsDouble();
-    inputs.leadingStatorCurrent = m_leadingStatorCurrent.getValueAsDouble();
-    inputs.followingStatorCurrent = m_followingStatorCurrent.getValueAsDouble();
-    inputs.leadingTemp = m_leadingTemp.getValueAsDouble();
-    inputs.followingTemp = m_followingTemp.getValueAsDouble();
-    inputs.positionControl = m_b001;
+    inputs.leadingVoltage = m_leadingVoltage.getValue().in(Volts);
+    inputs.followingVoltage = m_followingVoltage.getValue().in(Volts);
+    inputs.leadingSupplyCurrent = m_leadingSupplyCurrent.getValue().in(Amps);
+    inputs.followingSupplyCurrent = m_followingSupplyCurrent.getValue().in(Amps);
+    inputs.leadingStatorCurrent = m_leadingStatorCurrent.getValue().in(Amps);
+    inputs.followingStatorCurrent = m_followingStatorCurrent.getValue().in(Amps);
+    inputs.leadingTemp = m_leadingTemp.getValue().in(Celsius);
+    inputs.followingTemp = m_followingTemp.getValue().in(Celsius);
+    inputs.positionControl = m_isPositionControl;
   }
 
   @Override
@@ -178,26 +181,13 @@ public class ElevatorIOKraken implements ElevatorIO {
 
     // feedback
     m_desiredHeight = inches;
-    // m_leadingMotor.setControl(m_magicMotion.withPosition(meters));
     m_leadingMotor.setControl(m_positionControl.withPosition(inches));
-    // m_followingMotor.setControl(m_positionControl.withPosition(inches));
-    // m_leadingMotor.setControl(new MotionMagicVoltage(meters).withSlot(0));
-    // m_leadingMotor.setControl(new VoltageOut(3));
-    m_b001 = true;
+    m_isPositionControl = true;
   }
 
   @Override
-  public void setPIDFF(
-      int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG) {
-    var slotConfigs =
-        new SlotConfigs()
-            .withKP(kP)
-            .withKI(kI)
-            .withKD(kD)
-            .withKS(kS)
-            .withKV(kV)
-            .withKA(kA)
-            .withKG(kG);
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kG) {
+    var slotConfigs = new SlotConfigs().withKP(kP).withKI(kI).withKD(kD).withKG(kG);
     slotConfigs.SlotNumber = slot;
     m_leadingMotor.getConfigurator().apply(slotConfigs, 0.0);
     m_followingMotor.getConfigurator().apply(slotConfigs, 0.0);
@@ -215,31 +205,9 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_positionControl.withSlot(slot);
   }
 
-  @Override
-  public void setMagic(double velocity, double acceleration, double jerk) {
-    m_leadingMotor
-        .getConfigurator()
-        .apply(
-            m_config.MotionMagic.withMotionMagicCruiseVelocity(velocity)
-                .withMotionMagicAcceleration(acceleration)
-                .withMotionMagicJerk(jerk),
-            0.0);
-  }
-
-  @Override
-  public boolean atSetpoint() {
+  private boolean atSetpoint() {
     return Math.abs(m_leadingPosition.getValueAsDouble() - m_desiredHeight)
         <= ElevatorConstants.kHeightTolerance;
-  }
-
-  @Override
-  public boolean atSetpoint(double tolerance) {
-    return Math.abs(m_leadingPosition.getValueAsDouble() - m_desiredHeight) <= tolerance;
-  }
-
-  @Override
-  public double getCurrHeight() {
-    return m_leadingPosition.getValueAsDouble();
   }
 
   @Override
@@ -249,13 +217,8 @@ public class ElevatorIOKraken implements ElevatorIO {
   }
 
   @Override
-  public double getVelocity() {
-    return m_leadingVelocity.getValueAsDouble();
-  }
-
-  @Override
   public void setVoltage(double voltage) {
     m_leadingMotor.setControl(m_voltageOut.withOutput(voltage));
-    m_b001 = false;
+    m_isPositionControl = false;
   }
 }

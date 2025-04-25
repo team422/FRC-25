@@ -1,6 +1,11 @@
 package frc.robot.subsystems.manipulator.roller;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -131,12 +136,12 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     inputs.positionDegrees = m_motorPosition.getValue().in(Degrees);
     inputs.positionControl = m_positionControl;
     inputs.desiredPositionDegrees = m_desiredPosition.in(Degrees);
-    inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
-    inputs.accelerationRPSSq = m_motorAcceleration.getValueAsDouble();
-    inputs.current = m_motorCurrent.getValueAsDouble();
-    inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
-    inputs.voltage = m_motorVoltage.getValueAsDouble();
-    inputs.temperature = m_motorTemperature.getValueAsDouble();
+    inputs.velocityRPS = m_motorVelocity.getValue().in(RotationsPerSecond);
+    inputs.accelerationRPSSq = m_motorAcceleration.getValue().in(RotationsPerSecondPerSecond);
+    inputs.current = m_motorCurrent.getValue().in(Amps);
+    inputs.statorCurrent = m_motorStatorCurrent.getValue().in(Amps);
+    inputs.voltage = m_motorVoltage.getValue().in(Volts);
+    inputs.temperature = m_motorTemperature.getValue().in(Celsius);
   }
 
   @Override
@@ -151,11 +156,6 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     m_motor.setControl(m_positionVoltage.withPosition(position));
     m_positionControl = true;
     m_desiredPosition = position;
-  }
-
-  @Override
-  public Angle getPosition() {
-    return m_motorPosition.getValue();
   }
 
   @Override
@@ -176,21 +176,5 @@ public class ManipulatorRollerIOKraken implements ManipulatorRollerIO {
     m_motor
         .getConfigurator()
         .apply(m_config.CurrentLimits.withSupplyCurrentLimit(supplyLimit), 0.0);
-  }
-
-  @Override
-  public boolean withinPositionTolerance() {
-    return Math.abs(m_motorPosition.getValue().minus(m_desiredPosition).in(Degrees))
-        < ManipulatorConstants.kRollerPositionTolerance;
-  }
-
-  @Override
-  public double getCurrent() {
-    return m_motorCurrent.getValueAsDouble();
-  }
-
-  @Override
-  public double getAcceleration() {
-    return m_motorAcceleration.getValueAsDouble();
   }
 }
