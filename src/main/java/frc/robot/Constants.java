@@ -34,11 +34,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
-/**
- * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
- * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
- * (log replay from a file).
- */
 public final class Constants {
   public static final boolean kTuningMode = true;
 
@@ -51,6 +46,11 @@ public final class Constants {
   // set to false to disable the base refresh manager
   public static final boolean kUseBaseRefreshManager = false;
 
+  /**
+   * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when
+   * running on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and
+   * "replay" (log replay from a file).
+   */
   public static enum Mode {
     /** Running on a real robot. */
     REAL,

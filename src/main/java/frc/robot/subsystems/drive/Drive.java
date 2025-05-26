@@ -54,7 +54,7 @@ public class Drive extends SubsystemBase {
 
   private final Module[] m_modules = new Module[4]; // FL, FR, BL, BR
   private final SysIdRoutine m_sysId;
-  private Rotation2d lastGyroYaw = new Rotation2d();
+  private Rotation2d m_lastGyroYaw = new Rotation2d();
 
   private Alert m_gyroDisconnectedAlert = new Alert("Gyro Disconnected", AlertType.kError);
 
@@ -65,7 +65,7 @@ public class Drive extends SubsystemBase {
     kDriveToPoint,
     kCharacterization,
     kMeshedUserControls,
-    kStop
+    kStop,
   }
 
   private SubsystemProfiles<DriveProfiles> m_profiles;
@@ -168,6 +168,7 @@ public class Drive extends SubsystemBase {
     AlertManager.registerAlert(m_gyroDisconnectedAlert);
   }
 
+  @Override
   public void periodic() {
     double start = HALUtil.getFPGATime();
 
@@ -282,7 +283,7 @@ public class Drive extends SubsystemBase {
       }
       Rotation2d deltaYaw;
       if (i == 0) {
-        deltaYaw = m_rawGyroRotation.minus(lastGyroYaw);
+        deltaYaw = m_rawGyroRotation.minus(m_lastGyroYaw);
       } else {
         deltaYaw = m_rawGyroRotation.minus(m_gyroInputs.odometryYawPositions[i - 1]);
       }
@@ -294,11 +295,11 @@ public class Drive extends SubsystemBase {
     }
 
     if (m_gyroInputs.connected) {
-      totalTwist.dtheta = m_gyroInputs.yawPosition.minus(lastGyroYaw).getRadians();
-      lastGyroYaw = m_gyroInputs.yawPosition;
+      totalTwist.dtheta = m_gyroInputs.yawPosition.minus(m_lastGyroYaw).getRadians();
+      m_lastGyroYaw = m_gyroInputs.yawPosition;
     } else {
-      totalTwist.dtheta = m_rawGyroRotation.minus(lastGyroYaw).getRadians();
-      lastGyroYaw = m_rawGyroRotation;
+      totalTwist.dtheta = m_rawGyroRotation.minus(m_lastGyroYaw).getRadians();
+      m_lastGyroYaw = m_rawGyroRotation;
     }
     m_poseEstimator.addDriveData(Timer.getTimestamp(), totalTwist);
 
