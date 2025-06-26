@@ -46,9 +46,8 @@ public class SetpointGenerator {
           ReefHeight.L4, new LoggedTunableNumber("Wrist L4 Angle", 40.0));
 
   // we need to move back a bit from the raw branch pose
-  static LoggedTunableNumber incha = new LoggedTunableNumber("AAAA inch", 6.5);
-  private static double kDriveXOffset =
-      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
+  private static final double kDriveXOffset =
+      DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(6.5);
 
   private static final double kDriveXOffsetFinalAlgae =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(25.0);
@@ -104,10 +103,6 @@ public class SetpointGenerator {
     }
 
     var centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[reefIndex / 2]);
-
-    if (incha.hasChanged(0x00b259)) {
-      kDriveXOffset = DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
-    }
 
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
@@ -205,7 +200,7 @@ public class SetpointGenerator {
 
   private static int[] checkVertical(Pose2d pose) {
     // check the alliance
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+    Alliance alliance = getFieldAlliance(pose);
     if (alliance == Alliance.Red) {
       if (pose.getX() >= 13.062) {
         return new int[] {0, 1, 5};
@@ -222,7 +217,7 @@ public class SetpointGenerator {
   }
 
   private static int[] checkDiagonalPositive(Pose2d pose) {
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+    Alliance alliance = getFieldAlliance(pose);
     double m = Math.sqrt(3) / 3;
     double b = alliance == Alliance.Red ? -3.53 : 1.4;
     double ty = m * pose.getX() + b;
@@ -242,7 +237,7 @@ public class SetpointGenerator {
   }
 
   private static int[] checkDiagonalNegative(Pose2d pose) {
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Red);
+    Alliance alliance = getFieldAlliance(pose);
     double m = -Math.sqrt(3) / 3;
     double b = alliance == Alliance.Red ? 11.55 : 6.6;
     double ty = m * pose.getX() + b;
@@ -300,16 +295,39 @@ public class SetpointGenerator {
     return algaeHeight;
   }
 
-  public static Pose2d generateAlgae(int algaeIndex) {
-    Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
-    // we need to move away from the center of the reef (regardless of angle)
-    if (incha.hasChanged(0x00b259)) {
-      kDriveXOffset = DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(incha.get());
+  public static Pose2d generateAlgae(int algaeIndex, Pose2d robotPose) {
+    Pose2d centerFacePose = FieldConstants.Reef.kCenterFaces[algaeIndex];
+    var fieldAlliance = getFieldAlliance(robotPose);
+    if (fieldAlliance == Alliance.Red) {
+      // flip the pose
+      // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
+      // parameter and i dont wanna add that to every single method
+      var translation = centerFacePose.getTranslation();
+      var rotation = centerFacePose.getRotation();
+      centerFacePose =
+          new Pose2d(
+              new Translation2d(
+                  FieldConstants.kFieldLength - translation.getX(), translation.getY()),
+              new Rotation2d(-rotation.getCos(), rotation.getSin()));
     }
+    // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
         centerFacePose.transformBy(
             new Transform2d(kDriveXOffset, 0.0, Rotation2d.fromDegrees(180)));
     return drivePoseFinal;
+  }
+
+  private static Alliance getFieldAlliance(Pose2d robotPose) {
+    Logger.recordOutput("SetpointGenerator/AlliancePose", robotPose);
+
+    var translation = robotPose.getTranslation();
+    if (translation.getX() < FieldConstants.kFieldLength / 2.0) {
+      Logger.recordOutput("SetpointGenerator/Alliance", Alliance.Blue);
+      return Alliance.Blue;
+    } else {
+      Logger.recordOutput("SetpointGenerator/Alliance", Alliance.Red);
+      return Alliance.Red;
+    }
   }
 
   public static MeshedSetpoint generateNearestIntake(Pose2d curPose) {
@@ -328,8 +346,21 @@ public class SetpointGenerator {
     }
   }
 
-  public static Pose2d generateAlgaeFinal(int algaeIndex) {
-    Pose2d centerFacePose = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[algaeIndex]);
+  public static Pose2d generateAlgaeFinal(int algaeIndex, Pose2d robotPose) {
+    Pose2d centerFacePose = FieldConstants.Reef.kCenterFaces[algaeIndex];
+    var fieldAlliance = getFieldAlliance(robotPose);
+    if (fieldAlliance == Alliance.Red) {
+      // flip the pose
+      // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
+      // parameter and i dont wanna add that to every single method
+      var translation = centerFacePose.getTranslation();
+      var rotation = centerFacePose.getRotation();
+      centerFacePose =
+          new Pose2d(
+              new Translation2d(
+                  FieldConstants.kFieldLength - translation.getX(), translation.getY()),
+              new Rotation2d(-rotation.getCos(), rotation.getSin()));
+    }
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
         centerFacePose.transformBy(
@@ -352,20 +383,42 @@ public class SetpointGenerator {
     return commonIndex;
   }
 
-  public static Pose2d generateBargeLeft() {
-    return new Pose2d(FieldConstants.Barge.kMiddleCage, new Rotation2d())
-        .rotateAround(
-            new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
-            Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
-        .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+  public static Pose2d generateBargeLeft(Pose2d robotPose) {
+    Pose2d res =
+        new Pose2d(FieldConstants.Barge.kMiddleCage, new Rotation2d())
+            .rotateAround(
+                new Translation2d(
+                    FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+                Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
+            .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+    // if our field alliance doesn't match our actual alliance we need to flip
+    if (getFieldAlliance(robotPose) != DriverStation.getAlliance().orElse(Alliance.Red)) {
+      // another eldritch horror
+      res =
+          new Pose2d(
+              new Translation2d(FieldConstants.kFieldLength - res.getX(), res.getY()),
+              new Rotation2d(-res.getRotation().getCos(), res.getRotation().getSin()));
+    }
+    return res;
   }
 
-  public static Pose2d generateBargeRight() {
-    return new Pose2d(FieldConstants.Barge.kCloseCage, new Rotation2d())
-        .rotateAround(
-            new Translation2d(FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
-            Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
-        .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+  public static Pose2d generateBargeRight(Pose2d robotPose) {
+    Pose2d res =
+        new Pose2d(FieldConstants.Barge.kCloseCage, new Rotation2d())
+            .rotateAround(
+                new Translation2d(
+                    FieldConstants.kFieldLength / 2.0, FieldConstants.kFieldWidth / 2.0),
+                Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 180 : 0))
+            .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
+    // if our field alliance doesn't match our actual alliance we need to flip
+    if (getFieldAlliance(robotPose) != DriverStation.getAlliance().orElse(Alliance.Red)) {
+      // another eldritch horror
+      res =
+          new Pose2d(
+              new Translation2d(FieldConstants.kFieldLength - res.getX(), res.getY()),
+              new Rotation2d(-res.getRotation().getCos(), res.getRotation().getSin()));
+    }
+    return res;
   }
 
   public static Rotation2d generateLollipopAngle(Translation2d driveTranslation) {

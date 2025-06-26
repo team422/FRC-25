@@ -281,6 +281,8 @@ public class RobotState {
     Logger.recordOutput("RobotState/SecondaryTimerValue", m_secondaryTimer.get());
     Logger.recordOutput("RobotState/TertiaryTimerValue", m_tertiaryTimer.get());
 
+    Logger.recordOutput("RobotState/UsingVision", getUsingVision());
+
     Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
 
     Logger.recordOutput("RobotState/NumCoralScoredAuto", m_numCoralScoredAuto);
@@ -833,7 +835,7 @@ public class RobotState {
                   && !m_drive.driveToPointWithinTolerance(Inches.of(24.0), Degrees.of(10.0))))) {
 
         m_drive.setTargetPose(
-            SetpointGenerator.generateAlgae(m_desiredAlgaeIndex)
+            SetpointGenerator.generateAlgae(m_desiredAlgaeIndex, m_drive.getPose())
                 .transformBy(
                     new Transform2d(
                         Inches.of(m_numAlgaeScoredAuto < 2 ? -30 : -40),
@@ -841,10 +843,12 @@ public class RobotState {
                         new Rotation2d())));
 
       } else if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
-        m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
+        m_drive.setTargetPose(
+            SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex, m_drive.getPose()));
       } else {
         m_hasMovedOnFromTheIntermediateToTheDescore = true;
-        m_drive.setTargetPose(SetpointGenerator.generateAlgae(m_desiredAlgaeIndex));
+        m_drive.setTargetPose(
+            SetpointGenerator.generateAlgae(m_desiredAlgaeIndex, m_drive.getPose()));
       }
     }
 
@@ -985,16 +989,16 @@ public class RobotState {
           newDriveProfiles = DriveProfiles.kDriveToPoint;
           m_drive.setTargetPose(
               m_bargeLeftCage
-                  ? SetpointGenerator.generateBargeLeft()
-                  : SetpointGenerator.generateBargeRight());
+                  ? SetpointGenerator.generateBargeLeft(m_drive.getPose())
+                  : SetpointGenerator.generateBargeRight(m_drive.getPose()));
         } else {
           newDriveProfiles = DriveProfiles.kMeshedUserControls;
 
           Pose2d desPose;
           if (m_bargeLeftCage) {
-            desPose = SetpointGenerator.generateBargeLeft();
+            desPose = SetpointGenerator.generateBargeLeft(m_drive.getPose());
           } else {
-            desPose = SetpointGenerator.generateBargeRight();
+            desPose = SetpointGenerator.generateBargeRight(m_drive.getPose());
           }
           m_drive.setMeshedTargetPose(desPose);
           m_drive.setMeshedAxisUnlocked();
@@ -1023,7 +1027,7 @@ public class RobotState {
         break;
 
       case kCoralOTB:
-        newIntakeState = IntakeState.kIntaking;
+        newIntakeState = IntakeState.kIntakingInitial;
         newElevatorState = ElevatorState.kIntaking;
         newManipulatorState = ManipulatorState.kIntaking;
 
@@ -1095,7 +1099,8 @@ public class RobotState {
         if (getUsingVision()) {
           newDriveProfiles = DriveProfiles.kDriveToPoint;
           m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
-          m_drive.setTargetPose(SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex));
+          m_drive.setTargetPose(
+              SetpointGenerator.generateAlgaeFinal(m_desiredAlgaeIndex, m_drive.getPose()));
         }
         newElevatorState = ElevatorState.kAlgaeDescoringFinal;
         newManipulatorState = ManipulatorState.kAlgaeHold;

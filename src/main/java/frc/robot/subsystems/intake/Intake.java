@@ -41,9 +41,12 @@ public class Intake extends SubsystemBase {
   private Timer m_timer = new Timer();
   private Timer m_secondaryTimer = new Timer();
 
+  private boolean m_intakingWasWithinTolerance = false;
+
   public static enum IntakeState {
     kStow,
-    kIntaking,
+    kIntakingInitial,
+    kIntakingFinal,
     kCoralHold,
     kCoralRunThrough,
     kOuttaking,
@@ -60,7 +63,8 @@ public class Intake extends SubsystemBase {
 
     Map<IntakeState, Runnable> periodicHash = new HashMap<>();
     periodicHash.put(IntakeState.kStow, this::stowPeriodic);
-    periodicHash.put(IntakeState.kIntaking, this::intakingPeriodic);
+    periodicHash.put(IntakeState.kIntakingInitial, this::intakingInitialPeriodic);
+    periodicHash.put(IntakeState.kIntakingFinal, this::intakingFinalPeriodic);
     periodicHash.put(IntakeState.kCoralHold, this::coralHoldPeriodic);
     periodicHash.put(IntakeState.kOuttaking, this::outtakingPeriodic);
     periodicHash.put(IntakeState.kFunnelIntaking, this::funnelIntakingPeriodic);
@@ -187,8 +191,20 @@ public class Intake extends SubsystemBase {
     }
   }
 
-  public void intakingPeriodic() {
-    m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeVoltage.get());
+  public void intakingInitialPeriodic() {
+    m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeInitialVoltage.get());
+    m_pivotIO.setSlot(1);
+    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
+    if (Math.abs(IntakeConstants.kPivotIntakeAngle.get() - m_pivotInputs.currAngleDeg) < IntakeConstants.kPivotTolerance.get()) {
+      m_intakingWasWithinTolerance = true;
+    } else if (m_intakingWasWithinTolerance) {
+      // the pivot has been pushed out of the way by incoming coral, we need to slow down
+      updateState(IntakeState.kIntakingFinal);
+    }
+  }
+
+  public void intakingFinalPeriodic() {
+    m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeFinalVoltage.get());
     m_pivotIO.setSlot(1);
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
   }
@@ -284,7 +300,7 @@ public class Intake extends SubsystemBase {
     if (m_profiles.getCurrentProfile() == IntakeState.kCoralHold) {
       return IntakeState.kOuttaking;
     } else {
-      return IntakeState.kIntaking;
+      return IntakeState.kIntakingInitial;
     }
   }
 

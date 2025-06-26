@@ -464,8 +464,10 @@ public final class Constants {
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
-    public static final LoggedTunableNumber kRollerIntakeVoltage =
-        new LoggedTunableNumber("Intake Roller Intake Voltage", 3.5);
+    public static final LoggedTunableNumber kRollerIntakeInitialVoltage =
+        new LoggedTunableNumber("Intake Roller Intake Initial Voltage", 3.5);
+    public static final LoggedTunableNumber kRollerIntakeFinalVoltage =
+        new LoggedTunableNumber("Intake Roller Intake Final Voltage", 3.5);
     public static final LoggedTunableNumber kRollerHoldVoltage =
         new LoggedTunableNumber("Intake Roller Hold Voltage", 0.39);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
