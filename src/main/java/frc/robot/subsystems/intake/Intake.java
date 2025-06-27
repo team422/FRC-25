@@ -195,7 +195,8 @@ public class Intake extends SubsystemBase {
     m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeInitialVoltage.get());
     m_pivotIO.setSlot(1);
     m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()));
-    if (Math.abs(IntakeConstants.kPivotIntakeAngle.get() - m_pivotInputs.currAngleDeg) < IntakeConstants.kPivotTolerance.get()) {
+    if (Math.abs(IntakeConstants.kPivotIntakeAngle.get() - m_pivotInputs.currAngleDeg)
+        < IntakeConstants.kPivotTolerance.get()) {
       m_intakingWasWithinTolerance = true;
     } else if (m_intakingWasWithinTolerance) {
       // the pivot has been pushed out of the way by incoming coral, we need to slow down

@@ -1229,6 +1229,7 @@ public class RobotState {
   public void manageAlgaeIntakeRelease() {
     if (m_profiles.getCurrentProfile() == RobotAction.kBargeAutoScore
         || m_profiles.getCurrentProfile() == RobotAction.kProcessorOuttake) {
+      m_manipulator.updateState(ManipulatorState.kStow);
       setDefaultAction();
     }
     if (m_otbRunThrough) {
