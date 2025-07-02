@@ -163,7 +163,7 @@ public class PivotIOKraken implements PivotIO {
   }
 
   @Override
-  public void setDesiredAngle(Rotation2d angle) {
+  public void setDesiredAngle(Rotation2d angle, double feedforward) {
     double value = angle.getRadians();
     value =
         MathUtil.clamp(
@@ -173,7 +173,8 @@ public class PivotIOKraken implements PivotIO {
     angle = Rotation2d.fromRadians(value);
 
     m_desiredAngle = angle;
-    m_motor.setControl(m_positionControl.withPosition(angle.getRotations()));
+    m_motor.setControl(
+        m_positionControl.withPosition(angle.getRotations()).withFeedForward(feedforward));
   }
 
   private Rotation2d getCurrAngle() {

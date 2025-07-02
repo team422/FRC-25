@@ -1027,7 +1027,7 @@ public class RobotState {
         break;
 
       case kCoralOTB:
-        newIntakeState = IntakeState.kIntakingInitial;
+        newIntakeState = IntakeState.kIntaking;
         newElevatorState = ElevatorState.kIntaking;
         newManipulatorState = ManipulatorState.kIntaking;
 

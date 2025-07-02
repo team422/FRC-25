@@ -425,12 +425,12 @@ public final class Constants {
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees(
-            (77.8 - 88.29 - 11.26 - 9.0 - 11.6 - 11.75 + 5.0) * kPivotAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees((17.0) * kPivotAbsoluteEncoderGearRatio);
 
     public static final Rotation2d kPivotFakeToRealOffset = Rotation2d.fromDegrees(75.0);
 
-    public static final double kZeroEncoderThreshold = 122.0; // degrees
+    public static final LoggedTunableNumber kZeroEncoderThreshold =
+        new LoggedTunableNumber("Pivot Zero Threshikd", 122.0); // degrees
 
     public static final Angle kZeroEncoderValue = Degrees.of(137.0);
 
@@ -439,35 +439,42 @@ public final class Constants {
     public static final double kRollerCoralCurrentThreshold = 99.0;
 
     public static final double kRollerCoralCurrentDebounce = 0.2; // seconds
-
     public static final LoggedTunableNumber kPivotP0 = new LoggedTunableNumber("Pivot P0", 20.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
     public static final LoggedTunableNumber kPivotD0 = new LoggedTunableNumber("Pivot D0", 0.0);
     public static final LoggedTunableNumber kPivotP1 = new LoggedTunableNumber("Pivot P1", 35.0);
     public static final LoggedTunableNumber kPivotD1 = new LoggedTunableNumber("Pivot D1", 0.0);
+    public static final LoggedTunableNumber kPivotP2 = new LoggedTunableNumber("Pivot P2", 35.0);
+    public static final LoggedTunableNumber kPivotD2 = new LoggedTunableNumber("Pivot D2", 0.0);
     public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.23);
 
     public static final LoggedTunableNumber kPivotStowAngle =
         new LoggedTunableNumber("Pivot Stow Angle", 30.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
-        new LoggedTunableNumber("Pivot Intake Angle", 142.0);
+        new LoggedTunableNumber("Pivot Intake Angle", 139.0);
     public static final LoggedTunableNumber kPivotHoldAngle =
         new LoggedTunableNumber("Pivot Hold Angle", 30.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =
-        new LoggedTunableNumber("Pivot Outtake Angle", 40.0);
+        new LoggedTunableNumber("Pivot Outtake Angle", 48.0);
     public static final LoggedTunableNumber kPivotFunnelIntakeAngle =
         new LoggedTunableNumber("Pivot Funnel Intake Angle", 64.0);
     public static final LoggedTunableNumber kPivotCoralRunThroughAngle =
         new LoggedTunableNumber("Pivot Coral Run Through Angle", 30.0);
     public static final LoggedTunableNumber kPivotClimbAngle =
         new LoggedTunableNumber("Pivot Climb Angle", 50.0);
+    public static final LoggedTunableNumber kIntakingFeedforward =
+        new LoggedTunableNumber("Pivot Intaking Feedforward", -0.6);
+
+    public static final LoggedTunableNumber kZeroVelocityThreshold = new LoggedTunableNumber("Pivot Zero Velocity Threshold", 1.0);
+    public static final LoggedTunableNumber kIntakingFeedforwardThreshold =
+        new LoggedTunableNumber("Pivot Intaking Feedforward Threshold", 125.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
-    public static final LoggedTunableNumber kRollerIntakeInitialVoltage =
-        new LoggedTunableNumber("Intake Roller Intake Initial Voltage", 3.5);
-    public static final LoggedTunableNumber kRollerIntakeFinalVoltage =
-        new LoggedTunableNumber("Intake Roller Intake Final Voltage", 3.5);
+    public static final LoggedTunableNumber kRollerIntakeVoltage =
+        new LoggedTunableNumber("Intake Roller Intake Voltage", 3.5);
+    public static final LoggedTunableNumber kRollerL1IntakeVoltage =
+        new LoggedTunableNumber("Intake Roller L1 Intake Voltage", 2.0);
     public static final LoggedTunableNumber kRollerHoldVoltage =
         new LoggedTunableNumber("Intake Roller Hold Voltage", 0.39);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
@@ -491,8 +498,8 @@ public final class Constants {
     public static final double kPivotArmLength = Units.inchesToMeters(17.5);
     public static final double kPivotSimMOI =
         SingleJointedArmSim.estimateMOI(kPivotArmLength, kPivotArmMass);
-    public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(0.0);
-    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(139.0);
+    public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(30.0);
+    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(140.0);
     public static final boolean kSimSimulateGravity = false;
     public static final Rotation2d kSimStartingAngle =
         Rotation2d.fromDegrees(Math.random() * kPivotMaxAngle.getDegrees());
