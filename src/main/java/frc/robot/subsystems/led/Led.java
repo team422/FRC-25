@@ -1,8 +1,6 @@
 package frc.robot.subsystems.led;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
@@ -47,6 +45,7 @@ public class Led extends SubsystemBase {
     kAutoscoreMeasurementsBad,
     kAutoscoreMeasurementsGood,
     kTargetMismatch,
+    kSuperAlert,
     kOff,
   }
 
@@ -59,10 +58,7 @@ public class Led extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // unnecessary for now but i dont wanna delete the math i did just yet
-    // if (m_state == LedState.kLocationCheck) {
-    //   locationCheck();
-    // }
+    double start = HALUtil.getFPGATime();
 
     if (m_state == LedState.kTargetMismatch) {
       // if the mismatch timer is running, check if it has elapsed
@@ -79,6 +75,11 @@ public class Led extends SubsystemBase {
       }
     }
 
+    if (m_state == LedState.kSuperAlert) {
+      // override all other modifiers
+      superAlert();
+    }
+
     if (!RobotState.getInstance().getOtbRunthrough()) {
       blink();
     } else {
@@ -93,6 +94,8 @@ public class Led extends SubsystemBase {
     Logger.recordOutput("LED/OtbOn", m_otbOn);
     Logger.recordOutput("LED/GamepieceFlash", m_gamePieceFlash);
     Logger.recordOutput("LED/FlashColor", m_flashColor);
+
+    Logger.recordOutput("PeriodicTime/LED", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
   public void updateState(LedState state) {
@@ -100,14 +103,18 @@ public class Led extends SubsystemBase {
       // exit early so we don't have to update
       return;
     }
-    if (m_state == LedState.kFullTuning) {
-      // don't allow full tuning to be cancelled
+    if (m_state == LedState.kSuperAlert) {
+      // super alert must be cleared with code restart
       return;
     }
-    if (m_state == LedState.kAlert && state != LedState.kFullTuning) {
-      // don't allow the alert state to be overridden (an alert needs to be cleared with code
-      // restart)
-      // but full tuning can override it
+    if (m_state == LedState.kFullTuning && state != LedState.kSuperAlert) {
+      // don't allow full tuning to be cancelled except by super alert
+      return;
+    }
+    if (m_state == LedState.kAlert
+        && state != LedState.kFullTuning
+        && state != LedState.kSuperAlert) {
+      // only allow full tuning and super alert to cancel alert
       return;
     }
     m_state = state;
@@ -127,36 +134,16 @@ public class Led extends SubsystemBase {
     }
   }
 
-  @SuppressWarnings("unused")
-  private void locationCheck() {
-    Pose2d robotPose = RobotState.getInstance().getRobotPose();
-    Pose2d startPose = RobotState.getInstance().getPathPlannerStartPose();
-    double yawError = robotPose.getRotation().minus(startPose.getRotation()).getDegrees();
-    int numYawLeds = (int) Math.round(yawError);
-    numYawLeds = MathUtil.clamp(numYawLeds, 0, m_buffer.getLength() / 2);
-    double distanceError =
-        Units.metersToInches(robotPose.getTranslation().getDistance(startPose.getTranslation()));
-    int numDistanceLeds = (int) Math.round(distanceError);
-    numDistanceLeds = MathUtil.clamp(numDistanceLeds, 0, m_buffer.getLength() / 2);
-    // left side is yaw error, right side is distance error
-    // start in middle and work way out
-
-    int mid = m_buffer.getLength() / 2; // Middle index
-
-    // Place 1s
-    for (int i = 0; i < numYawLeds; i++) {
-      m_buffer.setLED(mid - (numYawLeds - i), LedConstants.kLocationCheckYaw);
+  private void superAlert() {
+    // rapidly flash red
+    if (Timer.getFPGATimestamp() % 0.35 < 0.175) {
+      // flash on
+      LEDPattern.solid(convertColor(Color.kRed)).applyTo(m_buffer);
+    } else {
+      // flash off
+      LEDPattern.kOff.applyTo(m_buffer);
     }
-
-    // Place 2s
-    for (int i = 0; i < numDistanceLeds; i++) {
-      m_buffer.setLED(mid + i, LedConstants.kLocationCheckDistance);
-    }
-
-    Logger.recordOutput("LED/LocationCheck/YawError", yawError);
-    Logger.recordOutput("LED/LocationCheck/DistanceError", distanceError);
-    Logger.recordOutput("LED/LocationCheck/NumYawLeds", numYawLeds);
-    Logger.recordOutput("LED/LocationCheck/NumDistanceLeds", numDistanceLeds);
+    m_strip.setData(m_buffer);
   }
 
   private void targetMismatch() {

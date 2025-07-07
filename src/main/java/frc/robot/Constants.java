@@ -412,7 +412,7 @@ public final class Constants {
   }
 
   public static final class IntakeConstants {
-    public static final double kPivotGearRatio = (84.0 / 8.0) * (36.0 / 14.0);
+    public static final double kPivotGearRatio = (72.0 / 8.0) * (36.0 / 14.0);
     public static final double kPivotAbsoluteEncoderGearRatio = 36.0 / 14.0;
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
@@ -425,7 +425,7 @@ public final class Constants {
     //     Rotation2d.fromDegrees(87.451171875).plus(Rotation2d.fromDegrees(90.0));
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
-        Rotation2d.fromDegrees((17.0) * kPivotAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees((24.0) * kPivotAbsoluteEncoderGearRatio);
 
     public static final Rotation2d kPivotFakeToRealOffset = Rotation2d.fromDegrees(75.0);
 
@@ -442,9 +442,9 @@ public final class Constants {
     public static final LoggedTunableNumber kPivotP0 = new LoggedTunableNumber("Pivot P0", 20.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
     public static final LoggedTunableNumber kPivotD0 = new LoggedTunableNumber("Pivot D0", 0.0);
-    public static final LoggedTunableNumber kPivotP1 = new LoggedTunableNumber("Pivot P1", 35.0);
+    public static final LoggedTunableNumber kPivotP1 = new LoggedTunableNumber("Pivot P1", 30.0);
     public static final LoggedTunableNumber kPivotD1 = new LoggedTunableNumber("Pivot D1", 0.0);
-    public static final LoggedTunableNumber kPivotP2 = new LoggedTunableNumber("Pivot P2", 35.0);
+    public static final LoggedTunableNumber kPivotP2 = new LoggedTunableNumber("Pivot P2", 30.0);
     public static final LoggedTunableNumber kPivotD2 = new LoggedTunableNumber("Pivot D2", 0.0);
     public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.23);
 
@@ -463,9 +463,10 @@ public final class Constants {
     public static final LoggedTunableNumber kPivotClimbAngle =
         new LoggedTunableNumber("Pivot Climb Angle", 50.0);
     public static final LoggedTunableNumber kIntakingFeedforward =
-        new LoggedTunableNumber("Pivot Intaking Feedforward", -0.6);
+        new LoggedTunableNumber("Pivot Intaking Feedforward", 0.0);
 
-    public static final LoggedTunableNumber kZeroVelocityThreshold = new LoggedTunableNumber("Pivot Zero Velocity Threshold", 1.0);
+    public static final LoggedTunableNumber kZeroVelocityThreshold =
+        new LoggedTunableNumber("Pivot Zero Velocity Threshold", 1.0);
     public static final LoggedTunableNumber kIntakingFeedforwardThreshold =
         new LoggedTunableNumber("Pivot Intaking Feedforward Threshold", 125.0);
 

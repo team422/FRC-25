@@ -1669,6 +1669,10 @@ public class RobotState {
     updateRobotAction(RobotAction.kAutoAutoScore);
   }
 
+  public void superAlert() {
+    m_led.updateState(LedState.kSuperAlert);
+  }
+
   public boolean getManipulatorAutoReversing() {
     return m_manipulator.getAutoReversing();
   }

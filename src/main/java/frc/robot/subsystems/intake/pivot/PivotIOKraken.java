@@ -197,9 +197,17 @@ public class PivotIOKraken implements PivotIO {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
 
-    double startAngle = getAbsoluteFinal().getRotations();
+    var startAngle = getAbsoluteFinal();
 
-    m_motor.getConfigurator().setPosition(startAngle);
+    // un-comment out to enable super alert
+    // if (Math.abs(startAngle.getMeasure().minus(IntakeConstants.kZeroEncoderValue).in(Degrees))
+    //     > 3) {
+    //   // if we're more than 3 degrees off, we are cooked
+    //   RobotState.getInstance().superAlert();
+    //   return;
+    // }
+
+    m_motor.getConfigurator().setPosition(startAngle.getMeasure());
   }
 
   private Rotation2d getAbsoluteWrapAround() {

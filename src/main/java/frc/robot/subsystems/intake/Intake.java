@@ -160,7 +160,8 @@ public class Intake extends SubsystemBase {
     m_rollerIO.updateInputs(m_rollerInputs);
     m_pivotIO.updateInputs(m_pivotInputs);
 
-    if (DriverStation.isEnabled() && m_pivotInputs.velocityRPS > IntakeConstants.kZeroVelocityThreshold.get()) {
+    if (DriverStation.isEnabled()
+        && m_pivotInputs.velocityRPS > IntakeConstants.kZeroVelocityThreshold.get()) {
       m_readyToZero = true;
     }
     if (DriverStation.isEnabled()
