@@ -275,6 +275,8 @@ public class RobotState {
 
     updateLED();
 
+    SetpointGenerator.logLines();
+
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());
     Logger.recordOutput("RobotState/SecondaryTimerValue", m_secondaryTimer.get());

@@ -52,13 +52,13 @@ public class SetpointGenerator {
   private static final double kDriveXOffsetFinalAlgae =
       DriveConstants.kTrackWidthX / 2.0 + Units.inchesToMeters(25.0);
 
-  private static List<MeshedSetpoint> kIntakePositionsRed =
+  private static final List<MeshedSetpoint> kIntakePositionsRed =
       List.of(
           new MeshedSetpoint(
               new Pose2d(16.32, 0.96, Rotation2d.fromDegrees(126)), .714, -10.50, 15.745, 16.73),
           new MeshedSetpoint(
               new Pose2d(16.32, 6.1, Rotation2d.fromDegrees(-126)), -.714, 18.55, 15.745, 16.73));
-  private static List<MeshedSetpoint> kIntakePositionsBlue =
+  private static final List<MeshedSetpoint> kIntakePositionsBlue =
       List.of(
           new MeshedSetpoint(
               new Pose2d(1.0, 0.96, Rotation2d.fromDegrees(54)), -.714, 1.98214, 0.7419, 1.7269),
@@ -438,5 +438,24 @@ public class SetpointGenerator {
     double dx = closestTranslation.getX() - driveTranslation.getX();
 
     return Rotation2d.fromRadians(Math.atan2(dy, dx));
+  }
+
+  public static void logLines() {
+    List<Translation2d[]> values = new ArrayList<>();
+    for (var pos : kIntakePositionsRed) {
+      double y1 = pos.slope * pos.minX + pos.intercept;
+      double y2 = pos.slope * pos.maxX + pos.intercept;
+      Translation2d[] line = {new Translation2d(pos.minX, y1), new Translation2d(pos.maxX, y2)};
+      values.add(line);
+    }
+    for (var pos : kIntakePositionsBlue) {
+      double y1 = pos.slope * pos.minX + pos.intercept;
+      double y2 = pos.slope * pos.maxX + pos.intercept;
+      Translation2d[] line = {new Translation2d(pos.minX, y1), new Translation2d(pos.maxX, y2)};
+      values.add(line);
+    }
+    for (int i = 0; i < values.size(); i++) {
+      Logger.recordOutput("Lines/" + i, values.get(i));
+    }
   }
 }
