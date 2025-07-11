@@ -16,7 +16,6 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.littletonUtils.AllianceFlipUtil;
@@ -287,6 +286,9 @@ public class RobotState {
 
     Logger.recordOutput("RobotState/NumCoralScoredAuto", m_numCoralScoredAuto);
 
+    Logger.recordOutput("RobotState/HasRunASingleCycle", m_hasRunASingleCycle);
+    Logger.recordOutput("RobotState/HasRunTwoCycle", m_hasRunTwoCycles);
+
     Logger.recordOutput("PeriodicTime/RobotState", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
@@ -460,7 +462,7 @@ public class RobotState {
 
       coralIntakingPeriodic();
 
-      if (!m_isBargeAuto && m_timer.hasElapsed(2.5)) {
+      if (!m_isBargeAuto && m_timer.hasElapsed(DriveConstants.kAutoAutoscoreTimeout.get())) {
         // we give up and accept that we don't have a game piece
         m_numCoralScoredAuto++;
         updateRobotAction(RobotAction.kAutoCoralIntaking);
@@ -587,12 +589,6 @@ public class RobotState {
                   1.6244, 0.9075, Rotation2d.fromDegrees(-126).plus(Rotation2d.fromDegrees(180))));
         }
       }
-    }
-
-    if (RobotBase.isReal() && DriverStation.getMatchTime() < 1.0) {
-      var targetPose = m_drive.getTargetPose();
-      var newTarget = new Pose2d(targetPose.getTranslation(), m_drive.getRotation());
-      m_drive.setTargetPose(newTarget);
     }
 
     coralIntakingPeriodic();
@@ -752,6 +748,10 @@ public class RobotState {
       m_hasRunASingleCycle = true;
       return;
     }
+    if (!m_hasRunTwoCycles) {
+      m_hasRunTwoCycles = true;
+      return;
+    }
 
     if (m_elevator.atSetpoint(ElevatorConstants.kBargeThrowHeight.get())) {
       m_manipulator.runRollerBargeScoring();
@@ -767,6 +767,10 @@ public class RobotState {
 
       if (!m_hasRunASingleCycle) {
         m_hasRunASingleCycle = true;
+        return;
+      }
+      if (!m_hasRunTwoCycles) {
+        m_hasRunTwoCycles = true;
         return;
       }
 
@@ -787,6 +791,10 @@ public class RobotState {
     if (m_elevator.getCurrentState() == ElevatorState.kBargeScore) {
       if (!m_hasRunASingleCycle) {
         m_hasRunASingleCycle = true;
+        return;
+      }
+      if (!m_hasRunTwoCycles) {
+        m_hasRunTwoCycles = true;
         return;
       }
 
@@ -812,6 +820,7 @@ public class RobotState {
 
   // this is a hack but trust
   private boolean m_hasRunASingleCycle = false;
+  private boolean m_hasRunTwoCycles = false;
 
   private boolean m_hasMovedOnFromTheIntermediateToTheDescore = false;
 
@@ -1153,6 +1162,7 @@ public class RobotState {
     m_loaderStationTimer.reset();
 
     m_hasRunASingleCycle = false;
+    m_hasRunTwoCycles = false;
 
     m_hasMovedOnFromTheIntermediateToTheDescore = false;
 

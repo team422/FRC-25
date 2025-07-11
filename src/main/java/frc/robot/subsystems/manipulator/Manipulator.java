@@ -181,6 +181,9 @@ public class Manipulator extends SubsystemBase {
     Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
     Logger.recordOutput("Manipulator/RollerAtSetpoint", rollerWithinTolerance());
     Logger.recordOutput("Manipulator/RollerError", getRollerError());
+    Logger.recordOutput("Manipulator/RunRollerBargeScoring", m_runRollerBargeScoring);
+    Logger.recordOutput("Manipulator/RunRollerAlgaeDescoring", m_runRollerBargeScoring);
+    Logger.recordOutput("Manipulator/RunRollerScoring", m_runRollerScoring);
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
