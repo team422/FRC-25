@@ -280,16 +280,43 @@ public class SetpointGenerator {
 
   public static ReefHeight getAlgaeHeight(Pose2d drivePose) {
     // first we get the closest reef center face
-    Pose2d closestCenterFace = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[0]);
+    Pose2d closestCenterFace = FieldConstants.Reef.kCenterFaces[0];
+    var fieldAlliance = getFieldAlliance(drivePose);
+    if (fieldAlliance == Alliance.Red) {
+      // flip the pose
+      // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
+      // parameter and i dont wanna add that to every single method
+      var translation = closestCenterFace.getTranslation();
+      var rotation = closestCenterFace.getRotation();
+      closestCenterFace =
+          new Pose2d(
+              new Translation2d(
+                  FieldConstants.kFieldLength - translation.getX(), translation.getY()),
+              new Rotation2d(-rotation.getCos(), rotation.getSin()));
+    }
     int closestIndex = 0;
     for (int i = 1; i < FieldConstants.Reef.kCenterFaces.length; i++) {
-      Pose2d curr = AllianceFlipUtil.apply(FieldConstants.Reef.kCenterFaces[i]);
+      Pose2d curr = FieldConstants.Reef.kCenterFaces[i];
+
+      if (fieldAlliance == Alliance.Red) {
+        // flip the pose
+        // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
+        // parameter and i dont wanna add that to every single method
+        var translation = curr.getTranslation();
+        var rotation = curr.getRotation();
+        curr =
+            new Pose2d(
+                new Translation2d(
+                    FieldConstants.kFieldLength - translation.getX(), translation.getY()),
+                new Rotation2d(-rotation.getCos(), rotation.getSin()));
+      }
       if (drivePose.getTranslation().getDistance(curr.getTranslation())
           < drivePose.getTranslation().getDistance(closestCenterFace.getTranslation())) {
         closestCenterFace = curr;
         closestIndex = i;
       }
     }
+    Logger.recordOutput("A", closestCenterFace);
     // now we determine if the algae is at L2 or L3
     ReefHeight algaeHeight = closestIndex % 2 == 0 ? ReefHeight.L3 : ReefHeight.L2;
     return algaeHeight;
