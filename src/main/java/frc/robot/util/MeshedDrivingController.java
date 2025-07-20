@@ -10,8 +10,6 @@ import org.littletonrobotics.junction.Logger;
 /**
  * This class is used to control the robot's movement in a meshed driving style. It takes user input
  * and desired pose and calculates the appropriate speeds for the robot to follow the desired path.
- *
- * <p>A new object should be created every time the meshed driving is called.
  */
 public class MeshedDrivingController {
   private Pose2d m_desiredPose = null;
@@ -41,6 +39,12 @@ public class MeshedDrivingController {
 
   public void setDesiredPose(Pose2d pose) {
     m_desiredPose = pose;
+    // reset pid
+    setPIDControllers(
+        m_linearXController.getP(),
+        m_linearXController.getD(),
+        m_thetaController.getP(),
+        m_thetaController.getD());
   }
 
   public void setPIDControllers(double pXY, double dXY, double pTheta, double dTheta) {
@@ -69,10 +73,15 @@ public class MeshedDrivingController {
   }
 
   public void setAxisLocked(double slope, double intercept, double minX, double maxX) {
+    m_axisLocked = true;
     m_slope = slope;
     m_intercept = intercept;
     m_minX = minX;
     m_maxX = maxX;
+  }
+
+  public void setAxisUnlocked() {
+    m_axisLocked = false;
   }
 
   public ChassisSpeeds calculateSpeeds(ChassisSpeeds userSpeeds, Pose2d curPose) {

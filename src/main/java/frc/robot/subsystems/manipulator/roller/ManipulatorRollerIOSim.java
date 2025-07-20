@@ -64,8 +64,7 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
     m_positionController.setSetpoint(position.in(Degrees));
   }
 
-  @Override
-  public Angle getPosition() {
+  private Angle getPosition() {
     return Radians.of(m_sim.getAngularPositionRad());
   }
 
@@ -79,18 +78,7 @@ public class ManipulatorRollerIOSim implements ManipulatorRollerIO {
     // Not needed for simulation
   }
 
-  @Override
-  public boolean withinPositionTolerance() {
-    return m_positionController.atSetpoint();
-  }
-
-  @Override
-  public double getCurrent() {
-    return m_sim.getCurrentDrawAmps();
-  }
-
-  @Override
-  public double getAcceleration() {
+  private double getAcceleration() {
     return Units.radiansToRotations(m_sim.getAngularAccelerationRadPerSecSq());
   }
 }

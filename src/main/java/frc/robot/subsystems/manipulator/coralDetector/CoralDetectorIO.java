@@ -9,11 +9,9 @@ public interface CoralDetectorIO {
     public boolean manipulatorSensorTwo;
     public boolean funnelSensorOne;
     public boolean funnelSensorTwo;
+    public boolean hasGamePiece;
+    public boolean gamePieceInFunnel;
   }
 
   public void updateInputs(CoralDetectorInputs inputs);
-
-  public boolean hasGamePiece();
-
-  public boolean gamePieceInFunnel();
 }

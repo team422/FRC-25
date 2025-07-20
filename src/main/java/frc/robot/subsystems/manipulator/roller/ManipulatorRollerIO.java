@@ -25,15 +25,7 @@ public interface ManipulatorRollerIO {
   // cannot use Rotation2d because this involves multiple rotations
   public void setDesiredPosition(Angle position);
 
-  public Angle getPosition();
-
   public void setPositionPID(double kP, double kI, double kD, double kS);
 
   public void setCurrentLimits(double supplyLimit);
-
-  public boolean withinPositionTolerance();
-
-  public double getCurrent();
-
-  public double getAcceleration();
 }

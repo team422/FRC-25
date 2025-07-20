@@ -1,5 +1,9 @@
 package frc.robot.subsystems.climb;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -102,13 +106,13 @@ public class ClimbIOKraken implements ClimbIO {
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
-    inputs.currPositionDegrees = getCurrPosition().getDegrees();
+    inputs.currPositionDegrees = getPosition().getDegrees();
     inputs.desiredPositionDegrees = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
-    inputs.voltage = m_motorVoltage.getValueAsDouble();
-    inputs.current = m_motorCurrent.getValueAsDouble();
-    inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
-    inputs.temperature = m_motorTemperature.getValueAsDouble();
+    inputs.voltage = m_motorVoltage.getValue().in(Volts);
+    inputs.current = m_motorCurrent.getValue().in(Amps);
+    inputs.statorCurrent = m_motorStatorCurrent.getValue().in(Amps);
+    inputs.temperature = m_motorTemperature.getValue().in(Celsius);
   }
 
   @Override
@@ -141,12 +145,12 @@ public class ClimbIOKraken implements ClimbIO {
     m_motor.setPosition(0, 0.0);
   }
 
-  public Rotation2d getCurrPosition() {
-    return Rotation2d.fromRotations(m_motorPosition.getValueAsDouble());
+  private Rotation2d getPosition() {
+    return new Rotation2d(m_motorPosition.getValue());
   }
 
-  public boolean atSetpoint() {
-    return Math.abs(m_desiredAngle.getDegrees() - getCurrPosition().getDegrees())
+  private boolean atSetpoint() {
+    return Math.abs(m_desiredAngle.getDegrees() - getPosition().getDegrees())
         < ClimbConstants.kClimbTolerance;
   }
 }

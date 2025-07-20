@@ -1,5 +1,10 @@
 package frc.robot.subsystems.intake.pivot;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -47,8 +52,6 @@ public class PivotIOKraken implements PivotIO {
 
   private boolean m_relativeEncoderReset = false;
 
-  // private PositionTorqueCurrentFOC m_positionControl =
-  //     new PositionTorqueCurrentFOC(0.0).withSlot(0);
   private PositionVoltage m_positionControl = new PositionVoltage(0.0).withSlot(0);
   private Rotation2d m_desiredAngle = new Rotation2d();
 
@@ -134,21 +137,16 @@ public class PivotIOKraken implements PivotIO {
       resetRelativeEncoder();
     }
 
-    // Logger.recordOutput("Pivot/AbsoluteEncoder",
-    // Units.rotationsToDegrees(m_absoluteEncoder.get()));
-    // Logger.recordOutput("Pivot/WrapAround", getAbsoluteWrapAround().getDegrees());
-    // Logger.recordOutput("Pivot/Final", getAbsoluteFinal().getDegrees());
-
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
     inputs.desiredAngleDeg = m_desiredAngle.getDegrees();
     inputs.atSetpoint = atSetpoint();
-    inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
-    inputs.current = m_motorCurrent.getValueAsDouble();
-    inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
-    inputs.voltage = m_motorVoltage.getValueAsDouble();
-    inputs.temperature = m_motorTemperature.getValueAsDouble();
+    inputs.velocityRPS = m_motorVelocity.getValue().in(RotationsPerSecond);
+    inputs.current = m_motorCurrent.getValue().in(Amps);
+    inputs.statorCurrent = m_motorStatorCurrent.getValue().in(Amps);
+    inputs.voltage = m_motorVoltage.getValue().in(Volts);
+    inputs.temperature = m_motorTemperature.getValue().in(Celsius);
   }
 
   @Override
@@ -179,13 +177,11 @@ public class PivotIOKraken implements PivotIO {
         m_positionControl.withPosition(angle.getRotations()).withFeedForward(feedforward));
   }
 
-  @Override
-  public Rotation2d getCurrAngle() {
-    return Rotation2d.fromRotations(m_motorPosition.getValueAsDouble());
+  private Rotation2d getCurrAngle() {
+    return new Rotation2d(m_motorPosition.getValue());
   }
 
-  @Override
-  public boolean atSetpoint() {
+  private boolean atSetpoint() {
     return Math.abs(m_desiredAngle.getDegrees() - getCurrAngle().getDegrees())
         < IntakeConstants.kPivotTolerance.get();
   }
@@ -201,9 +197,17 @@ public class PivotIOKraken implements PivotIO {
     // for performance, we use the absolute encoder to set the start angle but rely on the relative
     // encoder for the rest of the time
 
-    double startAngle = getAbsoluteFinal().getRotations();
+    var startAngle = getAbsoluteFinal();
 
-    m_motor.getConfigurator().setPosition(startAngle);
+    // un-comment out to enable super alert
+    // if (Math.abs(startAngle.getMeasure().minus(IntakeConstants.kZeroEncoderValue).in(Degrees))
+    //     > 3) {
+    //   // if we're more than 3 degrees off, we are cooked
+    //   RobotState.getInstance().superAlert();
+    //   return;
+    // }
+
+    m_motor.getConfigurator().setPosition(startAngle.getMeasure());
   }
 
   private Rotation2d getAbsoluteWrapAround() {

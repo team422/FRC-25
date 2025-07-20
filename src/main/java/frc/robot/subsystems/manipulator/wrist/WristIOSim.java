@@ -9,7 +9,6 @@ import frc.robot.Constants.ManipulatorConstants;
 public class WristIOSim implements WristIO {
   private SingleJointedArmSim m_sim;
   private PIDController m_controller = new PIDController(0, 0, 0);
-  private double m_kG = 0.0;
 
   public WristIOSim() {
     var plant =
@@ -35,8 +34,7 @@ public class WristIOSim implements WristIO {
   @Override
   public void updateInputs(WristInputs inputs) {
     double pidVoltage = m_controller.calculate(getCurrAngle().getDegrees());
-    double feedforwardVoltage = m_kG * Math.cos(getCurrAngle().getRadians());
-    m_sim.setInputVoltage(pidVoltage + feedforwardVoltage);
+    m_sim.setInputVoltage(pidVoltage);
     m_sim.update(0.020);
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
@@ -44,7 +42,7 @@ public class WristIOSim implements WristIO {
     inputs.atSetpoint = atSetpoint();
     inputs.velocityRPS = m_sim.getVelocityRadPerSec();
     inputs.current = m_sim.getCurrentDrawAmps();
-    inputs.voltage = pidVoltage + feedforwardVoltage;
+    inputs.voltage = pidVoltage;
 
     // these don't matter in sim
     inputs.statorCurrent = 0.0;
@@ -53,10 +51,9 @@ public class WristIOSim implements WristIO {
   }
 
   @Override
-  public void setPIDFF(double kP, double kI, double kD, double kS, double kG) {
+  public void setPIDFF(double kP, double kI, double kD, double kS) {
     m_controller.setPID(kP, kI, kD);
     // kS is not used in simulation
-    m_kG = kG;
   }
 
   @Override
@@ -64,20 +61,12 @@ public class WristIOSim implements WristIO {
     m_controller.setSetpoint(angle.getDegrees());
   }
 
-  @Override
-  public Rotation2d getCurrAngle() {
+  private Rotation2d getCurrAngle() {
     return Rotation2d.fromRadians(m_sim.getAngleRads());
   }
 
-  @Override
-  public boolean atSetpoint() {
+  private boolean atSetpoint() {
     return m_controller.atSetpoint();
-  }
-
-  @Override
-  public boolean atSetpoint(Rotation2d r) {
-    return Math.abs(r.getDegrees() - getCurrAngle().getDegrees())
-        < ManipulatorConstants.kWristTolerance;
   }
 
   @Override

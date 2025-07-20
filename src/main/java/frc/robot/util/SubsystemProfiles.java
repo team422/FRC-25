@@ -8,7 +8,39 @@ import java.util.List;
 import java.util.Map;
 import org.littletonrobotics.junction.Logger;
 
+/**
+ * A utility class for managing subsystem profiles/states. This is a simple finite state machine
+ * that allows you to manage profiles for a subsystem, based on an enum type. It also supports
+ * periodic functions associated with each profile, which can be called every loop iteration.
+ *
+ * <p>onEnter and onExit callbacks are not supported.
+ */
 public class SubsystemProfiles<T extends Enum<T>> {
+  private static boolean kUseLogging = true;
+  private static boolean kWarningsEnabled = true;
+
+  /**
+   * Sets whether to use logging for the subsystem profiles. This will enable logging of profile
+   * transitions and periodic function timings. If this is set to false, no logging will be done.
+   *
+   * @param useLogging whether to use logging for all subsystem profiles.
+   */
+  public static void setUseLogging(boolean useLogging) {
+    kUseLogging = useLogging;
+  }
+
+  /**
+   * Sets whether to enable warnings for missing periodic functions. If this is set to true, a
+   * warning will be printed to the console if a periodic function is not found for the current
+   * profile.
+   *
+   * @param warningsEnabled whether to enable warnings for missing periodic functions across all
+   *     subsystem profiles.
+   */
+  public static void setWarningsEnabled(boolean warningsEnabled) {
+    kWarningsEnabled = warningsEnabled;
+  }
+
   private T m_currentProfile;
   private final Map<T, Runnable> m_profilePeriodicFunctions;
   private T m_lastProfile;
@@ -18,6 +50,13 @@ public class SubsystemProfiles<T extends Enum<T>> {
   private final List<String> m_currMessages = new ArrayList<>();
   private int m_maxMessagesLength = 0;
 
+  /**
+   * Creates a new SubsystemProfiles instance.
+   *
+   * @param profilePeriodicFunctions a map of profiles to their periodic functions. The keys must be
+   *     non-null.
+   * @param defaultProfile the default profile to set initially. This must be non-null.
+   */
   @SuppressWarnings("unchecked")
   public SubsystemProfiles(Map<T, Runnable> profilePeriodicFunctions, T defaultProfile) {
 
@@ -43,10 +82,12 @@ public class SubsystemProfiles<T extends Enum<T>> {
     m_lastProfile = m_currentProfile;
     m_currentProfile = profile;
 
-    m_currMessages.add(
-        String.format(
-            "%s to %s: %.3f",
-            m_lastProfile.toString(), m_currentProfile.toString(), Timer.getFPGATimestamp()));
+    if (kUseLogging) {
+      m_currMessages.add(
+          String.format(
+              "%s to %s: %.3f",
+              m_lastProfile.toString(), m_currentProfile.toString(), Timer.getFPGATimestamp()));
+    }
   }
 
   /**
@@ -58,7 +99,7 @@ public class SubsystemProfiles<T extends Enum<T>> {
    */
   public Runnable getPeriodicFunction() {
     // logging
-    if (m_currMessages.size() > 0) {
+    if (kUseLogging && m_currMessages.size() > 0) {
       // we fill the rest of the messages for formatting
       // if there are old values in advantagescope it looks weird
       // this was the best solution i came up with that didn't sacrifice much performance
@@ -72,17 +113,17 @@ public class SubsystemProfiles<T extends Enum<T>> {
       m_currMessages.clear();
     }
 
-    Runnable res = m_profilePeriodicFunctions.get(m_currentProfile);
-    if (res == null) {
-      res =
-          () -> {
+    // if the profile is null we return a warning
+    return m_profilePeriodicFunctions.getOrDefault(
+        m_currentProfile,
+        () -> {
+          if (kWarningsEnabled) {
             System.out.println(
                 String.format(
                     "WARNING: No periodic function for profile %s::%s",
                     m_profileEnum.getSimpleName(), m_currentProfile.toString()));
-          };
-    }
-    return res;
+          }
+        });
   }
 
   /**
@@ -90,10 +131,16 @@ public class SubsystemProfiles<T extends Enum<T>> {
    * will log the time taken to "PeriodicTime/EnumName", where EnumName is the name of the states
    * enum.
    *
+   * <p>If {@code kUseLogging} is false, this will simply return the periodic function.
+   *
    * @return the periodic function with a timing wrapper.
    */
   public Runnable getPeriodicFunctionTimed() {
     Runnable r = getPeriodicFunction();
+    if (!kUseLogging) {
+      return r;
+    }
+
     return () -> {
       double start = HALUtil.getFPGATime();
 

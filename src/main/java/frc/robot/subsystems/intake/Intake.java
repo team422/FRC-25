@@ -1,8 +1,6 @@
 package frc.robot.subsystems.intake;
 
 import edu.wpi.first.hal.HALUtil;
-import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -43,8 +41,7 @@ public class Intake extends SubsystemBase {
   private Timer m_timer = new Timer();
   private Timer m_secondaryTimer = new Timer();
 
-  private Debouncer m_hasGamepieceDebouncer =
-      new Debouncer(IntakeConstants.kRollerCoralCurrentDebounce, DebounceType.kRising);
+  private boolean m_readyToZero = false;
 
   public static enum IntakeState {
     kStow,
@@ -136,6 +133,12 @@ public class Intake extends SubsystemBase {
                 IntakeConstants.kPivotI.get(),
                 IntakeConstants.kPivotD1.get(),
                 IntakeConstants.kPivotKS.get());
+            m_pivotIO.setPIDFF(
+                2,
+                IntakeConstants.kPivotP2.get(),
+                IntakeConstants.kPivotI.get(),
+                IntakeConstants.kPivotD2.get(),
+                IntakeConstants.kPivotKS.get());
           } else {
             m_pivotIO.setPIDFF(
                 0,
@@ -147,18 +150,27 @@ public class Intake extends SubsystemBase {
         },
         IntakeConstants.kPivotP0,
         IntakeConstants.kPivotP1,
+        IntakeConstants.kPivotP2,
         IntakeConstants.kPivotI,
         IntakeConstants.kPivotD0,
         IntakeConstants.kPivotD1,
+        IntakeConstants.kPivotD2,
         IntakeConstants.kPivotKS);
 
     m_rollerIO.updateInputs(m_rollerInputs);
     m_pivotIO.updateInputs(m_pivotInputs);
 
     if (DriverStation.isEnabled()
-        && m_pivotInputs.currAngleDeg > IntakeConstants.kZeroEncoderThreshold
-        && EqualsUtil.epsilonEquals(m_pivotInputs.velocityRPS, 0.0, 1e-3)) {
+        && m_pivotInputs.velocityRPS > IntakeConstants.kZeroVelocityThreshold.get()) {
+      m_readyToZero = true;
+    }
+    if (DriverStation.isEnabled()
+        && m_readyToZero
+        && m_pivotInputs.currAngleDeg > IntakeConstants.kZeroEncoderThreshold.get()
+        && EqualsUtil.epsilonEquals(m_pivotInputs.velocityRPS, 0.0)) {
       m_pivotIO.zeroEncoder(IntakeConstants.kZeroEncoderValue);
+      m_readyToZero = false;
+      Logger.recordOutput("Intake/Zeroed", Timer.getTimestamp());
     }
 
     m_profiles.getPeriodicFunctionTimed().run();
@@ -166,6 +178,7 @@ public class Intake extends SubsystemBase {
     Logger.processInputs("Intake/Roller", m_rollerInputs);
     Logger.processInputs("Intake/Pivot", m_pivotInputs);
     Logger.recordOutput("Intake/State", m_profiles.getCurrentProfile());
+    Logger.recordOutput("Intake/ReadyToZero", m_readyToZero);
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
@@ -187,24 +200,28 @@ public class Intake extends SubsystemBase {
     m_pivotIO.setSlot(0);
     if (RobotState.getInstance().getClimbState() != ClimbState.kMatch) {
       m_pivotIO.setDesiredAngle(
-          Rotation2d.fromDegrees(IntakeConstants.kPivotClimbAngle.get()),
-          computeKG(IntakeConstants.kPivotKGNoCoral.get()));
+          Rotation2d.fromDegrees(IntakeConstants.kPivotClimbAngle.get()), 0.0);
     } else {
-      m_pivotIO.setDesiredAngle(
-          Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()),
-          computeKG(IntakeConstants.kPivotKGNoCoral.get()));
+      m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()), 0.0);
     }
   }
 
   public void intakingPeriodic() {
-    m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeVoltage.get());
-    m_pivotIO.setSlot(1);
-    m_pivotIO.setDesiredAngle(
-        Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()),
-        computeKG(IntakeConstants.kPivotKGCoral.get()));
+    if (RobotState.getInstance().getOtbRunthrough()) {
+      m_rollerIO.setVoltage(IntakeConstants.kRollerIntakeVoltage.get());
+    } else {
+      m_rollerIO.setVoltage(IntakeConstants.kRollerL1IntakeVoltage.get());
+    }
 
-    if (m_hasGamepieceDebouncer.calculate(m_rollerIO.hasGamePiece())) {
-      RobotState.getInstance().manageIntakeHasGamePiece();
+    if (m_pivotInputs.currAngleDeg > IntakeConstants.kIntakingFeedforwardThreshold.get()) {
+      m_pivotIO.setSlot(2);
+      m_pivotIO.setDesiredAngle(
+          Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()),
+          IntakeConstants.kIntakingFeedforward.get());
+    } else {
+      m_pivotIO.setSlot(1);
+      m_pivotIO.setDesiredAngle(
+          Rotation2d.fromDegrees(IntakeConstants.kPivotIntakeAngle.get()), 0.0);
     }
   }
 
@@ -220,17 +237,14 @@ public class Intake extends SubsystemBase {
 
     m_rollerIO.setVoltage(IntakeConstants.kRollerHoldVoltage.get());
     m_pivotIO.setSlot(0);
-    m_pivotIO.setDesiredAngle(
-        Rotation2d.fromDegrees(IntakeConstants.kPivotHoldAngle.get()),
-        computeKG(IntakeConstants.kPivotKGCoral.get()));
+    m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotHoldAngle.get()), 0.0);
   }
 
   public void outtakingPeriodic() {
     m_rollerIO.setVoltage(IntakeConstants.kRollerOuttakeVoltage.get());
     m_pivotIO.setSlot(0);
     m_pivotIO.setDesiredAngle(
-        Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()),
-        computeKG(IntakeConstants.kPivotKGCoral.get()));
+        Rotation2d.fromDegrees(IntakeConstants.kPivotOuttakeAngle.get()), 0.0);
   }
 
   public void funnelIntakingPeriodic() {
@@ -238,14 +252,11 @@ public class Intake extends SubsystemBase {
     if (RobotState.getInstance().getManipulatorState() == ManipulatorState.kIntaking) {
       m_pivotIO.setSlot(1);
       m_pivotIO.setDesiredAngle(
-          Rotation2d.fromDegrees(IntakeConstants.kPivotFunnelIntakeAngle.get()),
-          computeKG(IntakeConstants.kPivotKGCoral.get()));
+          Rotation2d.fromDegrees(IntakeConstants.kPivotFunnelIntakeAngle.get()), 0.0);
       m_rollerIO.setVoltage(IntakeConstants.kRollerFunnelIntakeVoltage.get());
     } else {
       m_pivotIO.setSlot(1);
-      m_pivotIO.setDesiredAngle(
-          Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()),
-          computeKG(IntakeConstants.kPivotKGNoCoral.get()));
+      m_pivotIO.setDesiredAngle(Rotation2d.fromDegrees(IntakeConstants.kPivotStowAngle.get()), 0.0);
       m_rollerIO.setVoltage(IntakeConstants.kRollerStowVoltage.get());
     }
   }
@@ -262,10 +273,9 @@ public class Intake extends SubsystemBase {
 
     m_pivotIO.setSlot(0);
     m_pivotIO.setDesiredAngle(
-        Rotation2d.fromDegrees(IntakeConstants.kPivotCoralRunThroughAngle.get()),
-        computeKG(IntakeConstants.kPivotKGCoral.get()));
+        Rotation2d.fromDegrees(IntakeConstants.kPivotCoralRunThroughAngle.get()), 0.0);
     // once we're in position we can run the roller
-    if (m_pivotIO.atSetpoint()) {
+    if (atSetpoint()) {
       if (!m_secondaryTimer.isRunning()) {
         m_secondaryTimer.restart();
       }
@@ -283,8 +293,7 @@ public class Intake extends SubsystemBase {
   public void coralEjectPeriodic() {
     m_pivotIO.setSlot(0);
     m_pivotIO.setDesiredAngle(
-        Rotation2d.fromDegrees(IntakeConstants.kPivotCoralRunThroughAngle.get()),
-        computeKG(IntakeConstants.kPivotKGCoral.get()));
+        Rotation2d.fromDegrees(IntakeConstants.kPivotCoralRunThroughAngle.get()), 0.0);
     m_rollerIO.setVoltage(IntakeConstants.kRollerEjectVoltage.get());
   }
 
@@ -313,21 +322,11 @@ public class Intake extends SubsystemBase {
   }
 
   public Rotation2d getRotation() {
-    return m_pivotIO.getCurrAngle();
+    return Rotation2d.fromDegrees(m_pivotInputs.currAngleDeg);
   }
 
-  private double computeKG(double kG) {
-    if (RobotBase.isSimulation()) {
-      // no gravity in sim
-      Logger.recordOutput("Intake/KGCos", 0.0);
-      Logger.recordOutput("Intake/KGFinal", 0.0);
-      return 0.0;
-    }
-    Rotation2d angle = m_pivotIO.getCurrAngle();
-    Rotation2d offset = IntakeConstants.kPivotFakeToRealOffset;
-    angle = angle.plus(offset);
-    Logger.recordOutput("Intake/KGCos", angle.getCos());
-    Logger.recordOutput("Intake/KGFinal", kG * angle.getCos());
-    return kG * angle.getCos();
+  public boolean atSetpoint() {
+    return Math.abs(m_pivotInputs.desiredAngleDeg - m_pivotInputs.currAngleDeg)
+        < IntakeConstants.kPivotTolerance.get();
   }
 }

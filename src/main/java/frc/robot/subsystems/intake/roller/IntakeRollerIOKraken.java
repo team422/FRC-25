@@ -1,5 +1,11 @@
 package frc.robot.subsystems.intake.roller;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Volts;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -111,12 +117,12 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
 
     inputs.motorIsConnected = m_connectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
-    inputs.velocityRPS = m_motorVelocity.getValueAsDouble();
-    inputs.accelerationRPSSq = m_motorAcceleration.getValueAsDouble();
-    inputs.voltage = m_motorVoltage.getValueAsDouble();
-    inputs.current = m_motorCurrent.getValueAsDouble();
-    inputs.statorCurrent = m_motorStatorCurrent.getValueAsDouble();
-    inputs.temperature = m_motorTemperature.getValueAsDouble();
+    inputs.velocityRPS = m_motorVelocity.getValue().in(RotationsPerSecond);
+    inputs.accelerationRPSSq = m_motorAcceleration.getValue().in(RotationsPerSecondPerSecond);
+    inputs.current = m_motorCurrent.getValue().in(Amps);
+    inputs.statorCurrent = m_motorStatorCurrent.getValue().in(Amps);
+    inputs.voltage = m_motorVoltage.getValue().in(Volts);
+    inputs.temperature = m_motorTemperature.getValue().in(Celsius);
   }
 
   @Override
@@ -129,10 +135,5 @@ public class IntakeRollerIOKraken implements IntakeRollerIO {
     m_motor
         .getConfigurator()
         .apply(m_config.CurrentLimits.withSupplyCurrentLimit(supplyLimit), 0.0);
-  }
-
-  @Override
-  public boolean hasGamePiece() {
-    return m_motorCurrent.getValueAsDouble() > IntakeConstants.kRollerCoralCurrentThreshold;
   }
 }

@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -92,8 +93,7 @@ public class Manipulator extends SubsystemBase {
           ManipulatorConstants.kWristP.get(),
           ManipulatorConstants.kWristI.get(),
           ManipulatorConstants.kWristD.get(),
-          ManipulatorConstants.kWristKS.get(),
-          ManipulatorConstants.kWristKG.get());
+          ManipulatorConstants.kWristKS.get());
 
       m_rollerIO.setPositionPID(
           ManipulatorConstants.kRollerP.get(),
@@ -105,8 +105,7 @@ public class Manipulator extends SubsystemBase {
           ManipulatorConstants.kWristP.get(),
           ManipulatorConstants.kWristI.get(),
           ManipulatorConstants.kWristD.get(),
-          ManipulatorConstants.kWristKS.get(),
-          ManipulatorConstants.kWristKG.get());
+          ManipulatorConstants.kWristKS.get());
 
       m_rollerIO.setPositionPID(
           ManipulatorConstants.kSimRollerP,
@@ -130,22 +129,19 @@ public class Manipulator extends SubsystemBase {
                 ManipulatorConstants.kWristP.get(),
                 ManipulatorConstants.kWristI.get(),
                 ManipulatorConstants.kWristD.get(),
-                ManipulatorConstants.kWristKS.get(),
-                ManipulatorConstants.kWristKG.get());
+                ManipulatorConstants.kWristKS.get());
           } else {
             m_wristIO.setPIDFF(
                 ManipulatorConstants.kSimWristP,
                 ManipulatorConstants.kSimWristI,
                 ManipulatorConstants.kSimWristD,
-                0.0,
                 0.0);
           }
         },
         ManipulatorConstants.kWristP,
         ManipulatorConstants.kWristI,
         ManipulatorConstants.kWristD,
-        ManipulatorConstants.kWristKS,
-        ManipulatorConstants.kWristKG);
+        ManipulatorConstants.kWristKS);
 
     LoggedTunableNumber.ifChanged(
         hashCode(),
@@ -185,6 +181,9 @@ public class Manipulator extends SubsystemBase {
     Logger.recordOutput("Manipulator/State", m_profiles.getCurrentProfile());
     Logger.recordOutput("Manipulator/RollerAtSetpoint", rollerWithinTolerance());
     Logger.recordOutput("Manipulator/RollerError", getRollerError());
+    Logger.recordOutput("Manipulator/RunRollerBargeScoring", m_runRollerBargeScoring);
+    Logger.recordOutput("Manipulator/RunRollerAlgaeDescoring", m_runRollerBargeScoring);
+    Logger.recordOutput("Manipulator/RunRollerScoring", m_runRollerScoring);
 
     if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
       m_rollerMotorDisconnectedAlert.set(true);
@@ -245,7 +244,7 @@ public class Manipulator extends SubsystemBase {
     // if we have a game piece stop
     // if the indexer isn't running then the elevator and manipulator aren't both in position yet
     // so we don't want to intake yet
-    if (m_coralDetectorIO.hasGamePiece()) {
+    if (hasGamePiece()) {
       updateState(ManipulatorState.kIndexing);
     } else if (RobotState.getInstance().getIndexerState() != IndexerState.kIndexing) {
       m_rollerIO.setVoltage(0.0);
@@ -255,7 +254,7 @@ public class Manipulator extends SubsystemBase {
         m_autoReversing = false;
       }
     } else {
-      if (m_coralDetectorIO.gamePieceInFunnel()) {
+      if (gamePieceInFunnel()) {
         if (!m_timer.isRunning()) {
           m_timer.restart();
         }
@@ -281,9 +280,7 @@ public class Manipulator extends SubsystemBase {
     } else if (!m_rollerPositionControlSet) {
       m_rollerPositionControlSet = true;
       m_rollerIO.setDesiredPosition(
-          m_rollerIO
-              .getPosition()
-              .plus(Degrees.of(ManipulatorConstants.kRollerIndexingPosition.get())));
+          getRollerPosition().plus(Degrees.of(ManipulatorConstants.kRollerIndexingPosition.get())));
     }
     m_wristIO.setDesiredAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
   }
@@ -380,31 +377,40 @@ public class Manipulator extends SubsystemBase {
   }
 
   public boolean atSetpoint() {
-    return m_wristIO.atSetpoint() || m_profiles.getCurrentProfile() == ManipulatorState.kAlgaeHold;
+    return Math.abs(m_wristInputs.desiredAngleDeg - getCurrAngle().getDegrees())
+            < ManipulatorConstants.kWristTolerance
+        || m_profiles.getCurrentProfile() == ManipulatorState.kAlgaeHold;
   }
 
-  public boolean atSetpoint(Rotation2d r) {
-    return m_wristIO.atSetpoint(r);
+  public boolean atSetpoint(Rotation2d tolerance) {
+    return Math.abs(tolerance.getDegrees() - getCurrAngle().getDegrees())
+        < ManipulatorConstants.kWristTolerance;
   }
 
   public boolean hasGamePiece() {
-    return m_coralDetectorIO.hasGamePiece();
+    return m_coralDetectorInputs.hasGamePiece;
   }
 
   public boolean fullyIndexed() {
-    return m_coralDetectorIO.hasGamePiece() && !m_coralDetectorIO.gamePieceInFunnel();
+    return hasGamePiece() && !gamePieceInFunnel();
   }
 
   public boolean gamePieceInFunnel() {
-    return m_coralDetectorIO.gamePieceInFunnel();
+    return m_coralDetectorInputs.gamePieceInFunnel;
   }
 
   public Rotation2d getCurrAngle() {
-    return m_wristIO.getCurrAngle();
+    return Rotation2d.fromDegrees(m_wristInputs.currAngleDeg);
+  }
+
+  public Angle getRollerPosition() {
+    return Degrees.of(m_rollerInputs.positionDegrees);
   }
 
   public boolean rollerWithinTolerance() {
-    return m_rollerInputs.positionControl && m_rollerIO.withinPositionTolerance();
+    return m_rollerInputs.positionControl
+        && Math.abs(m_rollerInputs.positionDegrees - m_rollerInputs.desiredPositionDegrees)
+            < ManipulatorConstants.kRollerPositionTolerance;
   }
 
   public double getRollerError() {

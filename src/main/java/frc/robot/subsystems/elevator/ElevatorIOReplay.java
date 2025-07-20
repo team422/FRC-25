@@ -9,8 +9,7 @@ public class ElevatorIOReplay implements ElevatorIO {
   public void setDesiredHeight(double meters) {}
 
   @Override
-  public void setPIDFF(
-      int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG) {}
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kG) {}
 
   @Override
   public void setSlot(int slot) {}
@@ -19,30 +18,7 @@ public class ElevatorIOReplay implements ElevatorIO {
   public void setCurrentLimits(double supplyLimit) {}
 
   @Override
-  public void setMagic(double velocity, double acceleration, double jerk) {}
-
-  @Override
-  public boolean atSetpoint() {
-    return false;
-  }
-
-  @Override
-  public boolean atSetpoint(double tolerance) {
-    return false;
-  }
-
-  @Override
-  public double getCurrHeight() {
-    return 0.0;
-  }
-
-  @Override
   public void zeroElevator() {}
-
-  @Override
-  public double getVelocity() {
-    return 0.0;
-  }
 
   @Override
   public void setVoltage(double voltage) {}

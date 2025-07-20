@@ -25,6 +25,4 @@ public interface ClimbIO {
   public void setDesiredAngle(Rotation2d angle, double feedforward);
 
   public void zeroEncoder();
-
-  public boolean atSetpoint();
 }

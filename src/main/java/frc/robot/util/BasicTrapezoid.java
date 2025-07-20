@@ -8,6 +8,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
+import frc.robot.Robot;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -19,7 +20,7 @@ public class BasicTrapezoid {
   public static record BasicTrapezoidState(double velocity, double acceleration) {}
 
   // time step in seconds
-  private static final double kDt = 0.02;
+  private static final double kDt = Robot.defaultPeriodSecs;
 
   private double m_maxVelocity;
   private double m_maxAcceleration;

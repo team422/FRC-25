@@ -63,7 +63,8 @@ public class Climb extends SubsystemBase {
   }
 
   public boolean atSetpoint() {
-    return m_io.atSetpoint();
+    return Math.abs(m_inputs.desiredPositionDegrees - m_inputs.currPositionDegrees)
+        < ClimbConstants.kClimbTolerance;
   }
 
   @Override
@@ -81,7 +82,11 @@ public class Climb extends SubsystemBase {
                 ClimbConstants.kClimbI.get(),
                 ClimbConstants.kClimbD.get());
           } else {
-            m_io.setPID(m_currSlot, ClimbConstants.kSimClimbP, start, start);
+            m_io.setPID(
+                m_currSlot,
+                ClimbConstants.kSimClimbP,
+                ClimbConstants.kSimClimbI,
+                ClimbConstants.kSimClimbD);
           }
         },
         ClimbConstants.kClimbP,

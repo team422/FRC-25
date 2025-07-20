@@ -24,10 +24,6 @@ public interface PivotIO {
 
   public void setDesiredAngle(Rotation2d angle, double feedforward);
 
-  public Rotation2d getCurrAngle();
-
-  public boolean atSetpoint();
-
   public void setCurrentLimits(double supplyLimit);
 
   public void setSlot(int slot);

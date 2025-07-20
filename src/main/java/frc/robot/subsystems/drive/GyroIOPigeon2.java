@@ -1,26 +1,13 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearAcceleration;
@@ -42,7 +29,6 @@ public class GyroIOPigeon2 implements GyroIO {
   private final Queue<Double> m_yawPositionQueue;
   private final Queue<Double> m_pitchPositionQueue;
   private final Queue<Double> m_rollPositionQueue;
-  private final Queue<Double> m_zAccelerationQueue;
   private final Queue<Double> m_timestampQueue;
   private final StatusSignal<AngularVelocity> m_yawVelocity = m_pigeon.getAngularVelocityZWorld();
   private final StatusSignal<AngularVelocity> m_pitchVelocity = m_pigeon.getAngularVelocityXWorld();
@@ -76,9 +62,6 @@ public class GyroIOPigeon2 implements GyroIO {
     m_yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getYaw());
     m_pitchPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getPitch());
     m_rollPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(m_pigeon.getRoll());
-    m_zAccelerationQueue =
-        PhoenixOdometryThread.getInstance()
-            .registerSignal(m_pigeon.getAccelerationZ()::getValueAsDouble);
 
     if (Constants.kUseBaseRefreshManager) {
       CtreBaseRefreshManager.addSignals(
@@ -118,12 +101,12 @@ public class GyroIOPigeon2 implements GyroIO {
       inputs.connected = false;
     }
 
-    inputs.yawPosition = Rotation2d.fromDegrees(m_yaw.getValueAsDouble());
-    inputs.pitchPosition = Rotation2d.fromDegrees(m_pitch.getValueAsDouble());
-    inputs.rollPosition = Rotation2d.fromDegrees(m_roll.getValueAsDouble());
-    inputs.yawVelocityRadPerSec = Units.degreesToRadians(m_yawVelocity.getValueAsDouble());
-    inputs.pitchVelocityRadPerSec = Units.degreesToRadians(m_pitchVelocity.getValueAsDouble());
-    inputs.rollVelocityRadPerSec = Units.degreesToRadians(m_rollVelocity.getValueAsDouble());
+    inputs.yawPosition = new Rotation2d(m_yaw.getValue());
+    inputs.pitchPosition = new Rotation2d(m_pitch.getValue());
+    inputs.rollPosition = new Rotation2d(m_roll.getValue());
+    inputs.yawVelocityRadPerSec = m_yawVelocity.getValue().in(RadiansPerSecond);
+    inputs.pitchVelocityRadPerSec = m_pitchVelocity.getValue().in(RadiansPerSecond);
+    inputs.rollVelocityRadPerSec = m_rollVelocity.getValue().in(RadiansPerSecond);
     inputs.xAcceleration = m_xAcceleration.getValue().in(MetersPerSecondPerSecond);
     inputs.yAcceleration = m_yAcceleration.getValue().in(MetersPerSecondPerSecond);
     inputs.zAcceleration = m_zAcceleration.getValue().in(MetersPerSecondPerSecond);
@@ -142,13 +125,10 @@ public class GyroIOPigeon2 implements GyroIO {
         m_rollPositionQueue.stream()
             .map((Double value) -> Rotation2d.fromDegrees(value))
             .toArray(Rotation2d[]::new);
-    inputs.odometryZAccelerations =
-        m_zAccelerationQueue.stream().mapToDouble((Double value) -> value).toArray();
 
     m_timestampQueue.clear();
     m_yawPositionQueue.clear();
     m_pitchPositionQueue.clear();
     m_rollPositionQueue.clear();
-    m_zAccelerationQueue.clear();
   }
 }

@@ -12,7 +12,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
@@ -89,13 +88,6 @@ public class AprilTagVision extends SubsystemBase {
       Logger.processInputs("AprilTagVision/Inst" + i, m_inputs[i]);
     }
 
-    // if (RobotState.getInstance().getYawVelocity() > 1.0) {
-    //   Logger.recordOutput("AprilTagVision/TooFast", true);
-    //   return;
-    // }
-    // Logger.recordOutput("AprilTagVision/TooFast", false);
-
-    // List<Integer> allInstanceIDs = new ArrayList<>();
     List<Pose3d> allCameraPoses = new ArrayList<>();
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<Pose3d> allRobotPoses3d = new ArrayList<>();
@@ -138,6 +130,8 @@ public class AprilTagVision extends SubsystemBase {
             continue;
           case 1:
             continue;
+            // Tommy - if you end up using multi-tag for next year, uncomment this
+
             // One possible pose (multiple tags detected), can use directly
             // double translationX = values[2];
             // double translationY = values[3];
@@ -209,12 +203,6 @@ public class AprilTagVision extends SubsystemBase {
               // so we can just choose the one that is closer to the floor
               double height1 = Math.abs(robotPose3d1.getZ());
               double height2 = Math.abs(robotPose3d2.getZ());
-              // double pitch1 = Math.abs(robotPose3d1.getRotation().getY());
-              // double pitch2 = Math.abs(robotPose3d2.getRotation().getY());
-              // double roll1 = Math.abs(robotPose3d1.getRotation().getX());
-              // double roll2 = Math.abs(robotPose3d2.getRotation().getX());
-              // double yaw1 = Math.abs(robotPose3d1.getRotation().getZ());
-              // double yaw2 = Math.abs(robotPose3d2.getRotation().getZ());
               if (height1 < height2) {
                 cameraPose = cameraPose1;
                 robotPose3d = robotPose3d1;
@@ -327,8 +315,6 @@ public class AprilTagVision extends SubsystemBase {
         // if camera error low, distance to tag small, robot not moving, we can trust rotation
         // should only ever be single tag but leaving it in for now in case we switch
         if (!useVisionRotation) {
-          // Pose3d tagPose = tagPoses.get(0);
-          // double distance = tagPose.getTranslation().getDistance(cameraPose.getTranslation());
           ChassisSpeeds speeds = RobotState.getInstance().getRobotSpeeds();
           if (distance < AprilTagVisionConstants.kRotationDistanceThreshold
               && Math.abs(speeds.vxMetersPerSecond)
@@ -349,20 +335,13 @@ public class AprilTagVision extends SubsystemBase {
         // Add observation to list
         double xyStandardDeviation = 1;
         if (averageDistance < Units.inchesToMeters(50)) {
-          // TODO: if doing replay make these not tunable
           xyStandardDeviation = AprilTagVisionConstants.kCloseStandardDeviation.get();
-        } else if (averageDistance < Units.inchesToMeters(999999)) {
+        } else {
           xyStandardDeviation =
               AprilTagVisionConstants.kFarStandardDeviation.get()
-                  // back to normal math
                   * averageDistance
                   / tagPoses.size();
         }
-        // } else {
-        //   xyStandardDeviation = 0.05 * Math.pow(averageDistance / tagPoses.size(), 2);
-        // }
-
-        // xyStandardDeviation *= yawDifference * 0.25 + 0.1;
 
         double thetaStandardDeviation = 1;
         if (RobotState.getInstance().getNumVisionGyroObservations() < 100) {
@@ -376,47 +355,10 @@ public class AprilTagVision extends SubsystemBase {
           thetaStandardDeviation = Double.POSITIVE_INFINITY;
         }
 
-        // double gyroAccuracyFactor = 1.0;
-        // if (RobotState.getInstance().getNumVisionGyroObservations() > 100) {
-        //   // Calculate difference between vision and gyro rotation
-        //   Rotation2d visionRotation = robotPose.getRotation();
-        //   Rotation2d gyroRotation = RobotState.getInstance().getRobotPose().getRotation();
-        //   double angleDifference = Math.abs(visionRotation.minus(gyroRotation).getDegrees());
-        //   // if we are more than 1 degree off, reduce accuracy
-        //   // now we don't just wanna 100% trust it if it has the same rotation
-        //   gyroAccuracyFactor =
-        //       Math.max(0.3, angleDifference * AprilTagVisionConstants.kGyroAccurary);
-        //   // if it is 2 degrees off, we are increasing our standard deviation by 2
-        //   xyStandardDeviation *= gyroAccuracyFactor;
-        //   // this should not change our theta standard deviation as our gyroscope will not
-        // correct
-        //   // if we do
-        // }
-        // else {
-        //   // if we don't have many gyro observations, we should trust theta more
-        //   thetaStandardDeviation *= 0.01;
-        // }
-        if (thetaStandardDeviation
-            < 0.1) // check if the rotation standard deviation is low, if so add to
-        // numVisionGyroObservations
-        {
+        // check if the rotation standard deviation is low, if so add to numVisionGyroObservations
+        if (thetaStandardDeviation < 0.1) {
           RobotState.getInstance().incrementNumVisionGyroObservations();
         }
-
-        if (DriverStation.isDisabled()) {
-          // xyStandardDeviation *= 0.1;
-        }
-
-        // divide standard deviations by number of missing cameras
-        // int numMissing = 0;
-        // for (int i = 0; i < m_noReadingsAlerts.length; i++) {
-        //   if (m_noReadingsAlerts[i].get()) {
-        //     numMissing++;
-        //   }
-        // }
-        // if (numMissing != 0) {
-        //   xyStandardDeviation /= numMissing;
-        // }
 
         Logger.recordOutput(
             "AprilTagVision/Inst" + instanceIndex + "/Transform",
@@ -428,19 +370,12 @@ public class AprilTagVision extends SubsystemBase {
             "AprilTagVision/Inst" + instanceIndex + "/StandardDeviationTheta",
             thetaStandardDeviation);
 
-        // if (yawDifference < 0.5) {
-        //   allVisionUpdates.add(
-        //       new TimestampedVisionUpdate(timestamp, robotPose, VecBuilder.fill(0, 0, 0)));
-        // }
-        // if (DriverStation.isDisabled()) {
-
         allVisionUpdates.add(
             new TimestampedVisionUpdate(
                 timestamp,
                 robotPose,
                 VecBuilder.fill(xyStandardDeviation, xyStandardDeviation, thetaStandardDeviation)));
-        // }
-        // allInstanceIDs.add(instanceIndex);
+
         allRobotPoses.add(robotPose);
         allRobotPoses3d.add(robotPose3d);
 
@@ -480,12 +415,6 @@ public class AprilTagVision extends SubsystemBase {
     if (RobotState.getInstance().getUsingVision()
         && m_firstMeasurement
         && !allVisionUpdates.isEmpty()) {
-      // for (int i = 0; i < allVisionUpdates.size(); i++) {
-      //   var curr = allVisionUpdates.get(i);
-      //   curr = new TimestampedVisionUpdate(curr.timestamp(), curr.pose(), VecBuilder.fill(0, 0,
-      // 0));
-      //   allVisionUpdates.set(i, curr);
-      // }
       Logger.recordOutput("AprilTagVision/First", allVisionUpdates.get(0).pose());
       RobotState.getInstance().setDrivePose(allVisionUpdates.get(0).pose());
       m_firstMeasurement = false;
@@ -493,17 +422,6 @@ public class AprilTagVision extends SubsystemBase {
 
     // Send to RobotState
     RobotState.getInstance().addTimestampedVisionObservations(allVisionUpdates);
-
-    // List<List<TimestampedVisionUpdate>> visionUpdatesId = new ArrayList<>();
-    // for (int i = 0; i < 4; i++) {
-    //   visionUpdatesId.add(new ArrayList<>());
-    // }
-    // for (int i = 0; i < allVisionUpdates.size(); i++) {
-    //   int instanceIndex = allInstanceIDs.get(i);
-    //   var update = allVisionUpdates.get(i);
-    //   visionUpdatesId.get(instanceIndex).add(update);
-    // }
-    // RobotState.getInstance().addTimestampedVisionObservationsCameras(visionUpdatesId);
 
     if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore) {
       m_autoAutoScoreMeasurements += allVisionUpdates.size();

@@ -30,24 +30,13 @@ public interface ElevatorIO {
 
   public void setDesiredHeight(double inchesHeight);
 
-  public void setPIDFF(
-      int slot, double kP, double kI, double kD, double kS, double kV, double kA, double kG);
+  public void setPIDFF(int slot, double kP, double kI, double kD, double kG);
 
   public void setSlot(int slot);
 
   public void setCurrentLimits(double supplyLimit);
 
-  public void setMagic(double velocity, double acceleration, double jerk);
-
-  public boolean atSetpoint();
-
-  public boolean atSetpoint(double tolerance);
-
-  public double getCurrHeight();
-
   public void zeroElevator();
-
-  public double getVelocity();
 
   public void setVoltage(double voltage);
 }

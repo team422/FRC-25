@@ -1,25 +1,9 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.subsystems.drive;
-
-import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -48,11 +32,11 @@ public class Module {
     // Switch constants based on mode (the physics simulator is treated as a
     // separate robot with different tuning)
     if (RobotBase.isReal()) {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.22810, 0.13319, 0.0);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.21125, 0.13448);
       m_io.setDrivePID(2.0, 0.0, 0.0);
       m_io.setTurnPID(300.0, 0.0, 0.0);
     } else {
-      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13, 0.0);
+      m_driveFeedforward = new SimpleMotorFeedforward(0.0, 0.13);
       m_io.setDrivePID(0.1, 0.0, 0.0);
       m_io.setTurnPID(10.0, 0.0, 0.0);
     }
@@ -126,23 +110,6 @@ public class Module {
         "Module" + m_index + "/DriveFF", m_driveFeedforward.calculate(speedRadPerSec));
   }
 
-  /** Runs the module with the specified state and acceleration */
-  public void runSetpoint(SwerveModuleState state, LinearAcceleration accel) {
-    state.optimize(getAngle());
-
-    double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.kWheelRadius;
-    double accelRadPerSecSq =
-        Math.signum(speedRadPerSec)
-            * accel.in(MetersPerSecondPerSecond)
-            / DriveConstants.kWheelRadius;
-    double nextSpeedRadPerSec = speedRadPerSec + accelRadPerSecSq * 0.02;
-
-    m_io.setDriveVelocity(
-        speedRadPerSec,
-        m_driveFeedforward.calculateWithVelocities(speedRadPerSec, nextSpeedRadPerSec));
-    m_io.setTurnPosition(state.angle);
-  }
-
   /** Runs the module with the specified output while controlling to zero degrees. */
   public void runCharacterization(double output) {
     // Closed loop turn control
@@ -214,14 +181,21 @@ public class Module {
     return m_inputs.drivePositionRad;
   }
 
+  /**
+   * Sets the current limit for the drive motor
+   *
+   * @param supplyLimit The current limit in amps
+   */
   public void setCurrentLimits(double supplyLimit) {
     m_io.setCurrentLimits(supplyLimit);
   }
 
+  /** Returns the drive motor's acceleration in radians/sec^2. */
   public double getDriveAcceleration() {
     return m_inputs.driveAccelerationRadPerSecSq;
   }
 
+  /** Returns the drive motor's supply current in amps. */
   public double getDriveCurrent() {
     return m_inputs.driveCurrentAmps;
   }

@@ -11,7 +11,6 @@ import frc.robot.Constants.IntakeConstants;
 public class PivotIOSim implements PivotIO {
   private SingleJointedArmSim m_sim;
   private PIDController m_controller = new PIDController(0, 0, 0);
-  private double m_feedforward = 0.0;
 
   public PivotIOSim() {
     var plant =
@@ -38,7 +37,7 @@ public class PivotIOSim implements PivotIO {
   public void updateInputs(PivotInputs inputs) {
     double pidVoltage = m_controller.calculate(getCurrAngle().getDegrees());
 
-    m_sim.setInputVoltage(pidVoltage + m_feedforward);
+    m_sim.setInputVoltage(pidVoltage);
     m_sim.update(0.020);
 
     inputs.currAngleDeg = getCurrAngle().getDegrees();
@@ -46,7 +45,7 @@ public class PivotIOSim implements PivotIO {
     inputs.atSetpoint = atSetpoint();
     inputs.velocityRPS = Units.radiansToRotations(m_sim.getVelocityRadPerSec());
     inputs.current = m_sim.getCurrentDrawAmps();
-    inputs.voltage = pidVoltage + m_feedforward;
+    inputs.voltage = pidVoltage;
 
     // these don't matter in sim
     inputs.statorCurrent = 0.0;
@@ -65,16 +64,13 @@ public class PivotIOSim implements PivotIO {
   @Override
   public void setDesiredAngle(Rotation2d angle, double feedforward) {
     m_controller.setSetpoint(angle.getDegrees());
-    m_feedforward = feedforward;
   }
 
-  @Override
-  public Rotation2d getCurrAngle() {
+  private Rotation2d getCurrAngle() {
     return Rotation2d.fromRadians(m_sim.getAngleRads());
   }
 
-  @Override
-  public boolean atSetpoint() {
+  private boolean atSetpoint() {
     return m_controller.atSetpoint();
   }
 

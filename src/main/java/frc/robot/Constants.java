@@ -34,11 +34,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
-/**
- * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
- * on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and "replay"
- * (log replay from a file).
- */
 public final class Constants {
   public static final boolean kTuningMode = true;
 
@@ -51,6 +46,11 @@ public final class Constants {
   // set to false to disable the base refresh manager
   public static final boolean kUseBaseRefreshManager = false;
 
+  /**
+   * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when
+   * running on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and
+   * "replay" (log replay from a file).
+   */
   public static enum Mode {
     /** Running on a real robot. */
     REAL,
@@ -72,7 +72,10 @@ public final class Constants {
 
   public static final class DriveConstants {
     public static final double kMaxLinearSpeed = 4.5; // meters per second
-    public static final double kMaxAutoscoreSpeed = 3.6; // meters per second
+    // Tommy - this constant is unused right now, see my comment in driveToPointPeriodic
+    public static final double kMaxDriveToPointSpeed = 3.6;
+    // Tommy - delete these two constants after resolving the comment above
+    public static final double kMaxAutoscoreSpeed = 3.6;
     public static final double kMaxAutoIntakeSpeed = 4.0;
     public static final double kMaxMeshedSpeed = 4.5;
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
@@ -84,7 +87,6 @@ public final class Constants {
     public static final double kMaxAngularAcceleration = kMaxLinearAcceleration / kDriveBaseRadius;
     public static final LoggedTunableNumber kTeleopRotationSpeed =
         new LoggedTunableNumber("Teleop Rotation Speed", 10.0);
-
     public static final double kVisionSpeedConstantK = 0.5;
 
     // the exponent to raise the input to
@@ -106,7 +108,7 @@ public final class Constants {
     public static final ModuleLimits kModuleLimitsFree =
         new ModuleLimits(kMaxLinearSpeed, kMaxAngularSpeed, Units.degreesToRadians(1080.0));
 
-    public static final double kWheelRadius = Units.inchesToMeters(1.935);
+    public static final double kWheelRadius = Units.inchesToMeters(1.917);
     public static final double kOdometryFrequency = 250.0;
 
     public static final double kDriveGearRatio =
@@ -120,6 +122,8 @@ public final class Constants {
     public static final double kTurnSimMOI = 0.004;
 
     // universal reversals for drive (aka the big negative sign)
+    // Tommy - if you find yourself needing to enable either of these, most likely your controls are
+    // wrong or your modules are ID'd wrong
     public static final boolean kRealReversed = false;
     public static final boolean kSimReversed = false;
 
@@ -137,13 +141,6 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointAutoD =
         new LoggedTunableNumber("DriveToPoint Auto D", 0.12);
 
-    public static final LoggedTunableNumber kDriveToPointAutoIntakeP =
-        new LoggedTunableNumber("DriveToPoint Auto Intake P", 3.0);
-    public static final LoggedTunableNumber kDriveToPointAutoIntakeI =
-        new LoggedTunableNumber("DriveToPoint Auto Intake I", 0.0);
-    public static final LoggedTunableNumber kDriveToPointAutoIntakeD =
-        new LoggedTunableNumber("DriveToPoint Auto Intake D", 0.12);
-
     public static final LoggedTunableNumber kDriveToPointHeadingP =
         new LoggedTunableNumber("DriveToPoint Heading P", 4.0);
     public static final LoggedTunableNumber kDriveToPointHeadingI =
@@ -158,14 +155,14 @@ public final class Constants {
     public static final LoggedTunableNumber kDriveToPointMaxDeceleration =
         new LoggedTunableNumber("DriveToPoint Max Deceleration", 3.0);
 
-    public static final LoggedTunableNumber kDriveToIntakeMeshedP =
-        new LoggedTunableNumber("DriveToMeshedXY P", 3.0);
-    public static final LoggedTunableNumber kDriveToIntakeMeshedD =
-        new LoggedTunableNumber("DriveToMeshedXY D", 0.12);
-    public static final LoggedTunableNumber kDriveToIntakeThetaMeshedP =
-        new LoggedTunableNumber("DriveToIntakeMeshed Theta P", 3.0);
-    public static final LoggedTunableNumber kDriveToIntakeThetaMeshedD =
-        new LoggedTunableNumber("DriveToIntakeMeshed Theta D", 0.0);
+    public static final LoggedTunableNumber kMeshedXYP =
+        new LoggedTunableNumber("Drive Meshed XY P", 3.0);
+    public static final LoggedTunableNumber kMeshedXYD =
+        new LoggedTunableNumber("Drive Meshed XY D", 0.12);
+    public static final LoggedTunableNumber kMeshedThetaP =
+        new LoggedTunableNumber("Drive Meshed Theta P", 3.0);
+    public static final LoggedTunableNumber kMeshedThetaD =
+        new LoggedTunableNumber("Drive Meshed Theta D", 0.0);
     public static final LoggedTunableNumber kDebounceAmount =
         new LoggedTunableNumber("Meshed Drive Debounce", 0.1);
     public static final LoggedTunableNumber kMeshDrivePriority =
@@ -177,16 +174,12 @@ public final class Constants {
         new LoggedTunableNumber("Autoscore Outtake Distance", 1.25);
     public static final LoggedTunableNumber kAutoscoreL1OuttakeDistance =
         new LoggedTunableNumber("Autoscore L1 Outtake Distance", 18.0);
-    public static final LoggedTunableNumber kAutoscoreWheelSpeed =
-        // new LoggedTunableNumber("Autoscore Wheel Speed", 0.04 / DriveConstants.kWheelRadius);
-        new LoggedTunableNumber("Autoscore Wheel Speed", 999);
-    public static final double kAutoscoreHeadingTolerance =
-        // new LoggedTunableNumber("Autoscore Heading Tolerance", 1.0);
-        1.0;
     public static final LoggedTunableNumber kBargeScoreThrowDistance =
         new LoggedTunableNumber("Barge Score Throw Distance", 10.0);
     public static final LoggedTunableNumber kLoaderStationTimeout =
         new LoggedTunableNumber("Loader Station Timeout", 0.25);
+    public static final LoggedTunableNumber kAutoAutoscoreTimeout =
+        new LoggedTunableNumber("Auto Autoscore Timeout", 2.0);
 
     // radians per second squared to be considered slipping
     public static final LoggedTunableNumber kSlipThreshold =
@@ -257,17 +250,12 @@ public final class Constants {
     public static final LoggedTunableNumber kP0 = new LoggedTunableNumber("Elevator P0", 2.0);
     public static final LoggedTunableNumber kI = new LoggedTunableNumber("Elevator I", 0.0);
     public static final LoggedTunableNumber kD = new LoggedTunableNumber("Elevator D", 0.08);
-    public static final LoggedTunableNumber kKS = new LoggedTunableNumber("Elevator kS", 0.0);
     public static final LoggedTunableNumber kKG0 = new LoggedTunableNumber("Elevator kG0", 0.18);
-    public static final LoggedTunableNumber kKV0 = new LoggedTunableNumber("Elevator kV0", 0.0);
-    public static final LoggedTunableNumber kKA = new LoggedTunableNumber("Elevator kA", 0.0);
 
     public static final LoggedTunableNumber kP1 = new LoggedTunableNumber("Elevator P1", 2.0);
-    public static final LoggedTunableNumber kKV1 = new LoggedTunableNumber("Elevator kV1", 0.0);
     public static final LoggedTunableNumber kKG1 = new LoggedTunableNumber("Elevator kG1", 0.28);
 
     public static final LoggedTunableNumber kP2 = new LoggedTunableNumber("Elevator P2", 2.0);
-    public static final LoggedTunableNumber kKV2 = new LoggedTunableNumber("Elevator kV2", 0.0);
     public static final LoggedTunableNumber kKG2 = new LoggedTunableNumber("Elevator kG2", 0.40);
 
     public static final LoggedTunableNumber kMagicMotionCruiseVelocity =
@@ -290,7 +278,7 @@ public final class Constants {
     public static final LoggedTunableNumber kAlgaeDescoringFinalHeightL3 =
         new LoggedTunableNumber("Elevator Algae Descore Final Height L3", 38.5);
     public static final LoggedTunableNumber kBargeScoreHeight =
-        new LoggedTunableNumber("Elevator Barge Score Height", 73.5);
+        new LoggedTunableNumber("Elevator Barge Score Height", 72.5);
     public static final LoggedTunableNumber kAlgaeHoldHeight =
         new LoggedTunableNumber("Elevator Algae Hold Height", 14.5);
     public static final LoggedTunableNumber kAlgaeOuttakeHeight =
@@ -301,7 +289,7 @@ public final class Constants {
         new LoggedTunableNumber("Drive Up Height", 11.5);
 
     public static final LoggedTunableNumber kBargeThrowHeight =
-        new LoggedTunableNumber("Elevator Barge Throw Height", 20.0);
+        new LoggedTunableNumber("Elevator Barge Throw Height", 17.0);
 
     public static final double kDiameter = 2.256; // inches
     public static final double kGearRatio = 54.0 / 12.0;
@@ -350,216 +338,6 @@ public final class Constants {
 
   public static final class AprilTagVisionConstants {
     public static final LoggedTunableNumber kUseVision = new LoggedTunableNumber("Use Vision", 1);
-
-    // public static final AprilTagFieldLayout kAprilTagLayout;
-
-    // static {
-    // List<AprilTag> tags = new ArrayList<>();
-
-    // tags.add(
-    //     new AprilTag(
-    //         1,
-    //         new Pose3d(
-    //             16.687292,
-    //             0.628142,
-    //             1.4859,
-    //             new Rotation3d(new Quaternion(0.4539904997395468, 0, 0, 0.8910065241883678)))));
-    // tags.add(
-    //     new AprilTag(
-    //         2,
-    //         new Pose3d(
-    //             16.687292,
-    //             7.414259999999999,
-    //             1.4859,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.45399049973954675, -0.0, 0.0, 0.8910065241883679)))));
-    // tags.add(
-    //     new AprilTag(
-    //         3,
-    //         new Pose3d(
-    //             11.49096,
-    //             8.031733999999998,
-    //             1.30175,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.7071067811865475, -0.0, 0.0, 0.7071067811865476)))));
-    // // tags.add(
-    // //     new AprilTag(
-    // //         4,
-    // //         new Pose3d(
-    // //             9.276079999999999,
-    // //             6.132575999999999,
-    // //             1.8679160000000001,
-    // //             new Rotation3d(
-    // //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
-    // // tags.add(
-    // //     new AprilTag(
-    // //         5,
-    // //         new Pose3d(
-    // //             9.276079999999999,
-    // //             1.9098259999999998,
-    // //             1.8679160000000001,
-    // //             new Rotation3d(
-    // //                 new Quaternion(0.9659258262890683, 0.0, 0.25881904510252074, 0.0)))));
-    // tags.add(
-    //     new AprilTag(
-    //         6,
-    //         new Pose3d(
-    //             13.474446,
-    //             3.3012379999999997,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
-    // tags.add(
-    //     new AprilTag(
-    //         7,
-    //         new Pose3d(
-    //             13.890498,
-    //             4.0208200000000005,
-    //             0.308102,
-    //             new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
-    // tags.add(
-    //     new AprilTag(
-    //         8,
-    //         new Pose3d(
-    //             13.474446,
-    //             4.740402,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
-    // tags.add(
-    //     new AprilTag(
-    //         9,
-    //         new Pose3d(
-    //             12.643358,
-    //             4.740402,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
-    // tags.add(
-    //     new AprilTag(
-    //         10,
-    //         new Pose3d(
-    //             12.227305999999999,
-    //             4.0208200000000005,
-    //             0.308102,
-    //             new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
-    // tags.add(
-    //     new AprilTag(
-    //         11,
-    //         new Pose3d(
-    //             12.643358,
-    //             3.3012379999999997,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
-    // tags.add(
-    //     new AprilTag(
-    //         12,
-    //         new Pose3d(
-    //             0.8613139999999999,
-    //             0.628142,
-    //             1.4859,
-    //             new Rotation3d(
-    //                 new Quaternion(0.8910065241883679, 0.0, 0.0, 0.45399049973954675)))));
-    // tags.add(
-    //     new AprilTag(
-    //         13,
-    //         new Pose3d(
-    //             0.8613139999999999,
-    //             7.414259999999999,
-    //             1.4859,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.8910065241883678, -0.0, 0.0, 0.45399049973954686)))));
-    // // tags.add(
-    // //     new AprilTag(
-    // //         14,
-    // //         new Pose3d(
-    // //             8.272272,
-    // //             6.132575999999999,
-    // //             1.8679160000000001,
-    // //             new Rotation3d(
-    // //                 new Quaternion(
-    // //                     5.914589856893349e-17,
-    // //                     -0.25881904510252074,
-    // //                     1.5848095757158825e-17,
-    // //                     0.9659258262890683)))));
-    // // tags.add(
-    // //     new AprilTag(
-    // //         15,
-    // //         new Pose3d(
-    // //             8.272272,
-    // //             1.9098259999999998,
-    // //             1.8679160000000001,
-    // //             new Rotation3d(
-    // //                 new Quaternion(
-    // //                     5.914589856893349e-17,
-    // //                     -0.25881904510252074,
-    // //                     1.5848095757158825e-17,
-    // //                     0.9659258262890683)))));
-    // tags.add(
-    //     new AprilTag(
-    //         16,
-    //         new Pose3d(
-    //             6.057646,
-    //             0.010667999999999999,
-    //             1.30175,
-    //             new Rotation3d(
-    //                 new Quaternion(0.7071067811865476, 0.0, 0.0, 0.7071067811865476)))));
-    // tags.add(
-    //     new AprilTag(
-    //         17,
-    //         new Pose3d(
-    //             4.073905999999999,
-    //             3.3012379999999997,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.4999999999999998, -0.0, 0.0, 0.8660254037844387)))));
-    // tags.add(
-    //     new AprilTag(
-    //         18,
-    //         new Pose3d(
-    //             3.6576,
-    //             4.0208200000000005,
-    //             0.308102,
-    //             new Rotation3d(new Quaternion(6.123233995736766e-17, 0.0, 0.0, 1.0)))));
-    // tags.add(
-    //     new AprilTag(
-    //         19,
-    //         new Pose3d(
-    //             4.073905999999999,
-    //             4.740402,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(0.5000000000000001, 0.0, 0.0, 0.8660254037844386)))));
-    // tags.add(
-    //     new AprilTag(
-    //         20,
-    //         new Pose3d(
-    //             4.904739999999999,
-    //             4.740402,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(0.8660254037844387, 0.0, 0.0, 0.49999999999999994)))));
-    // tags.add(
-    //     new AprilTag(
-    //         21,
-    //         new Pose3d(
-    //             5.321046,
-    //             4.0208200000000005,
-    //             0.308102,
-    //             new Rotation3d(new Quaternion(1.0, 0.0, 0.0, 0.0)))));
-    // tags.add(
-    //     new AprilTag(
-    //         22,
-    //         new Pose3d(
-    //             4.904739999999999,
-    //             3.3012379999999997,
-    //             0.308102,
-    //             new Rotation3d(
-    //                 new Quaternion(-0.8660254037844387, -0.0, 0.0, 0.49999999999999994)))));
-
-    // kAprilTagLayout = new AprilTagFieldLayout(tags, 17.548, 8.042);
-    // }
 
     public static final AprilTagFieldLayout kAprilTagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
@@ -636,7 +414,7 @@ public final class Constants {
   }
 
   public static final class IntakeConstants {
-    public static final double kPivotGearRatio = (84.0 / 8.0) * (36.0 / 14.0);
+    public static final double kPivotGearRatio = (72.0 / 8.0) * (36.0 / 14.0);
     public static final double kPivotAbsoluteEncoderGearRatio = 36.0 / 14.0;
     public static final double kRollerGearRatio = (30.0 / 12.0);
     public static final double kRollerRadius = Units.inchesToMeters(1.5);
@@ -650,11 +428,12 @@ public final class Constants {
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
         Rotation2d.fromDegrees(
-            (77.8 - 88.29 - 11.26 - 9.0 - 11.6 - 11.75 + 5.0) * kPivotAbsoluteEncoderGearRatio);
+            (24.0 + 134.0 + 8.0 + 16.1 + 3.0 + 9.0 - 6.0 - 2.0) * kPivotAbsoluteEncoderGearRatio);
 
     public static final Rotation2d kPivotFakeToRealOffset = Rotation2d.fromDegrees(75.0);
 
-    public static final double kZeroEncoderThreshold = 122.0; // degrees
+    public static final LoggedTunableNumber kZeroEncoderThreshold =
+        new LoggedTunableNumber("Pivot Zero Threshikd", 122.0); // degrees
 
     public static final Angle kZeroEncoderValue = Degrees.of(137.0);
 
@@ -663,39 +442,48 @@ public final class Constants {
     public static final double kRollerCoralCurrentThreshold = 99.0;
 
     public static final double kRollerCoralCurrentDebounce = 0.2; // seconds
-
-    public static final LoggedTunableNumber kPivotP0 = new LoggedTunableNumber("Pivot P0", 20.0);
+    // L1 SETUP
+    public static final LoggedTunableNumber kPivotP0 = new LoggedTunableNumber("Pivot P0", 16.0);
+    // PASSTHROUGH SETUP
+    // public static final LoggedTunableNumber kPivotP0 = new LoggedTunableNumber("Pivot P0", 20.0);
     public static final LoggedTunableNumber kPivotI = new LoggedTunableNumber("Pivot I", 0.0);
-    public static final LoggedTunableNumber kPivotD0 = new LoggedTunableNumber("Pivot D0", 0.0);
-    public static final LoggedTunableNumber kPivotP1 = new LoggedTunableNumber("Pivot P1", 35.0);
-    public static final LoggedTunableNumber kPivotD1 = new LoggedTunableNumber("Pivot D1", 0.0);
+    public static final LoggedTunableNumber kPivotD0 = new LoggedTunableNumber("Pivot D0", 0.2);
+    public static final LoggedTunableNumber kPivotP1 = new LoggedTunableNumber("Pivot P1", 30.0);
+    public static final LoggedTunableNumber kPivotD1 = new LoggedTunableNumber("Pivot D1", 0.2);
+    public static final LoggedTunableNumber kPivotP2 = new LoggedTunableNumber("Pivot P2", 30.0);
+    public static final LoggedTunableNumber kPivotD2 = new LoggedTunableNumber("Pivot D2", 0.2);
     public static final LoggedTunableNumber kPivotKS = new LoggedTunableNumber("Pivot kS", 0.23);
-    public static final LoggedTunableNumber kPivotKGNoCoral =
-        new LoggedTunableNumber("Pivot kG No Coral", 0.0);
-    public static final LoggedTunableNumber kPivotKGCoral =
-        new LoggedTunableNumber("Pivot kG Coral", 0.0);
 
     public static final LoggedTunableNumber kPivotStowAngle =
         new LoggedTunableNumber("Pivot Stow Angle", 30.0);
     public static final LoggedTunableNumber kPivotIntakeAngle =
-        new LoggedTunableNumber("Pivot Intake Angle", 142.0);
+        new LoggedTunableNumber("Pivot Intake Angle", 139.0);
     public static final LoggedTunableNumber kPivotHoldAngle =
         new LoggedTunableNumber("Pivot Hold Angle", 30.0);
     public static final LoggedTunableNumber kPivotOuttakeAngle =
-        new LoggedTunableNumber("Pivot Outtake Angle", 40.0);
+        new LoggedTunableNumber("Pivot Outtake Angle", 48.0);
     public static final LoggedTunableNumber kPivotFunnelIntakeAngle =
         new LoggedTunableNumber("Pivot Funnel Intake Angle", 64.0);
     public static final LoggedTunableNumber kPivotCoralRunThroughAngle =
         new LoggedTunableNumber("Pivot Coral Run Through Angle", 30.0);
     public static final LoggedTunableNumber kPivotClimbAngle =
         new LoggedTunableNumber("Pivot Climb Angle", 50.0);
+    public static final LoggedTunableNumber kIntakingFeedforward =
+        new LoggedTunableNumber("Pivot Intaking Feedforward", 0.0);
+
+    public static final LoggedTunableNumber kZeroVelocityThreshold =
+        new LoggedTunableNumber("Pivot Zero Velocity Threshold", 1.0);
+    public static final LoggedTunableNumber kIntakingFeedforwardThreshold =
+        new LoggedTunableNumber("Pivot Intaking Feedforward Threshold", 125.0);
 
     public static final LoggedTunableNumber kRollerStowVoltage =
         new LoggedTunableNumber("Intake Roller Stow Voltage", 0.0);
     public static final LoggedTunableNumber kRollerIntakeVoltage =
         new LoggedTunableNumber("Intake Roller Intake Voltage", 3.5);
+    public static final LoggedTunableNumber kRollerL1IntakeVoltage =
+        new LoggedTunableNumber("Intake Roller L1 Intake Voltage", 3.0);
     public static final LoggedTunableNumber kRollerHoldVoltage =
-        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.39);
+        new LoggedTunableNumber("Intake Roller Hold Voltage", 0.29);
     public static final LoggedTunableNumber kRollerOuttakeVoltage =
         new LoggedTunableNumber("Intake Roller Outtake Voltage", -2.0);
     public static final LoggedTunableNumber kRollerFunnelIntakeVoltage =
@@ -717,8 +505,8 @@ public final class Constants {
     public static final double kPivotArmLength = Units.inchesToMeters(17.5);
     public static final double kPivotSimMOI =
         SingleJointedArmSim.estimateMOI(kPivotArmLength, kPivotArmMass);
-    public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(0.0);
-    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(139.0);
+    public static final Rotation2d kPivotMinAngle = Rotation2d.fromDegrees(30.0);
+    public static final Rotation2d kPivotMaxAngle = Rotation2d.fromDegrees(140.0);
     public static final boolean kSimSimulateGravity = false;
     public static final Rotation2d kSimStartingAngle =
         Rotation2d.fromDegrees(Math.random() * kPivotMaxAngle.getDegrees());
@@ -745,7 +533,7 @@ public final class Constants {
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
     public static final Rotation2d kWristOffset =
-        Rotation2d.fromDegrees((-37.2) * kWristAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees((-37.4) * kWristAbsoluteEncoderGearRatio);
     // get owned shrihari - sri b is a better coder
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
@@ -761,7 +549,6 @@ public final class Constants {
     public static final LoggedTunableNumber kWristI = new LoggedTunableNumber("Wrist I", 0.0);
     public static final LoggedTunableNumber kWristD = new LoggedTunableNumber("Wrist D", 0.3);
     public static final LoggedTunableNumber kWristKS = new LoggedTunableNumber("Wrist kS", 0.25);
-    public static final LoggedTunableNumber kWristKG = new LoggedTunableNumber("Wrist kG", 0.0);
 
     public static final LoggedTunableNumber kWristStowAngle =
         new LoggedTunableNumber("Wrist Stow Angle", 100.0);

@@ -1,20 +1,11 @@
-// Copyright 2021-2024 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
@@ -280,27 +271,26 @@ public class ModuleIOTalonFX implements ModuleIO {
           m_cancoderSupplyVoltage);
     }
 
-    inputs.drivePositionRad = Units.rotationsToRadians(m_drivePosition.getValueAsDouble());
-    inputs.driveVelocityRadPerSec = Units.rotationsToRadians(m_driveVelocity.getValueAsDouble());
+    inputs.drivePositionRad = m_drivePosition.getValue().in(Radians);
+    inputs.driveVelocityRadPerSec = m_driveVelocity.getValue().in(RadiansPerSecond);
     inputs.driveAccelerationRadPerSecSq =
-        Units.rotationsToRadians(m_driveAcceleration.getValueAsDouble());
-    inputs.driveAppliedVolts = m_driveAppliedVolts.getValueAsDouble();
-    inputs.driveCurrentAmps = Math.abs(m_driveCurrent.getValueAsDouble());
+        m_driveAcceleration.getValue().in(RadiansPerSecondPerSecond);
+    inputs.driveAppliedVolts = m_driveAppliedVolts.getValue().in(Volts);
+    inputs.driveCurrentAmps = m_driveCurrent.getValue().in(Amps);
     inputs.driveMotorIsConnected = m_driveConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     inputs.turnAbsolutePosition =
-        Rotation2d.fromRotations(m_turnAbsolutePosition.getValueAsDouble())
-            .minus(m_absoluteEncoderOffset);
-    inputs.turnPosition = Rotation2d.fromRotations(m_turnPosition.getValueAsDouble());
-    inputs.turnVelocityRadPerSec = Units.rotationsToRadians(m_turnVelocity.getValueAsDouble());
-    inputs.turnAppliedVolts = m_turnAppliedVolts.getValueAsDouble();
-    inputs.turnCurrentAmps = Math.abs(m_turnCurrent.getValueAsDouble());
+        new Rotation2d(m_turnAbsolutePosition.getValue()).minus(m_absoluteEncoderOffset);
+    inputs.turnPosition = new Rotation2d(m_turnPosition.getValue());
+    inputs.turnVelocityRadPerSec = m_turnVelocity.getValue().in(RadiansPerSecond);
+    inputs.turnAppliedVolts = m_turnAppliedVolts.getValue().in(Volts);
+    inputs.turnCurrentAmps = m_turnCurrent.getValue().in(Amps);
     inputs.turnMotorIsConnected = m_turnConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
 
     // this is a hack because the cancoder doesn't have a connected motor (obviously)
     // so basically if we're in sim, the supply voltage is EXACTLY zero
     // if we connected it'll be something else
-    inputs.turnEncoderIsConnected = m_cancoderSupplyVoltage.getValueAsDouble() != 0.0;
+    inputs.turnEncoderIsConnected = m_cancoderSupplyVoltage.getValue().in(Volts) != 0.0;
 
     inputs.odometryTimestamps =
         m_timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
