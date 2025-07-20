@@ -454,7 +454,7 @@ public class Drive extends SubsystemBase {
 
     if (!DriverStation.isAutonomous()) {
       if (driveToPointWithinTolerance()) {
-        updateProfile(getDefaultProfile());
+        updateProfile(DriveProfiles.kDefault);
       }
     }
 
@@ -639,14 +639,6 @@ public class Drive extends SubsystemBase {
     m_profiles.setCurrentProfile(newProfile);
 
     if (newProfile == DriveProfiles.kMeshedUserControls) {}
-  }
-
-  public DriveProfiles getDefaultProfile() {
-    if (DriverStation.isAutonomous()) {
-      return DriveProfiles.kDriveToPoint;
-    } else {
-      return DriveProfiles.kDefault;
-    }
   }
 
   public boolean headingWithinTolerance() {

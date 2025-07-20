@@ -64,6 +64,7 @@ public class RobotState {
   private Led m_led;
   private AprilTagVision m_aprilTagVision;
 
+  @SuppressWarnings("unused")
   private AutoFactory m_autoFactory;
 
   public enum RobotAction {
@@ -212,8 +213,7 @@ public class RobotState {
     return m_climb.atSetpoint();
   }
 
-  public boolean getWristAtScoringSetpoint() {
-
+  public boolean getWristAtSetpoint() {
     return m_manipulator.atSetpoint();
   }
 
@@ -275,7 +275,7 @@ public class RobotState {
 
     updateLED();
 
-    SetpointGenerator.logLines();
+    SetpointGenerator.logAutoIntakeLines();
 
     Logger.recordOutput("RobotState/CurrentAction", m_profiles.getCurrentProfile());
     Logger.recordOutput("RobotState/TimerValue", m_timer.get());
@@ -906,7 +906,7 @@ public class RobotState {
   }
 
   public void updateRobotAction(RobotAction newAction) {
-    DriveProfiles newDriveProfiles = m_drive.getDefaultProfile();
+    DriveProfiles newDriveProfiles = DriveProfiles.kDefault;
     IntakeState newIntakeState = m_intake.getStowOrHold();
     IndexerState newIndexerState = IndexerState.kIdle;
     ElevatorState newElevatorState = ElevatorState.kStow;
@@ -1201,13 +1201,7 @@ public class RobotState {
     // if we're at the processor then kDriveToProcessor
     // if we're near the barge then kBargeScore
     // and if we're near the reef then kAutoScore
-    // if (SetpointGenerator.isNearProcessor(m_drive.getPose())) {
-    //   updateRobotAction(RobotAction.kDriveToProcessor);
-    // } else if (SetpointGenerator.isNearBarge(m_drive.getPose())) {
-    //   updateRobotAction(RobotAction.kBargeScore);
-    // } else {
     updateRobotAction(RobotAction.kAutoScore);
-    // }
   }
 
   public void manageCoralOuttakePressed() {
@@ -1221,12 +1215,7 @@ public class RobotState {
         || m_profiles.getCurrentProfile() == RobotAction.kProcessorOuttake) {
       m_elevator.updateState(ElevatorState.kBargeScore);
     } else if (m_manipulator.getCurrentState() == ManipulatorState.kAlgaeHold) {
-      // if we're near the processor then initiate a drive to point
-      // if (getUsingVision() && SetpointGenerator.isNearProcessor(m_drive.getPose())) {
-      // updateRobotAction(RobotAction.kDriveToProcessor);
-      // } else {
       updateRobotAction(RobotAction.kProcessorOuttake);
-      // }
     } else {
       // first press - run intake
       // second press - L1
@@ -1275,11 +1264,7 @@ public class RobotState {
     m_numAlgaeScoredAuto = 0;
   }
 
-  public void onDisable() {
-    // if (m_profiles.getCurrentProfile() == RobotAction.kAutoCoralIntaking) {
-    //   m_drive.setDriveCoast();
-    // }
-  }
+  public void onDisable() {}
 
   public void addTimestampedVisionObservations(List<TimestampedVisionUpdate> observations) {
     if (!m_usingVision) {
@@ -1298,15 +1283,6 @@ public class RobotState {
     m_drive.addTimestampedVisionObservations(observations);
   }
 
-  // public void addTimestampedVisionObservationsCameras(
-  //     List<List<TimestampedVisionUpdate>> observations) {
-  //   if (!m_usingVision) {
-  //     return;
-  //   }
-
-  //   m_drive.addTimestampedVisionObservationsCameras(observations);
-  // }
-
   public void registerSlip() {
     m_odometryTrustFactor -= AprilTagVisionConstants.kOdometryTrustFactorSlip;
     m_odometryTrustFactor = MathUtil.clamp(m_odometryTrustFactor, 0.0, 1.0);
@@ -1314,10 +1290,6 @@ public class RobotState {
 
   public void setDesiredReefHeight(ReefHeight height) {
     m_desiredReefHeight = height;
-  }
-
-  public void setDesiredBranchIndex(int index) {
-    m_desiredBranchIndex = index;
   }
 
   public ReefHeight getDesiredReefHeight() {
@@ -1602,13 +1574,6 @@ public class RobotState {
     } else {
       m_led.updateState(LedState.kLocationCheck);
     }
-  }
-
-  public Pose2d getPathPlannerStartPose() {
-    if (m_autoFactory != null && m_selectedAuto != null) {
-      return m_autoFactory.getStartingPose(m_selectedAuto);
-    }
-    return new Pose2d();
   }
 
   public void setAutoSideLeft() {

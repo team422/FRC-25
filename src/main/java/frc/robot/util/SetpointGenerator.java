@@ -283,32 +283,14 @@ public class SetpointGenerator {
     Pose2d closestCenterFace = FieldConstants.Reef.kCenterFaces[0];
     var fieldAlliance = getFieldAlliance(drivePose);
     if (fieldAlliance == Alliance.Red) {
-      // flip the pose
-      // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
-      // parameter and i dont wanna add that to every single method
-      var translation = closestCenterFace.getTranslation();
-      var rotation = closestCenterFace.getRotation();
-      closestCenterFace =
-          new Pose2d(
-              new Translation2d(
-                  FieldConstants.kFieldLength - translation.getX(), translation.getY()),
-              new Rotation2d(-rotation.getCos(), rotation.getSin()));
+      closestCenterFace = flipPose(closestCenterFace);
     }
     int closestIndex = 0;
     for (int i = 1; i < FieldConstants.Reef.kCenterFaces.length; i++) {
       Pose2d curr = FieldConstants.Reef.kCenterFaces[i];
 
       if (fieldAlliance == Alliance.Red) {
-        // flip the pose
-        // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
-        // parameter and i dont wanna add that to every single method
-        var translation = curr.getTranslation();
-        var rotation = curr.getRotation();
-        curr =
-            new Pose2d(
-                new Translation2d(
-                    FieldConstants.kFieldLength - translation.getX(), translation.getY()),
-                new Rotation2d(-rotation.getCos(), rotation.getSin()));
+        curr = flipPose(curr);
       }
       if (drivePose.getTranslation().getDistance(curr.getTranslation())
           < drivePose.getTranslation().getDistance(closestCenterFace.getTranslation())) {
@@ -316,7 +298,6 @@ public class SetpointGenerator {
         closestIndex = i;
       }
     }
-    Logger.recordOutput("A", closestCenterFace);
     // now we determine if the algae is at L2 or L3
     ReefHeight algaeHeight = closestIndex % 2 == 0 ? ReefHeight.L3 : ReefHeight.L2;
     return algaeHeight;
@@ -326,16 +307,7 @@ public class SetpointGenerator {
     Pose2d centerFacePose = FieldConstants.Reef.kCenterFaces[algaeIndex];
     var fieldAlliance = getFieldAlliance(robotPose);
     if (fieldAlliance == Alliance.Red) {
-      // flip the pose
-      // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
-      // parameter and i dont wanna add that to every single method
-      var translation = centerFacePose.getTranslation();
-      var rotation = centerFacePose.getRotation();
-      centerFacePose =
-          new Pose2d(
-              new Translation2d(
-                  FieldConstants.kFieldLength - translation.getX(), translation.getY()),
-              new Rotation2d(-rotation.getCos(), rotation.getSin()));
+      centerFacePose = flipPose(centerFacePose);
     }
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
@@ -355,6 +327,16 @@ public class SetpointGenerator {
       Logger.recordOutput("SetpointGenerator/Alliance", Alliance.Red);
       return Alliance.Red;
     }
+  }
+
+  private static Pose2d flipPose(Pose2d pose) {
+    // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
+    // parameter and i dont wanna add that to every single method
+    var translation = pose.getTranslation();
+    var rotation = pose.getRotation();
+    return new Pose2d(
+        new Translation2d(FieldConstants.kFieldLength - translation.getX(), translation.getY()),
+        new Rotation2d(-rotation.getCos(), rotation.getSin()));
   }
 
   public static MeshedSetpoint generateNearestIntake(Pose2d curPose) {
@@ -377,16 +359,7 @@ public class SetpointGenerator {
     Pose2d centerFacePose = FieldConstants.Reef.kCenterFaces[algaeIndex];
     var fieldAlliance = getFieldAlliance(robotPose);
     if (fieldAlliance == Alliance.Red) {
-      // flip the pose
-      // i am very sorry for this eldritch horror but AllianceFlipUtil doesn't have an Alliance
-      // parameter and i dont wanna add that to every single method
-      var translation = centerFacePose.getTranslation();
-      var rotation = centerFacePose.getRotation();
-      centerFacePose =
-          new Pose2d(
-              new Translation2d(
-                  FieldConstants.kFieldLength - translation.getX(), translation.getY()),
-              new Rotation2d(-rotation.getCos(), rotation.getSin()));
+      centerFacePose = flipPose(centerFacePose);
     }
     // we need to move away from the center of the reef (regardless of angle)
     var drivePoseFinal =
@@ -420,11 +393,7 @@ public class SetpointGenerator {
             .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
     // if our field alliance doesn't match our actual alliance we need to flip
     if (getFieldAlliance(robotPose) != DriverStation.getAlliance().orElse(Alliance.Red)) {
-      // another eldritch horror
-      res =
-          new Pose2d(
-              new Translation2d(FieldConstants.kFieldLength - res.getX(), res.getY()),
-              new Rotation2d(-res.getRotation().getCos(), res.getRotation().getSin()));
+      res = flipPose(res);
     }
     return res;
   }
@@ -439,11 +408,7 @@ public class SetpointGenerator {
             .transformBy(new Transform2d(-kBargeXOffset, 0.0, Rotation2d.fromDegrees(25)));
     // if our field alliance doesn't match our actual alliance we need to flip
     if (getFieldAlliance(robotPose) != DriverStation.getAlliance().orElse(Alliance.Red)) {
-      // another eldritch horror
-      res =
-          new Pose2d(
-              new Translation2d(FieldConstants.kFieldLength - res.getX(), res.getY()),
-              new Rotation2d(-res.getRotation().getCos(), res.getRotation().getSin()));
+      res = flipPose(res);
     }
     return res;
   }
@@ -467,7 +432,7 @@ public class SetpointGenerator {
     return Rotation2d.fromRadians(Math.atan2(dy, dx));
   }
 
-  public static void logLines() {
+  public static void logAutoIntakeLines() {
     List<Translation2d[]> values = new ArrayList<>();
     for (var pos : kIntakePositionsRed) {
       double y1 = pos.slope * pos.minX + pos.intercept;
@@ -482,7 +447,7 @@ public class SetpointGenerator {
       values.add(line);
     }
     for (int i = 0; i < values.size(); i++) {
-      Logger.recordOutput("Lines/" + i, values.get(i));
+      Logger.recordOutput("SetpointGenerator/AutoIntakeLines/" + i, values.get(i));
     }
   }
 }
