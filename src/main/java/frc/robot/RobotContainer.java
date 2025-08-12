@@ -327,7 +327,6 @@ public class RobotContainer {
 
     m_driverControls
         .resetFieldCentric()
-        .or(m_operatorControls.resetFieldCentric())
         .onTrue(
             Commands.runOnce(
                 () ->
