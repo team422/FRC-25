@@ -14,6 +14,7 @@ import frc.robot.commands.auto.AutoFactory;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
+import frc.robot.oi.DriverControlsXbox;
 import frc.robot.oi.TestingController;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
@@ -77,6 +78,7 @@ public class RobotContainer {
   private AprilTagVision m_aprilTagVision;
 
   // Controller
+  private DriverControls m_operatorControls;
   private DriverControls m_driverControls;
   private TestingController m_testingController;
 
@@ -308,7 +310,7 @@ public class RobotContainer {
 
   /** Configure the controllers. */
   private void configureControllers() {
-    // m_driverControls = new DriverControlsXbox(0);
+    m_operatorControls = new DriverControlsXbox(0);
     m_driverControls = new DriverControlsPS5(0);
     m_testingController = new TestingController(5);
   }
@@ -325,6 +327,7 @@ public class RobotContainer {
 
     m_driverControls
         .resetFieldCentric()
+        .or(m_operatorControls.resetFieldCentric())
         .onTrue(
             Commands.runOnce(
                 () ->
@@ -335,6 +338,7 @@ public class RobotContainer {
     // don't use wpilib toggle, it's not good
     m_driverControls
         .coralIntake()
+        .or(m_operatorControls.coralIntake())
         .toggleOnTrue(
             Commands.runOnce(
                     () -> {
@@ -350,6 +354,7 @@ public class RobotContainer {
 
     m_driverControls
         .coralOuttake()
+        .or(m_operatorControls.coralIntake())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -358,6 +363,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL1()
+        .or(m_operatorControls.setLocationL1())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -366,6 +372,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL2()
+        .or(m_operatorControls.setLocationL2())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -374,6 +381,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL3()
+        .or(m_operatorControls.setLocationL3())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -382,6 +390,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL4()
+        .or(m_operatorControls.setLocationL4())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -390,6 +399,7 @@ public class RobotContainer {
 
     m_driverControls
         .autoscoreLeft()
+        .or(m_operatorControls.autoscoreLeft())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -415,6 +425,7 @@ public class RobotContainer {
 
     m_driverControls
         .autoscoreRight()
+        .or(m_operatorControls.autoscoreRight())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -440,6 +451,7 @@ public class RobotContainer {
 
     m_driverControls
         .manualScore()
+        .or(m_operatorControls.manualScore())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -462,6 +474,7 @@ public class RobotContainer {
 
     m_driverControls
         .climb()
+        .or(m_operatorControls.climb())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -475,6 +488,7 @@ public class RobotContainer {
 
     m_driverControls
         .otbMagic()
+        .or(m_operatorControls.otbMagic())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -488,6 +502,7 @@ public class RobotContainer {
 
     m_driverControls
         .algaeDescore()
+        .or(m_operatorControls.algaeDescore())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -502,6 +517,7 @@ public class RobotContainer {
 
     m_driverControls
         .zeroElevator()
+        .or(m_operatorControls.zeroElevator())
         .onTrue(
             Commands.runOnce(
                     () -> {
@@ -511,6 +527,7 @@ public class RobotContainer {
 
     m_driverControls
         .toggleVision()
+        .or(m_operatorControls.toggleVision())
         .onTrue(
             Commands.runOnce(
                     () -> {
@@ -520,6 +537,7 @@ public class RobotContainer {
 
     m_driverControls
         .coralEject()
+        .or(m_operatorControls.coralEject())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -533,6 +551,7 @@ public class RobotContainer {
 
     m_driverControls
         .toggleOtbRunthrough()
+        .or(m_operatorControls.toggleOtbRunthrough())
         .onTrue(
             Commands.runOnce(
                     () -> {
@@ -542,6 +561,7 @@ public class RobotContainer {
 
     m_driverControls
         .zeroClimb()
+        .or(m_operatorControls.zeroClimb())
         .onTrue(
             Commands.runOnce(
                     () -> {
