@@ -311,7 +311,7 @@ public class RobotContainer {
 
   /** Configure the controllers. */
   private void configureControllers() {
-    m_operatorControls = new OperatorControlsXbox(0);
+    m_operatorControls = new OperatorControlsXbox(1);
     m_driverControls = new DriverControlsPS5(0);
     m_testingController = new TestingController(5);
   }
