@@ -36,31 +36,6 @@ public class DriverControlsXbox implements DriverControls {
   }
 
   @Override
-  public Trigger coralOuttake() {
-    return m_controller.rightBumper();
-  }
-
-  @Override
-  public Trigger setLocationL1() {
-    return m_controller.povUp();
-  }
-
-  @Override
-  public Trigger setLocationL2() {
-    return m_controller.povRight();
-  }
-
-  @Override
-  public Trigger setLocationL3() {
-    return m_controller.povDown();
-  }
-
-  @Override
-  public Trigger setLocationL4() {
-    return m_controller.povLeft();
-  }
-
-  @Override
   public Trigger autoscoreLeft() {
     return m_controller.x();
   }
@@ -71,47 +46,12 @@ public class DriverControlsXbox implements DriverControls {
   }
 
   @Override
-  public Trigger manualScore() {
-    return m_controller.y();
-  }
-
-  @Override
-  public Trigger climb() {
-    return m_controller.a();
-  }
-
-  @Override
   public Trigger otbMagic() {
     return m_controller.rightTrigger(0.1);
   }
 
   @Override
-  public Trigger algaeDescore() {
-    return m_controller.leftTrigger(0.1);
-  }
-
-  @Override
-  public Trigger zeroElevator() {
-    return new Trigger(() -> false);
-  }
-
-  @Override
   public Trigger toggleVision() {
     return m_controller.start();
-  }
-
-  @Override
-  public Trigger coralEject() {
-    return m_controller.rightStick();
-  }
-
-  @Override
-  public Trigger toggleOtbRunthrough() {
-    return m_controller.leftStick();
-  }
-
-  @Override
-  public Trigger zeroClimb() {
-    return new Trigger(() -> false);
   }
 }
