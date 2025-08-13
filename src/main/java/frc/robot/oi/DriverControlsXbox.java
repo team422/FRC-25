@@ -32,17 +32,17 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public Trigger coralIntake() {
-    return m_controller.leftBumper();
+    return m_controller.leftTrigger(0.1);
   }
 
   @Override
   public Trigger autoscoreLeft() {
-    return m_controller.x();
+    return m_controller.leftBumper();
   }
 
   @Override
   public Trigger autoscoreRight() {
-    return m_controller.b();
+    return m_controller.rightBumper();
   }
 
   @Override

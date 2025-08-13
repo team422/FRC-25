@@ -32,17 +32,17 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger coralIntake() {
-    return m_controller.L1();
+    return m_controller.L2();
   }
 
   @Override
   public Trigger autoscoreLeft() {
-    return m_controller.square();
+    return m_controller.L1();
   }
 
   @Override
   public Trigger autoscoreRight() {
-    return m_controller.circle();
+    return m_controller.R1();
   }
 
   @Override
