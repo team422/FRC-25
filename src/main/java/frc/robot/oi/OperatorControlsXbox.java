@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class OperatorControlsXbox implements OperatorControls {
   CommandXboxController m_controller;
 
-  public OperatorControlsXbox(int port){
+  public OperatorControlsXbox(int port) {
     m_controller = new CommandXboxController(port);
   }
 
@@ -37,7 +37,7 @@ public class OperatorControlsXbox implements OperatorControls {
 
   @Override
   public Trigger manualScore() {
-    return m_controller.y();
+    return m_controller.rightTrigger(0.1);
   }
 
   @Override
@@ -52,22 +52,21 @@ public class OperatorControlsXbox implements OperatorControls {
 
   @Override
   public Trigger zeroElevator() {
-    return new Trigger(() -> false);
+    return m_controller.b();
   }
-
 
   @Override
   public Trigger coralEject() {
-    return m_controller.rightStick();
+    return m_controller.x();
   }
 
   @Override
   public Trigger toggleOtbRunthrough() {
-    return m_controller.leftStick();
+    return m_controller.leftBumper();
   }
 
   @Override
   public Trigger zeroClimb() {
-    return new Trigger(() -> false);
+    return m_controller.y();
   }
 }

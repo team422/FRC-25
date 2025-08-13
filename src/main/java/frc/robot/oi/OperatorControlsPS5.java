@@ -6,11 +6,11 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class OperatorControlsPS5 implements OperatorControls {
   CommandPS5Controller m_controller;
 
-  public OperatorControlsPS5(int port){
+  public OperatorControlsPS5(int port) {
     m_controller = new CommandPS5Controller(port);
   }
-  
-    @Override
+
+  @Override
   public Trigger coralOuttake() {
     return m_controller.R1();
   }
@@ -37,7 +37,7 @@ public class OperatorControlsPS5 implements OperatorControls {
 
   @Override
   public Trigger manualScore() {
-    return m_controller.triangle();
+    return m_controller.R2();
   }
 
   @Override
@@ -52,21 +52,21 @@ public class OperatorControlsPS5 implements OperatorControls {
 
   @Override
   public Trigger zeroElevator() {
-    return m_controller.options();
+    return m_controller.circle();
   }
 
   @Override
   public Trigger coralEject() {
-    return m_controller.R3();
+    return m_controller.square();
   }
 
   @Override
   public Trigger toggleOtbRunthrough() {
-    return m_controller.L3();
+    return m_controller.L1();
   }
 
   @Override
   public Trigger zeroClimb() {
-    return m_controller.create();
+    return m_controller.triangle();
   }
 }

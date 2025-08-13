@@ -27,7 +27,7 @@ public class DriverControlsPS5 implements DriverControls {
 
   @Override
   public Trigger resetFieldCentric() {
-    return m_controller.touchpad();
+    return m_controller.cross();
   }
 
   @Override
