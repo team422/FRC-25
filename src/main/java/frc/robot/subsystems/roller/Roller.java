@@ -55,6 +55,7 @@ public class Roller extends SubsystemBase {
         m_io.setVoltage(Constants.RollerConstants.kRollerSpeed);
         break;
     }
+    m_profiles.setCurrentProfile(state);
   }
 
   public RollerProfiles getState() {

@@ -15,6 +15,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 import java.util.function.DoubleSupplier;
 
@@ -26,7 +27,14 @@ public class DriveCommands {
       Drive drive, DoubleSupplier xSupplier, DoubleSupplier omegaSupplier) {
     return Commands.run(
         () -> {
-          drive.arcadeDrive(xSupplier.getAsDouble(), omegaSupplier.getAsDouble());
+          double forwardInput = xSupplier.getAsDouble();
+          double omegaInput = omegaSupplier.getAsDouble();
+
+          forwardInput = Math.copySign(forwardInput * forwardInput, forwardInput);
+          omegaInput = Math.copySign(omegaInput * omegaInput, omegaInput);
+
+          drive.arcadeDrive(
+              forwardInput * DriveConstants.kMaxInput, omegaInput * DriveConstants.kMaxInput);
         },
         drive);
   }

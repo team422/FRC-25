@@ -19,6 +19,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Drive(DriveIO io) {
+    m_io = io;
 
     m_drivetrain = new DifferentialDrive(m_io::setLeft, m_io::setRight);
 

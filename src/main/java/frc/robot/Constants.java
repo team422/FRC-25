@@ -21,6 +21,8 @@ public final class Constants {
     public static final double kTeleopRotationSpeed = 10.0;
 
     public static final double kCurrentLimit = 60.0;
+
+    public static final double kMaxInput = 0.5;
   }
 
   public class Ports {
@@ -33,7 +35,7 @@ public final class Constants {
   }
 
   public class RollerConstants {
-    public static final double kRollerSpeed = 0.5;
+    public static final double kRollerSpeed = 5.0;
   }
 
   public static enum Mode {
