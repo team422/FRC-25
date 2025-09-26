@@ -15,7 +15,7 @@ import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
 import frc.robot.oi.OperatorControls;
-import frc.robot.oi.OperatorControlsXbox;
+import frc.robot.oi.OperatorControlsPS5;
 import frc.robot.oi.TestingController;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
@@ -115,11 +115,11 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
-        // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
-        m_intake =
-            new Intake(
-                new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
+        // m_intake =
+        //     new Intake(
+        //         new IntakeRollerIOKraken(Ports.kIntakeRoller),
+        //         new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer =
             new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
@@ -311,7 +311,7 @@ public class RobotContainer {
 
   /** Configure the controllers. */
   private void configureControllers() {
-    m_operatorControls = new OperatorControlsXbox(1);
+    m_operatorControls = new OperatorControlsPS5(1);
     m_driverControls = new DriverControlsPS5(0);
     m_testingController = new TestingController(5);
   }

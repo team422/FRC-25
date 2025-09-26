@@ -40,6 +40,8 @@ public class Led extends SubsystemBase {
     kL2,
     kL3,
     kL4,
+    kIndexed,
+    kNotIndexed,
     kAlert,
     kFullTuning,
     kAutoscoreMeasurementsBad,
@@ -130,7 +132,8 @@ public class Led extends SubsystemBase {
 
   public void cancelAlert() {
     if (m_state == LedState.kAlert) {
-      m_state = LedState.kL1;
+      // m_state = LedState.kL1;
+      m_state = LedState.kNotIndexed;
     }
   }
 
@@ -236,6 +239,11 @@ public class Led extends SubsystemBase {
       case kAutoscoreMeasurementsGood:
         pattern = LEDPattern.solid(convertColor(LedConstants.kAutoscoreMeasurementsGood));
         break;
+      case kIndexed:
+        pattern = LEDPattern.solid(LedConstants.kIndexed);
+        break;
+      case kNotIndexed:
+        pattern = LEDPattern.solid(LedConstants.kNotIndexed);
       case kTargetMismatch:
         pattern = null;
         break;

@@ -1436,21 +1436,27 @@ public class RobotState {
       }
       return;
     }
-    // if we get here then we're in teleop so we should pick based on what level is selected
-    switch (m_desiredReefHeight) {
-      case L1:
-        m_led.updateState(LedState.kL1);
-        break;
-      case L2:
-        m_led.updateState(LedState.kL2);
-        break;
-      case L3:
-        m_led.updateState(LedState.kL3);
-        break;
-      case L4:
-        m_led.updateState(LedState.kL4);
-        break;
+
+    if (m_manipulator.hasGamePiece()) {
+      m_led.updateState(LedState.kIndexed);
+    } else {
+      m_led.updateState(LedState.kNotIndexed);
     }
+    // if we get here then we're in teleop so we should pick based on what level is selected
+    // switch (m_desiredReefHeight) {
+    //   case L1:
+    //     m_led.updateState(LedState.kL1);
+    //     break;
+    //   case L2:
+    //     m_led.updateState(LedState.kL2);
+    //     break;
+    //   case L3:
+    //     m_led.updateState(LedState.kL3);
+    //     break;
+    //   case L4:
+    //     m_led.updateState(LedState.kL4);
+    //     break;
+    // }
   }
 
   public int getNumVisionGyroObservations() {

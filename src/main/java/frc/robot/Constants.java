@@ -244,6 +244,8 @@ public final class Constants {
     public static final Color kAutoscoreMeasurementsBad = Color.kOrange;
     public static final Color kAutoscoreMeasurementsGood = Color.kDarkOliveGreen;
     public static final Color kHasGamePiece = Color.kBrown;
+    public static final Color kIndexed = Color.kGreen;
+    public static final Color kNotIndexed = Color.kRed;
   }
 
   public static final class ElevatorConstants {
