@@ -112,11 +112,11 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
-        // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
-        m_intake =
-            new Intake(
-                new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
+        // m_intake =
+        //     new Intake(
+        //         new IntakeRollerIOKraken(Ports.kIntakeRoller),
+        //         new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer =
             new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
