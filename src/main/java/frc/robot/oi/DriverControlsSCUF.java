@@ -22,12 +22,12 @@ public class DriverControlsSCUF implements DriverControls {
 
   @Override
   public double getTurn() {
-    return -m_controller.getRightX();
+    return -m_controller.getHID().getRawAxis(4);
   }
 
   @Override
   public Trigger resetFieldCentric() {
-    return new Trigger(() -> false);
+    return m_controller.leftStick();
   }
 
   @Override
@@ -107,7 +107,7 @@ public class DriverControlsSCUF implements DriverControls {
 
   @Override
   public Trigger toggleOtbRunthrough() {
-    return m_controller.leftStick();
+    return new Trigger(() -> false);
   }
 
   @Override
