@@ -42,22 +42,22 @@ public class DriverControlsSCUF implements DriverControls {
 
   @Override
   public Trigger setLocationL1() {
-    return m_controller.povUp();
-  }
-
-  @Override
-  public Trigger setLocationL2() {
-    return m_controller.povRight();
-  }
-
-  @Override
-  public Trigger setLocationL3() {
     return m_controller.povDown();
   }
 
   @Override
-  public Trigger setLocationL4() {
+  public Trigger setLocationL2() {
     return m_controller.povLeft();
+  }
+
+  @Override
+  public Trigger setLocationL3() {
+    return m_controller.povUp();
+  }
+
+  @Override
+  public Trigger setLocationL4() {
+    return m_controller.povRight();
   }
 
   @Override
