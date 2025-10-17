@@ -533,7 +533,7 @@ public final class Constants {
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
     public static final Rotation2d kWristOffset =
-        Rotation2d.fromDegrees((-37.4 + 22 - 153) * kWristAbsoluteEncoderGearRatio);
+        Rotation2d.fromDegrees((-37.4 + 22 - 153 - 3.9) * kWristAbsoluteEncoderGearRatio);
     // get owned shrihari - sri b is a better coder
     // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
 
