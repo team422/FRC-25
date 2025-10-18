@@ -32,6 +32,7 @@ import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
 import java.util.List;
+import org.littletonrobotics.junction.Logger;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -146,6 +147,8 @@ public class WristIOKraken implements WristIO {
     inputs.statorCurrent = m_motorStatorCurrent.getValue().in(Amps);
     inputs.voltage = m_motorVoltage.getValue().in(Volts);
     inputs.temperature = m_motorTemperature.getValue().in(Celsius);
+
+    Logger.recordOutput("AbsoluteEncoder", m_absoluteEncoder.get());
   }
 
   @Override
@@ -213,5 +216,13 @@ public class WristIOKraken implements WristIO {
 
   private Rotation2d getAbsoluteFinal() {
     return getAbsoluteWrapAround().div(ManipulatorConstants.kWristAbsoluteEncoderGearRatio);
+  }
+
+  @Override
+  public void offset(double angle) {
+    m_motor.setPosition(
+        getCurrAngle()
+            .plus(Rotation2d.fromDegrees(angle * ManipulatorConstants.kWristGearRatio))
+            .getRotations());
   }
 }

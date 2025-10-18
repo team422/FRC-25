@@ -14,4 +14,7 @@ public class WristIOReplay implements WristIO {
 
   @Override
   public void setCurrentLimits(double supplyLimit) {}
+
+  @Override
+  public void offset(double angle) {}
 }

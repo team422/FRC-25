@@ -73,4 +73,7 @@ public class WristIOSim implements WristIO {
   public void setCurrentLimits(double supplyLimit) {
     // Not needed for simulation
   }
+
+  @Override
+  public void offset(double angle) {}
 }

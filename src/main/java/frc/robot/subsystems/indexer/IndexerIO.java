@@ -19,6 +19,7 @@ public interface IndexerIO {
     public double topVoltage;
     public double topTemperature;
     public boolean topMotorIsConnected;
+    public boolean sideMotorDataUpdate;
   }
 
   public void updateInputs(IndexerInputs inputs);

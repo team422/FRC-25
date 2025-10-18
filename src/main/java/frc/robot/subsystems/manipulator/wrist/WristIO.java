@@ -24,4 +24,6 @@ public interface WristIO {
   public void setDesiredAngle(Rotation2d angle);
 
   public void setCurrentLimits(double supplyLimit);
+
+  public void offset(double angle);
 }

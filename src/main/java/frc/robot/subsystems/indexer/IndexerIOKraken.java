@@ -13,6 +13,7 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -27,6 +28,7 @@ import frc.robot.Constants.IndexerConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.util.CtreBaseRefreshManager;
 import java.util.List;
+import org.littletonrobotics.junction.Logger;
 
 public class IndexerIOKraken implements IndexerIO {
   private TalonFX m_sideMotor;
@@ -111,7 +113,7 @@ public class IndexerIOKraken implements IndexerIO {
         m_topMotorVoltage,
         m_topMotorTemperature);
 
-    // ParentDevice.optimizeBusUtilizationForAll(m_sideMotor, m_topMotor);
+    ParentDevice.optimizeBusUtilizationForAll(m_sideMotor, m_topMotor);
 
     if (Constants.kUseBaseRefreshManager) {
       CtreBaseRefreshManager.addSignals(
@@ -135,24 +137,32 @@ public class IndexerIOKraken implements IndexerIO {
 
   @Override
   public void updateInputs(IndexerInputs inputs) {
+    boolean works;
     if (!Constants.kUseBaseRefreshManager) {
-      BaseStatusSignal.refreshAll(
-              m_sideConnectedMotor,
-              m_sideMotorPosition,
-              m_sideMotorVelocity,
-              m_sideMotorCurrent,
-              m_sideMotorStatorCurrent,
-              m_sideMotorVoltage,
-              m_sideMotorTemperature,
-              m_topConnectedMotor,
-              m_topMotorPosition,
-              m_topMotorVelocity,
-              m_topMotorCurrent,
-              m_topMotorStatorCurrent,
-              m_topMotorVoltage,
-              m_topMotorTemperature)
-          .isOK();
+      inputs.sideMotorDataUpdate =
+          BaseStatusSignal.refreshAll(
+                  m_sideConnectedMotor,
+                  m_sideMotorPosition,
+                  m_sideMotorVelocity,
+                  m_sideMotorCurrent,
+                  m_sideMotorStatorCurrent,
+                  m_sideMotorVoltage,
+                  m_sideMotorTemperature)
+              .isOK();
+
+      works =
+          BaseStatusSignal.refreshAll(
+                  m_topConnectedMotor,
+                  m_topMotorPosition,
+                  m_topMotorVelocity,
+                  m_topMotorCurrent,
+                  m_topMotorStatorCurrent,
+                  m_topMotorVoltage,
+                  m_topMotorTemperature)
+              .isOK();
     }
+
+    Logger.recordOutput("works", works);
 
     inputs.sideMotorIsConnected = m_sideConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
     inputs.topMotorIsConnected = m_topConnectedMotor.getValue() != ConnectedMotorValue.Unknown;
@@ -174,6 +184,7 @@ public class IndexerIOKraken implements IndexerIO {
 
   @Override
   public void setVoltage(double sideVoltage, double topVoltage) {
+    Logger.recordOutput("Side Voltage", sideVoltage);
     m_sideMotor.setControl(m_voltageOut.withOutput(sideVoltage));
     m_topMotor.setControl(m_voltageOut.withOutput(topVoltage));
   }

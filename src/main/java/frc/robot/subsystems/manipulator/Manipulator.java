@@ -197,6 +197,10 @@ public class Manipulator extends SubsystemBase {
       m_wristMotorDisconnectedAlert.set(false);
     }
 
+    if (ManipulatorConstants.kWristNewOffset.hasChanged(hashCode())) {
+      m_wristIO.offset(ManipulatorConstants.kWristNewOffset.getAsDouble());
+    }
+
     Logger.recordOutput("PeriodicTime/Manipulator", (HALUtil.getFPGATime() - start) / 1000.0);
   }
 
