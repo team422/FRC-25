@@ -532,10 +532,10 @@ public final class Constants {
     // the offset needs to be so that it starts at 180 degrees (all the way out)
     // public static final Rotation2d kWristOffset =
     //     Rotation2d.fromDegrees(-78.662).plus(Rotation2d.fromDegrees(180.0));
-    // public static final Rotation2d kWristOffset =
+    public static final Rotation2d kWristOffset =
         Rotation2d.fromDegrees((-15.1 + 1.7) * kWristAbsoluteEncoderGearRatio);
     // get owned shrihari - sri b is a better coder
-    public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
+    // public static final Rotation2d kWristOffset = Rotation2d.fromDegrees(0.0);
     // public static final LoggedTunableNumber kWristNewOffset =
     //     new LoggedTunableNumber("Wrist New Offset", 0);
 
