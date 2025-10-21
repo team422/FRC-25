@@ -13,7 +13,7 @@ import frc.robot.RobotState.RobotAction;
 import frc.robot.commands.auto.AutoFactory;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
-import frc.robot.oi.DriverControlsPS5;
+import frc.robot.oi.DriverControlsSCUF;
 import frc.robot.oi.TestingController;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
@@ -309,8 +309,15 @@ public class RobotContainer {
   /** Configure the controllers. */
   private void configureControllers() {
     // m_driverControls = new DriverControlsXbox(0);
-    m_driverControls = new DriverControlsPS5(0);
-    // m_driverControls = new DriverControlsSCUF(0);
+    // String cotjrr;
+    // if (DriverStation.getJoystickIsXbox(0)) {
+    m_driverControls = new DriverControlsSCUF(0);
+    //   cotjrr = "SCUF";
+    // } else {
+    //   m_driverControls = new DriverControlsPS5(0);
+    //   cotjrr = "PS5";
+    // }
+    // Logger.recordOutput("Controller", cotjrr);
     m_testingController = new TestingController(5);
   }
 

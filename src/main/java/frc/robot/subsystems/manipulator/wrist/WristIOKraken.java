@@ -220,9 +220,8 @@ public class WristIOKraken implements WristIO {
 
   @Override
   public void offset(double angle) {
-    m_motor.setPosition(
-        getCurrAngle()
-            .plus(Rotation2d.fromDegrees(angle * ManipulatorConstants.kWristGearRatio))
-            .getRotations());
+    if (angle != 0) {
+      m_motor.setPosition(getCurrAngle().plus(Rotation2d.fromDegrees(angle)).getRotations(), 0.0);
+    }
   }
 }
