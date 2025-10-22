@@ -428,7 +428,7 @@ public final class Constants {
     // public static final Rotation2d kPivotOffset = Rotation2d.fromDegrees(0.0);
     public static final Rotation2d kPivotOffset =
         Rotation2d.fromDegrees(
-            (24.0 + 134.0 + 8.0 + 16.1 + 3.0 + 9.0 - 6.0 - 2.0 + 120)
+            (24.0 + 134.0 + 8.0 + 16.1 + 3.0 + 9.0 - 6.0 - 2.0 + 120 - 38)
                 * kPivotAbsoluteEncoderGearRatio);
 
     public static final Rotation2d kPivotFakeToRealOffset = Rotation2d.fromDegrees(75.0);
