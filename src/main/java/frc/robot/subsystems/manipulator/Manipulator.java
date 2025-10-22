@@ -197,7 +197,8 @@ public class Manipulator extends SubsystemBase {
       m_wristMotorDisconnectedAlert.set(false);
     }
 
-    if (ManipulatorConstants.kWristNewOffset.hasChanged(hashCode())) {
+    if (ManipulatorConstants.kWristNewOffset.hasChanged(hashCode())
+        && ManipulatorConstants.kWristNewOffset.get() != 0) {
       m_wristIO.offset(ManipulatorConstants.kWristNewOffset.getAsDouble());
     }
 
