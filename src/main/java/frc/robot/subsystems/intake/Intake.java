@@ -2,15 +2,12 @@ package frc.robot.subsystems.intake;
 
 import edu.wpi.first.hal.HALUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.Alert;
-import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.EqualsUtil;
 import frc.lib.littletonUtils.LoggedTunableNumber;
-import frc.robot.Constants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.climb.Climb.ClimbState;
@@ -20,7 +17,6 @@ import frc.robot.subsystems.intake.pivot.PivotInputsAutoLogged;
 import frc.robot.subsystems.intake.roller.IntakeRollerIO;
 import frc.robot.subsystems.intake.roller.IntakeRollerInputsAutoLogged;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
-import frc.robot.util.AlertManager;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +26,10 @@ public class Intake extends SubsystemBase {
   private IntakeRollerIO m_rollerIO;
   private PivotIO m_pivotIO;
 
-  private Alert m_rollerMotorDisconnectedAlert =
-      new Alert("Intake Roller Motor Disconnected", AlertType.kError);
-  private Alert m_pivotMotorDisconnectedAlert =
-      new Alert("Intake Pivot Motor Disconnected", AlertType.kError);
+  // private Alert m_rollerMotorDisconnectedAlert =
+  //     new Alert("Intake Roller Motor Disconnected", AlertType.kError);
+  // private Alert m_pivotMotorDisconnectedAlert =
+  //     new Alert("Intake Pivot Motor Disconnected", AlertType.kError);
 
   public final IntakeRollerInputsAutoLogged m_rollerInputs = new IntakeRollerInputsAutoLogged();
   public final PivotInputsAutoLogged m_pivotInputs = new PivotInputsAutoLogged();
@@ -91,7 +87,7 @@ public class Intake extends SubsystemBase {
           0, IntakeConstants.kPivotSimP, IntakeConstants.kPivotSimI, IntakeConstants.kPivotSimD, 0);
     }
 
-    AlertManager.registerAlert(m_pivotMotorDisconnectedAlert, m_rollerMotorDisconnectedAlert);
+    // AlertManager.registerAlert(m_pivotMotorDisconnectedAlert, m_rollerMotorDisconnectedAlert);
   }
 
   public void updateState(IntakeState state) {
@@ -180,17 +176,17 @@ public class Intake extends SubsystemBase {
     Logger.recordOutput("Intake/State", m_profiles.getCurrentProfile());
     Logger.recordOutput("Intake/ReadyToZero", m_readyToZero);
 
-    if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
-      m_rollerMotorDisconnectedAlert.set(true);
-    } else {
-      m_rollerMotorDisconnectedAlert.set(false);
-    }
+    // if (Constants.kUseAlerts && !m_rollerInputs.motorIsConnected) {
+    //   m_rollerMotorDisconnectedAlert.set(true);
+    // } else {
+    //   m_rollerMotorDisconnectedAlert.set(false);
+    // }
 
-    if (Constants.kUseAlerts && !m_pivotInputs.motorIsConnected) {
-      m_pivotMotorDisconnectedAlert.set(true);
-    } else {
-      m_pivotMotorDisconnectedAlert.set(false);
-    }
+    // if (Constants.kUseAlerts && !m_pivotInputs.motorIsConnected) {
+    //   m_pivotMotorDisconnectedAlert.set(true);
+    // } else {
+    //   m_pivotMotorDisconnectedAlert.set(false);
+    // }
 
     Logger.recordOutput("PeriodicTime/Intake", (HALUtil.getFPGATime() - start) / 1000.0);
   }
