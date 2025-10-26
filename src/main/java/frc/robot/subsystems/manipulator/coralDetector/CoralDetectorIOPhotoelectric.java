@@ -3,6 +3,7 @@ package frc.robot.subsystems.manipulator.coralDetector;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
 
 public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   private DigitalInput m_manipulatorSensorOne;
@@ -41,6 +42,9 @@ public class CoralDetectorIOPhotoelectric implements CoralDetectorIO {
   }
 
   private boolean hasGamePiece() {
+    if (DriverStation.isAutonomous()) {
+      return manipulatorOneDetected() && manipulatorTwoDetected() && !gamePieceInFunnel();
+    }
     return manipulatorOneDetected() && manipulatorTwoDetected();
   }
 

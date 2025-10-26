@@ -97,7 +97,7 @@ public class DriverControlsSCUF implements DriverControls {
 
   @Override
   public Trigger toggleVision() {
-    return m_controller.start();
+    return new Trigger(() -> false);
   }
 
   @Override
@@ -112,6 +112,6 @@ public class DriverControlsSCUF implements DriverControls {
 
   @Override
   public Trigger zeroClimb() {
-    return new Trigger(() -> false);
+    return m_controller.start();
   }
 }

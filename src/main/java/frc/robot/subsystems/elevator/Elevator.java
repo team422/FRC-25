@@ -41,6 +41,7 @@ public class Elevator extends SubsystemBase {
     kLollipopIntake,
     kFullTuning,
     kSlamming,
+    kDown
     // we force a slam every time we go down
   }
 
@@ -60,6 +61,7 @@ public class Elevator extends SubsystemBase {
     periodicHash.put(ElevatorState.kLollipopIntake, this::lollipopIntakePeriodic);
     periodicHash.put(ElevatorState.kFullTuning, this::fullTuningPeriodic);
     periodicHash.put(ElevatorState.kSlamming, this::slammingPeriodic);
+    periodicHash.put(ElevatorState.kDown, this::downPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, ElevatorState.kStow);
 
@@ -312,6 +314,11 @@ public class Elevator extends SubsystemBase {
     }
   }
 
+  public void downPeriodic() {
+    m_io.setVoltage(-1.5);
+    zeroElevator();
+  }
+
   public boolean atSetpoint() {
     return Math.abs(m_inputs.leadingPosition - m_inputs.desiredLocation)
         <= ElevatorConstants.kHeightTolerance;
@@ -324,4 +331,6 @@ public class Elevator extends SubsystemBase {
   public void zeroElevator() {
     m_io.zeroElevator();
   }
+
+  public void down() {}
 }

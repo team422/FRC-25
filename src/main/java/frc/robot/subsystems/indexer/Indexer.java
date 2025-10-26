@@ -26,6 +26,7 @@ public class Indexer extends SubsystemBase {
     kIndexing,
     kCoralEject,
     kFullTuning,
+    kLaunch
   }
 
   private SubsystemProfiles<IndexerState> m_profiles;
@@ -38,6 +39,7 @@ public class Indexer extends SubsystemBase {
     periodicHash.put(IndexerState.kIndexing, this::indexingPeriodic);
     periodicHash.put(IndexerState.kCoralEject, this::coralEjectPeriodic);
     periodicHash.put(IndexerState.kFullTuning, this::fullTuningPeriodic);
+    periodicHash.put(IndexerState.kLaunch, this::launchPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, IndexerState.kIdle);
 
@@ -106,5 +108,9 @@ public class Indexer extends SubsystemBase {
   public void fullTuningPeriodic() {
     m_io.setVoltage(
         FullTuningConstants.kIndexerVoltage.get(), FullTuningConstants.kIndexerVoltage.get());
+  }
+
+  public void launchPeriodic() {
+    m_io.setVoltage(IndexerConstants.kLaunchVoltage.get(), IndexerConstants.kLaunchVoltage.get());
   }
 }

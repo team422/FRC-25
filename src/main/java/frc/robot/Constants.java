@@ -135,7 +135,7 @@ public final class Constants {
         new LoggedTunableNumber("DriveToPoint D", 0.18);
 
     public static final LoggedTunableNumber kDriveToPointAutoP =
-        new LoggedTunableNumber("DriveToPoint Auto P", 3.0);
+        new LoggedTunableNumber("DriveToPoint Auto P", 2.7);
     public static final LoggedTunableNumber kDriveToPointAutoI =
         new LoggedTunableNumber("DriveToPoint Auto I", 0.0);
     public static final LoggedTunableNumber kDriveToPointAutoD =
@@ -300,7 +300,7 @@ public final class Constants {
         new LoggedTunableNumber("Elevator Offset", Units.inchesToMeters(0));
 
     // this is the more than the max amount that the belts will ever skip
-    public static final double kMaxSkip = 2.0;
+    public static final double kMaxSkip = 3.0;
     public static final LoggedTunableNumber kSlamTime = new LoggedTunableNumber("Slam Time", 0.2);
     public static final LoggedTunableNumber kSlamVoltage =
         new LoggedTunableNumber("Slam Voltage", -3.0);
@@ -676,6 +676,8 @@ public final class Constants {
         new LoggedTunableNumber("Indexer Eject Voltage", -5.0);
     public static final LoggedTunableNumber kIndexerTopEjectVoltage =
         new LoggedTunableNumber("Indexer Top Eject Voltage", -2.5);
+    public static final LoggedTunableNumber kLaunchVoltage =
+        new LoggedTunableNumber("Indexer Launch Voltage", -11.0);
 
     // Simulation constants
     public static final DCMotor kSimGearbox = DCMotor.getKrakenX60Foc(2);

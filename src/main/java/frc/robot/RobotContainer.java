@@ -14,7 +14,6 @@ import frc.robot.commands.auto.AutoFactory;
 import frc.robot.commands.drive.DriveCommands;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
-import frc.robot.oi.TestingController;
 import frc.robot.subsystems.aprilTagVision.AprilTagVision;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIONorthstar;
 import frc.robot.subsystems.climb.Climb;
@@ -29,6 +28,7 @@ import frc.robot.subsystems.drive.ModuleIOReplay;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.Elevator.ElevatorState;
 import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOReplay;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
@@ -78,7 +78,6 @@ public class RobotContainer {
 
   // Controller
   private DriverControls m_driverControls;
-  private TestingController m_testingController;
 
   // Dashboard inputs
   private LoggedDashboardChooser<Command> m_autoChooser;
@@ -112,11 +111,11 @@ public class RobotContainer {
                 new ModuleIOTalonFX(2),
                 new ModuleIOTalonFX(3));
 
-        // m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
-        m_intake =
-            new Intake(
-                new IntakeRollerIOKraken(Ports.kIntakeRoller),
-                new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
+        m_intake = new Intake(new IntakeRollerIOReplay(), new PivotIOReplay());
+        // m_intake =
+        //     new Intake(
+        //         new IntakeRollerIOKraken(Ports.kIntakeRoller),
+        //         new PivotIOKraken(Ports.kIntakePivot, Ports.kIntakeAbsoluteEncoder));
 
         m_indexer =
             new Indexer(new IndexerIOKraken(Ports.kIndexerSideMotor, Ports.kIndexerTopMotor));
@@ -308,22 +307,20 @@ public class RobotContainer {
 
   /** Configure the controllers. */
   private void configureControllers() {
-    // m_driverControls = new DriverControlsXbox(0);
-    // // String cotjrr;
-    // // if (DriverStation.getJoystickIsXbox(0)) {
-    // m_driverControls = new DriverControlsSCUF(0);
-    // //   cotjrr = "SCUF";
-    // // } else {
     m_driverControls = new DriverControlsPS5(0);
-    // //   cotjrr = "PS5";
-    // // }
-    // // Logger.recordOutput("Controller", cotjrr);
-    m_testingController = new TestingController(5);
+    // m_driverControlsPS5 = new DriverControlsSCUF(0);
+    // m_testingController = new TestingController(5);
   }
 
   /** Configure the button bindings. */
   private void configureButtonBindings() {
     m_drive.setDefaultCommand(
+        // DriveCommands.joystickDrive(
+        //     m_drive,
+        //     () -> m_driverControlsPS5.getForward() + m_driverControlsSCUF.getForward(),
+        //     () -> m_driverControlsPS5.getStrafe() + m_driverControlsSCUF.getStrafe(),
+        //     () -> m_driverControlsPS5.getTurn() + m_driverControlsSCUF.getTurn(),
+        //     false)
         DriveCommands.joystickDrive(
             m_drive,
             m_driverControls::getForward,
@@ -333,6 +330,7 @@ public class RobotContainer {
 
     m_driverControls
         .resetFieldCentric()
+        // .or(m_driverControlsSCUF.resetFieldCentric())
         .onTrue(
             Commands.runOnce(
                 () ->
@@ -343,6 +341,7 @@ public class RobotContainer {
     // don't use wpilib toggle, it's not good
     m_driverControls
         .coralIntake()
+        // .or(m_driverControlsSCUF.coralIntake())
         .toggleOnTrue(
             Commands.runOnce(
                     () -> {
@@ -358,6 +357,7 @@ public class RobotContainer {
 
     m_driverControls
         .coralOuttake()
+        // .or(m_driverControlsSCUF.coralOuttake())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -366,6 +366,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL1()
+        // .or(m_driverControlsSCUF.setLocationL1())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -374,6 +375,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL2()
+        // .or(m_driverControlsSCUF.setLocationL2())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -382,6 +384,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL3()
+        // .or(m_driverControlsSCUF.setLocationL3())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -390,6 +393,7 @@ public class RobotContainer {
 
     m_driverControls
         .setLocationL4()
+        // .or(m_driverControlsSCUF.setLocationL4())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -398,6 +402,7 @@ public class RobotContainer {
 
     m_driverControls
         .autoscoreLeft()
+        // .or(m_driverControlsSCUF.autoscoreLeft())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -423,6 +428,7 @@ public class RobotContainer {
 
     m_driverControls
         .autoscoreRight()
+        // .or(m_driverControlsSCUF.autoscoreRight())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -448,6 +454,7 @@ public class RobotContainer {
 
     m_driverControls
         .manualScore()
+        // .or(m_driverControlsSCUF.manualScore())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -470,6 +477,7 @@ public class RobotContainer {
 
     m_driverControls
         .climb()
+        // .or(m_driverControlsSCUF.climb())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -496,6 +504,7 @@ public class RobotContainer {
 
     m_driverControls
         .algaeDescore()
+        // .or(m_driverControlsSCUF.algaeDescore())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -510,15 +519,17 @@ public class RobotContainer {
 
     m_driverControls
         .zeroElevator()
+        // .or(m_driverControlsSCUF.zeroElevator())
         .onTrue(
             Commands.runOnce(
-                    () -> {
-                      m_elevator.zeroElevator();
-                    })
-                .ignoringDisable(true));
+                () -> {
+                  // m_elevator.zeroElevator();
+                  // m_indexer.updateState(IndexerState.kLaunch);
+                }));
 
     m_driverControls
         .toggleVision()
+        // .or(m_driverControlsSCUF.toggleVision())
         .onTrue(
             Commands.runOnce(
                     () -> {
@@ -528,6 +539,7 @@ public class RobotContainer {
 
     m_driverControls
         .coralEject()
+        // .or(m_driverControlsSCUF.coralEject())
         .onTrue(
             Commands.runOnce(
                 () -> {
@@ -541,6 +553,7 @@ public class RobotContainer {
 
     m_driverControls
         .toggleOtbRunthrough()
+        // .or(m_driverControlsSCUF.toggleOtbRunthrough())
         .onTrue(
             Commands.runOnce(
                     () -> {
@@ -550,78 +563,91 @@ public class RobotContainer {
 
     m_driverControls
         .zeroClimb()
-        .onTrue(
+        // .or(m_driverControlsSCUF.zeroClimb())
+        // .onTrue(
+        //     Commands.runOnce(
+        //             () -> {
+        //               m_climb.zeroEncoder();
+        //               m_climb.updateState(ClimbState.kMatch);
+        //             })
+        //         .ignoringDisable(true));
+        .whileTrue(
             Commands.runOnce(
                     () -> {
-                      m_climb.zeroEncoder();
-                      m_climb.updateState(ClimbState.kMatch);
+                      RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
+                      m_elevator.updateState(ElevatorState.kDown);
+                      m_manipulator.updateState(ManipulatorState.kStow);
                     })
-                .ignoringDisable(true));
+                .andThen(
+                    () -> {
+                      m_elevator.updateState(ElevatorState.kStow);
+                      RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
+                    }));
 
-    m_testingController
-        .toggleTestingMode()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().toggleTestingMode();
-                }));
+    // m_testingController
+    //     .toggleTestingMode()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().toggleTestingMode();
+    //             }));
 
-    m_testingController
-        .autoAutoscoreLeft()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setReefIndexLeft();
-                  RobotState.getInstance().testAutoAutoScore();
-                }));
-    m_testingController
-        .autoAutoscoreRight()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setReefIndexRight();
-                  RobotState.getInstance().testAutoAutoScore();
-                }));
+    // m_testingController
+    //     .autoAutoscoreLeft()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().setReefIndexLeft();
+    //               RobotState.getInstance().testAutoAutoScore();
+    //             }));
+    // m_testingController
+    //     .autoAutoscoreRight()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().setReefIndexRight();
+    //               RobotState.getInstance().testAutoAutoScore();
+    //             }));
 
-    m_testingController
-        .autoCoralIntake()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().testAutoCoralIntake();
-                }));
+    // m_testingController
+    //     .autoCoralIntake()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().testAutoCoralIntake();
+    //             }));
 
-    m_testingController
-        .autoLeft()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setAutoSideLeft();
-                }));
+    // m_testingController
+    //     .autoLeft()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().setAutoSideLeft();
+    //             }));
 
-    m_testingController
-        .autoRight()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().setAutoSideRight();
-                }));
+    // m_testingController
+    //     .autoRight()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().setAutoSideRight();
+    //             }));
 
-    m_testingController
-        .incrementCoralScored()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().incrementCoralScoredAuto();
-                }));
+    // m_testingController
+    //     .incrementCoralScored()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().incrementCoralScoredAuto();
+    //             }));
 
-    m_testingController
-        .decrementCoralScored()
-        .onTrue(
-            Commands.runOnce(
-                () -> {
-                  RobotState.getInstance().decrementCoralScoredAuto();
-                }));
+    // m_testingController
+    //     .decrementCoralScored()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //             () -> {
+    //               RobotState.getInstance().decrementCoralScoredAuto();
+    //             }));
   }
 
   /**
