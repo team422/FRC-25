@@ -113,7 +113,7 @@ public class Robot extends LoggedRobot {
       }
     }
 
-    RobotState.getInstance().updateRobotState();
+    // RobotState.getInstance().updateRobotState();
 
     CommandScheduler.getInstance().run();
 
@@ -123,20 +123,20 @@ public class Robot extends LoggedRobot {
   /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {
-    RobotState.getInstance().onDisable();
+    // RobotState.getInstance().onDisable();
   }
 
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {
-    RobotState.getInstance().setSelectedAuto(m_robotContainer.getSelectedAuto());
-    RobotState.getInstance().calculateDriveTargetPose();
+    // RobotState.getInstance().setSelectedAuto(m_robotContainer.getSelectedAuto());
+    // RobotState.getInstance().calculateDriveTargetPose();
   }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    RobotState.getInstance().onEnable();
+    // RobotState.getInstance().onEnable();
 
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
     if (m_autonomousCommand != null) {
@@ -155,7 +155,7 @@ public class Robot extends LoggedRobot {
       m_autonomousCommand.cancel();
     }
 
-    RobotState.getInstance().onEnable();
+    // RobotState.getInstance().onEnable();
   }
 
   /** This function is called periodically during operator control. */
@@ -167,7 +167,7 @@ public class Robot extends LoggedRobot {
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
 
-    RobotState.getInstance().onEnable();
+    // RobotState.getInstance().onEnable();
   }
 
   /** This function is called periodically during test mode. */
