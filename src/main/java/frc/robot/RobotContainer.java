@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.oi.DriverControls;
 import frc.robot.oi.DriverControlsPS5;
-import frc.robot.oi.TestingController;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -18,7 +17,6 @@ public class RobotContainer {
 
   // Controller
   private DriverControls m_driverControls;
-  private TestingController m_testingController;
 
   // Dashboard inputs
   private LoggedDashboardChooser<Command> m_autoChooser;
@@ -55,7 +53,6 @@ public class RobotContainer {
   private void configureControllers() {
     // m_driverControls = new DriverControlsXbox(0);
     m_driverControls = new DriverControlsPS5(0);
-    m_testingController = new TestingController(5);
   }
 
   /** Configure the button bindings. */

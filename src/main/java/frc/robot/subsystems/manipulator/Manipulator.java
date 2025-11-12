@@ -1,3 +1,5 @@
 package frc.robot.subsystems.manipulator;
 
-public class Manipulator {}
+public class Manipulator {
+
+}
