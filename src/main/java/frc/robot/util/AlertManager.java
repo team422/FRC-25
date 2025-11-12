@@ -1,7 +1,6 @@
 package frc.robot.util;
 
 import edu.wpi.first.wpilibj.Alert;
-import frc.robot.RobotState;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,10 +25,10 @@ public class AlertManager {
       anyActive |= alert.get();
     }
 
-    if (anyActive) {
-      RobotState.getInstance().triggerAlert();
-    } else {
-      RobotState.getInstance().cancelAlert();
-    }
+    // if (anyActive) {
+    //   RobotState.getInstance().triggerAlert();
+    // } else {
+    //   RobotState.getInstance().cancelAlert();
+    // }
   }
 }
