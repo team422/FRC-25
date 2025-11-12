@@ -1,0 +1,67 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 1.6236371527777766,
+        "y": 6.9254806857638895
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.6095641637731473,
+        "y": 6.584299045138889
+      },
+      "isLocked": false,
+      "linkedName": "Loader Station Left"
+    },
+    {
+      "anchor": {
+        "x": 3.696349103009258,
+        "y": 5.55953125
+      },
+      "prevControl": {
+        "x": 3.01456814236111,
+        "y": 6.129914279513889
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Piece 2"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "Set Height L4",
+      "waypointRelativePos": 0.324830242406542,
+      "endWaypointRelativePos": null,
+      "command": null
+    },
+    {
+      "name": "Autoscore Left",
+      "waypointRelativePos": 0.40264493282710284,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 8.0,
+    "maxAcceleration": 7.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -54.10020983324006
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -50.74683226874685
+  },
+  "useDefaultConstraints": false
+}

@@ -12,6 +12,7 @@ import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.Constants.FullTuningConstants;
 import frc.robot.RobotState;
+import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.util.AlertManager;
 import frc.robot.util.SetpointGenerator;
@@ -189,6 +190,11 @@ public class Elevator extends SubsystemBase {
     } else {
       m_followingMotorDisconnectedAlert.set(false);
     }
+
+    Logger.recordOutput(
+        "Elevator/Stupid",
+        !RobotState.getInstance().getCurrentAction().equals(RobotAction.kAutoScore)
+            && !RobotState.getInstance().getCurrentAction().equals(RobotAction.kCoralOuttaking));
 
     Logger.recordOutput("PeriodicTime/Elevator", (HALUtil.getFPGATime() - start) / 1000.0);
   }

@@ -1,0 +1,99 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "named",
+          "data": {
+            "name": "UsePP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left Starting"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "WaitTillScored"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "UsePP"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Back Left to Loader"
+          }
+        },
+        {
+          "type": "race",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "WaitTillInFunnel"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 1.0
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left to Second Piece"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "WaitTillScored"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Left Second to Loader"
+          }
+        },
+        {
+          "type": "race",
+          "data": {
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "WaitTillInFunnel"
+                }
+              },
+              {
+                "type": "wait",
+                "data": {
+                  "waitTime": 1.0
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}

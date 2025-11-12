@@ -1,0 +1,61 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 5.008011736188616,
+        "y": 5.172015816824776
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 3.8554360525948663,
+        "y": 7.374998256138392
+      },
+      "isLocked": false,
+      "linkedName": "Piece 1"
+    },
+    {
+      "anchor": {
+        "x": 1.6236371527777766,
+        "y": 6.9254806857638895
+      },
+      "prevControl": {
+        "x": 3.4828703703703696,
+        "y": 7.1279535590277785
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "Loader Station Left"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [
+    {
+      "name": "Intake",
+      "waypointRelativePos": 0.15,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
+  "globalConstraints": {
+    "maxVelocity": 8.0,
+    "maxAcceleration": 7.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": -50.74683226874685
+  },
+  "reversed": false,
+  "folder": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": -121.01538720309006
+  },
+  "useDefaultConstraints": false
+}

@@ -92,9 +92,9 @@ public class RobotState {
     kAlgaeDescoringFinal,
 
     kAutoDefault,
-    kAutoAutoScore,
-    kAutoCoralIntaking,
-    kAutoCoralOuttaking,
+    // kAutoAutoScore,
+    // kAutoCoralIntaking,
+    // kAutoCoralOuttaking,
   }
 
   private SubsystemProfiles<RobotAction> m_profiles;
@@ -116,8 +116,8 @@ public class RobotState {
 
   private double m_odometryTrustFactor = 0.0;
 
-  private boolean m_isBargeAuto = false;
-  private boolean m_isCitrusAuto = false;
+  // private boolean m_isBargeAuto = false;
+  // private boolean m_isCitrusAuto = false;
 
   private boolean m_autoTestingMode = false;
 
@@ -137,12 +137,12 @@ public class RobotState {
           RobotAction.kAlgaeDescoringMoveUp,
           RobotAction.kAlgaeDescoringFinal);
 
-  private final List<RobotAction> kAlgaeDescoreSequenceAuto =
-      List.of(
-          RobotAction.kAlgaeDescoringInitial,
-          RobotAction.kAlgaeDescoringDeployManipulator,
-          RobotAction.kAlgaeDescoringMoveUp,
-          RobotAction.kAlgaeDescoringDriveAway);
+  // private final List<RobotAction> kAlgaeDescoreSequenceAuto =
+  //     List.of(
+  //         RobotAction.kAlgaeDescoringInitial,
+  //         RobotAction.kAlgaeDescoringDeployManipulator,
+  //         RobotAction.kAlgaeDescoringMoveUp,
+  //         RobotAction.kAlgaeDescoringDriveAway);
 
   // Singleton logic
   private static RobotState m_instance;
@@ -188,9 +188,9 @@ public class RobotState {
     periodicHash.put(RobotAction.kAlgaeDescoringMoveUp, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringDriveAway, this::algaeDescoringPeriodic);
     periodicHash.put(RobotAction.kAlgaeDescoringFinal, this::algaeDescoringPeriodic);
-    periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
-    periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
-    periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
+    // periodicHash.put(RobotAction.kAutoAutoScore, this::autoAutoScorePeriodic);
+    // periodicHash.put(RobotAction.kAutoCoralIntaking, this::autoCoralIntakingPeriodic);
+    // periodicHash.put(RobotAction.kAutoCoralOuttaking, this::coralOuttakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(periodicHash, RobotAction.kTeleopDefault);
 
@@ -286,7 +286,7 @@ public class RobotState {
 
     Logger.recordOutput("OdometryTrustFactor", m_odometryTrustFactor);
 
-    Logger.recordOutput("RobotState/NumCoralScoredAuto", m_numCoralScoredAuto);
+    // Logger.recordOutput("RobotState/NumCoralScoredAuto", m_numCoralScoredAuto);
 
     Logger.recordOutput("RobotState/HasRunASingleCycle", m_hasRunASingleCycle);
     Logger.recordOutput("RobotState/HasRunTwoCycle", m_hasRunTwoCycles);
@@ -318,17 +318,20 @@ public class RobotState {
 
   public void coralOuttakingPeriodic() {
     if (m_timer.hasElapsed(ManipulatorConstants.kCoralOuttakeTimeout.get())) {
-      // after we release the coral go back to stow
-      if (!m_autoTestingMode && DriverStation.isAutonomous()) {
-        if (m_isBargeAuto) {
-          algaeDescore();
-        } else {
-          updateRobotAction(RobotAction.kAutoCoralIntaking);
-        }
-      } else {
-        setDefaultAction();
-      }
+      //   // after we release the coral go back to stow
+      // if (!m_autoTestingMode && DriverStation.isAutonomous()) {
+      //   if (m_isBargeAuto) {
+      //     algaeDescore();
+      //   } else {
+      //     updateRobotAction(RobotAction.kAutoCoralIntaking);
+      //   }
+      // } else {
+      setDefaultAction();
+      // }
     }
+
+    // setDefaultAction();
+
     if (m_manipulator.hasGamePiece() || !m_timer.isRunning()) {
       m_timer.restart();
     }
@@ -408,294 +411,302 @@ public class RobotState {
     }
   }
 
-  public void autoAutoScorePeriodic() {
-    if (!m_secondaryTimer.isRunning()) {
-      m_secondaryTimer.restart();
-    }
+  // // public void autoAutoScorePeriodic() {
+  //   if (!m_secondaryTimer.isRunning()) {
+  //     m_secondaryTimer.restart();
+  //   }
 
-    m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
-    // only set the setpoints if they're different so we don't reset the motion profile or drive pid
+  //   m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, true);
+  //   // only set the setpoints if they're different so we don't reset the motion profile or drive
+  // pid
 
-    if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_secondaryTimer.get() < 0.75) {
-      if (AllianceFlipUtil.shouldFlip()) {
-        // we are on red
-        if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(12.92, 1.56, Rotation2d.fromDegrees(90)));
-        } else {
-          m_drive.setTargetPose(new Pose2d(12.92, 6.39, Rotation2d.fromDegrees(270)));
-        }
-      } else {
-        // we are on blue
-        if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(4.3519, 6.39, Rotation2d.fromDegrees(270)));
-        } else {
-          m_drive.setTargetPose(new Pose2d(4.3519, 1.56, Rotation2d.fromDegrees(90)));
-        }
-      }
-    } else if (m_drive.getTargetPose() == null
-        || !EqualsUtil.GeomExtensions.epsilonEquals(
-            m_setpoint.drivePose(), m_drive.getTargetPose())) {
-      m_drive.setTargetPose(m_setpoint.drivePose());
-    }
+  //   if (m_isCitrusAuto && m_numCoralScoredAuto >= 3 && m_secondaryTimer.get() < 0.75) {
+  //     if (AllianceFlipUtil.shouldFlip()) {
+  //       // we are on red
+  //       if (m_autoLeft) {
+  //         m_drive.setTargetPose(new Pose2d(12.92, 1.56, Rotation2d.fromDegrees(90)));
+  //       } else {
+  //         m_drive.setTargetPose(new Pose2d(12.92, 6.39, Rotation2d.fromDegrees(270)));
+  //       }
+  //     } else {
+  //       // we are on blue
+  //       if (m_autoLeft) {
+  //         m_drive.setTargetPose(new Pose2d(4.3519, 6.39, Rotation2d.fromDegrees(270)));
+  //       } else {
+  //         m_drive.setTargetPose(new Pose2d(4.3519, 1.56, Rotation2d.fromDegrees(90)));
+  //       }
+  //     }
+  //   } else if (m_drive.getTargetPose() == null
+  //       || !EqualsUtil.GeomExtensions.epsilonEquals(
+  //           m_setpoint.drivePose(), m_drive.getTargetPose())) {
+  //     m_drive.setTargetPose(m_setpoint.drivePose());
+  //   }
 
-    Logger.recordOutput("AutoScore/DriveTarget", m_drive.getTargetPose());
-    Logger.recordOutput("AutoScore/DrivePose", m_setpoint.drivePose());
+  //   Logger.recordOutput("AutoScore/DriveTarget", m_drive.getTargetPose());
+  //   Logger.recordOutput("AutoScore/DrivePose", m_setpoint.drivePose());
 
-    Logger.recordOutput("AutoScore/BranchIndex", m_desiredBranchIndex);
-    Logger.recordOutput("AutoScore/ReefHeight", m_desiredReefHeight);
-    Logger.recordOutput(
-        "AutoScore/DistanceToSetpoint",
-        Units.metersToInches(
-            m_drive
-                .getPose()
-                .getTranslation()
-                .getDistance(m_setpoint.drivePose().getTranslation())));
+  //   Logger.recordOutput("AutoScore/BranchIndex", m_desiredBranchIndex);
+  //   Logger.recordOutput("AutoScore/ReefHeight", m_desiredReefHeight);
+  //   Logger.recordOutput(
+  //       "AutoScore/DistanceToSetpoint",
+  //       Units.metersToInches(
+  //           m_drive
+  //               .getPose()
+  //               .getTranslation()
+  //               .getDistance(m_setpoint.drivePose().getTranslation())));
 
-    if (!m_manipulator.fullyIndexed()) {
-      // we need to wait for the game piece to index
-      if (!m_timer.isRunning()) {
-        m_timer.restart();
-      }
+  //   if (!m_manipulator.fullyIndexed()) {
+  //     // we need to wait for the game piece to index
+  //     if (!m_timer.isRunning()) {
+  //       m_timer.restart();
+  //     }
 
-      if (m_manipulator.getCurrentState() != ManipulatorState.kIndexing) {
-        m_manipulator.updateState(ManipulatorState.kIntaking);
-      }
-      m_elevator.updateState(ElevatorState.kIntaking);
+  //     if (m_manipulator.getCurrentState() != ManipulatorState.kIndexing) {
+  //       m_manipulator.updateState(ManipulatorState.kIntaking);
+  //     }
+  //     m_elevator.updateState(ElevatorState.kIntaking);
 
-      coralIntakingPeriodic();
+  //     coralIntakingPeriodic();
 
-      if (!m_isBargeAuto && m_timer.hasElapsed(DriveConstants.kAutoAutoscoreTimeout.get())) {
-        // we give up and accept that we don't have a game piece
-        m_numCoralScoredAuto++;
-        updateRobotAction(RobotAction.kAutoCoralIntaking);
-      }
-      return;
-    } else if (m_manipulator.rollerWithinTolerance()) {
-      // } else {
-      // we are fully in the manipulator
-      m_manipulator.updateState(ManipulatorState.kScoring);
-      m_elevator.updateState(ElevatorState.kScoring);
-    } else if (m_manipulator.getCurrentState() == ManipulatorState.kIndexing
-        && Math.abs(m_manipulator.getRollerError())
-            < ManipulatorConstants.kRollerFeedErrorTolerance.get()) {
-      if (!m_tertiaryTimer.isRunning()) {
-        m_tertiaryTimer.restart();
-      }
+  //     if (!m_isBargeAuto && m_timer.hasElapsed(DriveConstants.kAutoAutoscoreTimeout.get())) {
+  //       // we give up and accept that we don't have a game piece
+  //       m_numCoralScoredAuto++;
+  //       updateRobotAction(RobotAction.kAutoCoralIntaking);
+  //     }
+  //     return;
+  //   } else if (m_manipulator.rollerWithinTolerance()) {
+  //     // } else {
+  //     // we are fully in the manipulator
+  //     m_manipulator.updateState(ManipulatorState.kScoring);
+  //     m_elevator.updateState(ElevatorState.kScoring);
+  //   } else if (m_manipulator.getCurrentState() == ManipulatorState.kIndexing
+  //       && Math.abs(m_manipulator.getRollerError())
+  //           < ManipulatorConstants.kRollerFeedErrorTolerance.get()) {
+  //     if (!m_tertiaryTimer.isRunning()) {
+  //       m_tertiaryTimer.restart();
+  //     }
 
-      if (m_tertiaryTimer.get() > 0.1) {
-        m_manipulator.updateState(ManipulatorState.kScoring);
-        m_elevator.updateState(ElevatorState.kScoring);
-        Logger.recordOutput("Autoscore/SkippedIndexing", Timer.getFPGATimestamp());
-      }
-    }
+  //     if (m_tertiaryTimer.get() > 0.1) {
+  //       m_manipulator.updateState(ManipulatorState.kScoring);
+  //       m_elevator.updateState(ElevatorState.kScoring);
+  //       Logger.recordOutput("Autoscore/SkippedIndexing", Timer.getFPGATimestamp());
+  //     }
+  //   }
 
-    // we don't want to deploy elevator or manipulator until we're close to the setpoint
-    if (Math.abs(
-            m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation()))
-        < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())) {
-      Logger.recordOutput("AutoScore/WithinDriveTolerance", Timer.getFPGATimestamp());
-      if (!EqualsUtil.epsilonEquals(m_setpoint.elevatorHeight(), m_elevator.getDesiredHeight())) {
-        m_elevator.setDesiredHeight(m_setpoint.elevatorHeight());
-      }
-      // don't deploy manipulator until we're at the elevator setpoint
-      if (m_elevator.atSetpoint(10.0)) {
-        if (!EqualsUtil.epsilonEquals(
-            m_setpoint.manipulatorAngle().getRadians(),
-            m_manipulator.getDesiredWristAngle().getRadians())) {
-          m_manipulator.setDesiredWristAngle(m_setpoint.manipulatorAngle());
-        }
-      } else {
-        m_manipulator.setDesiredWristAngle(
-            Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
-      }
-    } else {
-      // as we drive up go to a height still within the first stage so don't increase center of mass
-      m_elevator.setDesiredHeight(ElevatorConstants.kDriveUpHeight.get());
-    }
+  //   // we don't want to deploy elevator or manipulator until we're close to the setpoint
+  //   if (Math.abs(
+  //
+  // m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation()))
+  //       < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())) {
+  //     Logger.recordOutput("AutoScore/WithinDriveTolerance", Timer.getFPGATimestamp());
+  //     if (!EqualsUtil.epsilonEquals(m_setpoint.elevatorHeight(), m_elevator.getDesiredHeight()))
+  // {
+  //       m_elevator.setDesiredHeight(m_setpoint.elevatorHeight());
+  //     }
+  //     // don't deploy manipulator until we're at the elevator setpoint
+  //     if (m_elevator.atSetpoint(10.0)) {
+  //       if (!EqualsUtil.epsilonEquals(
+  //           m_setpoint.manipulatorAngle().getRadians(),
+  //           m_manipulator.getDesiredWristAngle().getRadians())) {
+  //         m_manipulator.setDesiredWristAngle(m_setpoint.manipulatorAngle());
+  //       }
+  //     } else {
+  //       m_manipulator.setDesiredWristAngle(
+  //           Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
+  //     }
+  //   } else {
+  //     // as we drive up go to a height still within the first stage so don't increase center of
+  // mass
+  //     m_elevator.setDesiredHeight(ElevatorConstants.kDriveUpHeight.get());
+  //   }
 
-    // everything must be within tolerance to run the rollers
-    Logger.recordOutput("Auto/ElevRight", m_elevator.atSetpoint());
-    Logger.recordOutput("Auto/ManipRight", m_manipulator.atSetpoint(m_setpoint.manipulatorAngle()));
-    Logger.recordOutput(
-        "Auto/DriveRight",
-        m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation())
-            < Units.inchesToMeters(
-                m_desiredReefHeight == ReefHeight.L1
-                    ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
-                    : DriveConstants.kAutoscoreOuttakeDistance.get()));
-    Logger.recordOutput(
-        "Auto/DriveDistance",
-        Units.metersToInches(
-            m_drive
-                .getPose()
-                .getTranslation()
-                .getDistance(m_setpoint.drivePose().getTranslation())));
-    Logger.recordOutput("Auto/SetpointAngle", m_setpoint.manipulatorAngle().getDegrees());
-    if (m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation())
-            < Units.inchesToMeters(
-                m_desiredReefHeight == ReefHeight.L1
-                    ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
-                    : DriveConstants.kAutoscoreOuttakeDistance.get())
-        && m_elevator.atSetpoint()
-        && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
-      m_numCoralScoredAuto++;
-      updateRobotAction(RobotAction.kAutoCoralOuttaking);
-    }
-  }
+  //   // everything must be within tolerance to run the rollers
+  //   Logger.recordOutput("Auto/ElevRight", m_elevator.atSetpoint());
+  //   Logger.recordOutput("Auto/ManipRight",
+  // m_manipulator.atSetpoint(m_setpoint.manipulatorAngle()));
+  //   Logger.recordOutput(
+  //       "Auto/DriveRight",
+  //       m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation())
+  //           < Units.inchesToMeters(
+  //               m_desiredReefHeight == ReefHeight.L1
+  //                   ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
+  //                   : DriveConstants.kAutoscoreOuttakeDistance.get()));
+  //   Logger.recordOutput(
+  //       "Auto/DriveDistance",
+  //       Units.metersToInches(
+  //           m_drive
+  //               .getPose()
+  //               .getTranslation()
+  //               .getDistance(m_setpoint.drivePose().getTranslation())));
+  //   Logger.recordOutput("Auto/SetpointAngle", m_setpoint.manipulatorAngle().getDegrees());
+  //   if (m_drive.getPose().getTranslation().getDistance(m_setpoint.drivePose().getTranslation())
+  //           < Units.inchesToMeters(
+  //               m_desiredReefHeight == ReefHeight.L1
+  //                   ? DriveConstants.kAutoscoreL1OuttakeDistance.get()
+  //                   : DriveConstants.kAutoscoreOuttakeDistance.get())
+  //       && m_elevator.atSetpoint()
+  //       && m_manipulator.atSetpoint(m_setpoint.manipulatorAngle())) {
+  //     m_numCoralScoredAuto++;
+  //     updateRobotAction(RobotAction.kAutoCoralOuttaking);
+  //   }
+  // // }
 
-  private boolean m_autoLeft = true;
-  private Timer m_loaderStationTimer = new Timer();
-  private int m_numCoralScoredAuto = 0;
-  private int m_numAlgaeScoredAuto = 0;
+  // private boolean m_autoLeft = true;
+  // private Timer m_loaderStationTimer = new Timer();
+  // private int m_numCoralScoredAuto = 0;
+  // private int m_numAlgaeScoredAuto = 0;
 
-  public void autoCoralIntakingPeriodic() {
+  // public void autoCoralIntakingPeriodic() {
 
-    if (!m_timer.isRunning()) {
-      m_timer.restart();
-    }
+  //   if (!m_timer.isRunning()) {
+  //     m_timer.restart();
+  //   }
 
-    if (m_timer.get() < 0.25 && m_numCoralScoredAuto < 2) {
-      if (AllianceFlipUtil.shouldFlip()) {
-        // we are on red
-        if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(12.92, 1.96, m_drive.getRotation()));
-        } else {
-          m_drive.setTargetPose(new Pose2d(12.92, 5.99, m_drive.getRotation()));
-        }
-      } else {
-        // we are on blue
-        if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(4.3519, 5.99, m_drive.getRotation()));
-        } else {
-          m_drive.setTargetPose(new Pose2d(4.3519, 1.96, m_drive.getRotation()));
-        }
-      }
-    } else {
-      if (AllianceFlipUtil.shouldFlip()) {
-        // we are on red
-        if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(15.92385, 0.9075, Rotation2d.fromDegrees(126)));
-        } else {
-          // I HATE MATH
-          m_drive.setTargetPose(
-              new Pose2d(
-                  15.92385, 7.1825, Rotation2d.fromDegrees(54).plus(Rotation2d.fromDegrees(180))));
-        }
-      } else {
-        // we are on blue
-        if (m_autoLeft) {
-          m_drive.setTargetPose(new Pose2d(1.6244, 7.1825, Rotation2d.fromDegrees(-54)));
-        } else {
-          m_drive.setTargetPose(
-              new Pose2d(
-                  1.6244, 0.9075, Rotation2d.fromDegrees(-126).plus(Rotation2d.fromDegrees(180))));
-        }
-      }
-    }
+  //   if (m_timer.get() < 0.25 && m_numCoralScoredAuto < 2) {
+  //     if (AllianceFlipUtil.shouldFlip()) {
+  //       // we are on red
+  //       if (m_autoLeft) {
+  //         m_drive.setTargetPose(new Pose2d(12.92, 1.96, m_drive.getRotation()));
+  //       } else {
+  //         m_drive.setTargetPose(new Pose2d(12.92, 5.99, m_drive.getRotation()));
+  //       }
+  //     } else {
+  //       // we are on blue
+  //       if (m_autoLeft) {
+  //         m_drive.setTargetPose(new Pose2d(4.3519, 5.99, m_drive.getRotation()));
+  //       } else {
+  //         m_drive.setTargetPose(new Pose2d(4.3519, 1.96, m_drive.getRotation()));
+  //       }
+  //     }
+  //   } else {
+  //     if (AllianceFlipUtil.shouldFlip()) {
+  //       // we are on red
+  //       if (m_autoLeft) {
+  //         m_drive.setTargetPose(new Pose2d(15.92385, 0.9075, Rotation2d.fromDegrees(126)));
+  //       } else {
+  //         // I HATE MATH
+  //         m_drive.setTargetPose(
+  //             new Pose2d(
+  //                 15.92385, 7.1825,
+  // Rotation2d.fromDegrees(54).plus(Rotation2d.fromDegrees(180))));
+  //       }
+  //     } else {
+  //       // we are on blue
+  //       if (m_autoLeft) {
+  //         m_drive.setTargetPose(new Pose2d(1.6244, 7.1825, Rotation2d.fromDegrees(-54)));
+  //       } else {
+  //         m_drive.setTargetPose(
+  //             new Pose2d(
+  //                 1.6244, 0.9075,
+  // Rotation2d.fromDegrees(-126).plus(Rotation2d.fromDegrees(180))));
+  //       }
+  //     }
+  //   }
 
-    coralIntakingPeriodic();
+  //   coralIntakingPeriodic();
 
-    if (!m_autoTestingMode && m_manipulator.gamePieceInFunnel()) {
-      if (m_numCoralScoredAuto < 2) {
-        if (m_autoLeft) {
-          setReefIndexLeft();
-        } else {
-          setReefIndexRight();
-        }
-      } else if (m_numCoralScoredAuto < 3) {
-        if (m_autoLeft) {
-          setReefIndexRight();
-        } else {
-          setReefIndexLeft();
-        }
-      } else {
-        // I. Hate. Math.
-        Pose2d pose;
-        if (m_isCitrusAuto) {
-          if (m_autoLeft) {
-            pose =
-                new Pose2d(
-                        AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                        Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
-                    .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-          } else {
-            pose =
-                new Pose2d(
-                        AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                        Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
-                    .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-          }
-        } else {
-          pose =
-              new Pose2d(
-                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                      AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
-                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-        }
-        if (m_autoLeft) {
-          setReefIndexLeft(pose);
-        } else {
-          setReefIndexRight(pose);
-        }
-      }
-      updateRobotAction(RobotAction.kAutoAutoScore);
-      return;
-    }
+  //   if (!m_autoTestingMode && m_manipulator.gamePieceInFunnel()) {
+  //     if (m_numCoralScoredAuto < 2) {
+  //       if (m_autoLeft) {
+  //         setReefIndexLeft();
+  //       } else {
+  //         setReefIndexRight();
+  //       }
+  //     } else if (m_numCoralScoredAuto < 3) {
+  //       if (m_autoLeft) {
+  //         setReefIndexRight();
+  //       } else {
+  //         setReefIndexLeft();
+  //       }
+  //     } else {
+  //       // I. Hate. Math.
+  //       Pose2d pose;
+  //       if (m_isCitrusAuto) {
+  //         if (m_autoLeft) {
+  //           pose =
+  //               new Pose2d(
+  //                       AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                       Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
+  //                   .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //         } else {
+  //           pose =
+  //               new Pose2d(
+  //                       AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                       Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
+  //                   .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //         }
+  //       } else {
+  //         pose =
+  //             new Pose2d(
+  //                     AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                     AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
+  //                 .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //       }
+  //       if (m_autoLeft) {
+  //         setReefIndexLeft(pose);
+  //       } else {
+  //         setReefIndexRight(pose);
+  //       }
+  //     }
+  //     updateRobotAction(RobotAction.kAutoAutoScore);
+  //     return;
+  //   }
 
-    Logger.recordOutput(
-        "AutoCoralIntake/DriveRight",
-        m_drive.driveToPointWithinTolerance(Inches.of(3.0), Degrees.of(10)));
-    if (!m_autoTestingMode && m_drive.driveToPointWithinTolerance(Inches.of(3.0), Degrees.of(10))) {
-      if (!m_loaderStationTimer.isRunning()) {
-        m_loaderStationTimer.restart();
-      } else if (m_loaderStationTimer.hasElapsed(DriveConstants.kLoaderStationTimeout.get())) {
-        if (m_numCoralScoredAuto < 2) {
-          if (m_autoLeft) {
-            setReefIndexLeft();
-          } else {
-            setReefIndexRight();
-          }
-        } else if (m_numCoralScoredAuto < 3) {
-          if (m_autoLeft) {
-            setReefIndexRight();
-          } else {
-            setReefIndexLeft();
-          }
-        } else {
-          // I. Hate. Math. pt2
-          Pose2d pose;
-          if (m_isCitrusAuto) {
-            if (m_autoLeft) {
-              pose =
-                  new Pose2d(
-                          AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                          Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
-                      .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-            } else {
-              pose =
-                  new Pose2d(
-                          AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                          Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
-                      .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-            }
-          } else {
-            pose =
-                new Pose2d(
-                        AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                        AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
-                    .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-          }
-          if (m_autoLeft) {
-            setReefIndexLeft(pose);
-          } else {
-            setReefIndexRight(pose);
-          }
-        }
-        updateRobotAction(RobotAction.kAutoAutoScore);
-      }
-      Logger.recordOutput("AutoCoralIntake/LoaderStationTimer", m_loaderStationTimer.get());
-    }
-  }
+  //   Logger.recordOutput(
+  //       "AutoCoralIntake/DriveRight",
+  //       m_drive.driveToPointWithinTolerance(Inches.of(3.0), Degrees.of(10)));
+  //   if (!m_autoTestingMode && m_drive.driveToPointWithinTolerance(Inches.of(3.0),
+  // Degrees.of(10))) {
+  //     if (!m_loaderStationTimer.isRunning()) {
+  //       m_loaderStationTimer.restart();
+  //     } else if (m_loaderStationTimer.hasElapsed(DriveConstants.kLoaderStationTimeout.get())) {
+  //       if (m_numCoralScoredAuto < 2) {
+  //         if (m_autoLeft) {
+  //           setReefIndexLeft();
+  //         } else {
+  //           setReefIndexRight();
+  //         }
+  //       } else if (m_numCoralScoredAuto < 3) {
+  //         if (m_autoLeft) {
+  //           setReefIndexRight();
+  //         } else {
+  //           setReefIndexLeft();
+  //         }
+  //       } else {
+  //         // I. Hate. Math. pt2
+  //         Pose2d pose;
+  //         if (m_isCitrusAuto) {
+  //           if (m_autoLeft) {
+  //             pose =
+  //                 new Pose2d(
+  //                         AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                         Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
+  //                     .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //           } else {
+  //             pose =
+  //                 new Pose2d(
+  //                         AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                         Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
+  //                     .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //           }
+  //         } else {
+  //           pose =
+  //               new Pose2d(
+  //                       AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                       AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
+  //                   .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //         }
+  //         if (m_autoLeft) {
+  //           setReefIndexLeft(pose);
+  //         } else {
+  //           setReefIndexRight(pose);
+  //         }
+  //       }
+  //       updateRobotAction(RobotAction.kAutoAutoScore);
+  //     }
+  //     Logger.recordOutput("AutoCoralIntake/LoaderStationTimer", m_loaderStationTimer.get());
+  //   }
+  // }
 
   public void manualScorePeriodic() {
     m_setpoint = SetpointGenerator.generate(m_desiredBranchIndex, m_desiredReefHeight, false);
@@ -762,33 +773,33 @@ public class RobotState {
 
   public void bargeAutoScorePeriodic() {
     // only autoshoot in auto
-    if ((DriverStation.isAutonomous() || m_autoTestingMode)
-        && m_drive.driveToPointWithinTolerance(
-            Inches.of(DriveConstants.kBargeScoreThrowDistance.get()), Degrees.of(10.0))) {
-      m_elevator.updateState(ElevatorState.kBargeScore);
+    // if ((DriverStation.isAutonomous() || m_autoTestingMode)
+    //     && m_drive.driveToPointWithinTolerance(
+    //         Inches.of(DriveConstants.kBargeScoreThrowDistance.get()), Degrees.of(10.0))) {
+    //   m_elevator.updateState(ElevatorState.kBargeScore);
 
-      if (!m_hasRunASingleCycle) {
-        m_hasRunASingleCycle = true;
-        return;
-      }
-      if (!m_hasRunTwoCycles) {
-        m_hasRunTwoCycles = true;
-        return;
-      }
+    //   if (!m_hasRunASingleCycle) {
+    //     m_hasRunASingleCycle = true;
+    //     return;
+    //   }
+    //   if (!m_hasRunTwoCycles) {
+    //     m_hasRunTwoCycles = true;
+    //     return;
+    //   }
 
-      if (m_elevator.atSetpoint(ElevatorConstants.kBargeThrowHeight.get())) {
-        if (!m_timer.isRunning()) {
-          m_timer.restart();
-        }
+    //   if (m_elevator.atSetpoint(ElevatorConstants.kBargeThrowHeight.get())) {
+    //     if (!m_timer.isRunning()) {
+    //       m_timer.restart();
+    //     }
 
-        m_manipulator.runRollerBargeScoring();
-        if ((DriverStation.isAutonomous() || m_autoTestingMode) && m_timer.hasElapsed(0.4)) {
-          m_numAlgaeScoredAuto++;
-          m_manipulator.updateState(ManipulatorState.kStow);
-          algaeDescore();
-        }
-      }
-    }
+    //     m_manipulator.runRollerBargeScoring();
+    //     if ((DriverStation.isAutonomous() || m_autoTestingMode) && m_timer.hasElapsed(0.4)) {
+    //       m_numAlgaeScoredAuto++;
+    //       m_manipulator.updateState(ManipulatorState.kStow);
+    //       algaeDescore();
+    //     }
+    //   }
+    // }
 
     if (m_elevator.getCurrentState() == ElevatorState.kBargeScore) {
       if (!m_hasRunASingleCycle) {
@@ -828,10 +839,10 @@ public class RobotState {
 
   public void algaeDescoringPeriodic() {
 
-    var sequence =
-        (DriverStation.isAutonomous() || m_autoTestingMode)
-            ? kAlgaeDescoreSequenceAuto
-            : kAlgaeDescoreSequence;
+    var sequence = kAlgaeDescoreSequence;
+    // (DriverStation.isAutonomous() || m_autoTestingMode)
+    //     ? kAlgaeDescoreSequenceAuto
+    //     : kAlgaeDescoreSequence;
 
     if (!m_timer.isRunning()) {
       m_timer.restart();
@@ -847,11 +858,7 @@ public class RobotState {
 
         m_drive.setTargetPose(
             SetpointGenerator.generateAlgae(m_desiredAlgaeIndex, m_drive.getPose())
-                .transformBy(
-                    new Transform2d(
-                        Inches.of(m_numAlgaeScoredAuto < 2 ? -30 : -40),
-                        Inches.zero(),
-                        new Rotation2d())));
+                .transformBy(new Transform2d(Inches.of(-40), Inches.zero(), new Rotation2d())));
 
       } else if (m_profiles.getCurrentProfile() == RobotAction.kAlgaeDescoringDriveAway) {
         m_drive.setTargetPose(
@@ -873,30 +880,35 @@ public class RobotState {
             Meters.of((DriverStation.isAutonomous() || m_autoTestingMode) ? 2.0 : 0.1), null));
     Logger.recordOutput("AlgaeDescore/Index", index);
 
+    // if (m_elevator.atSetpoint()
+    //     && (m_manipulator.atSetpoint() || (DriverStation.isAutonomous() || m_autoTestingMode))
+    //     && m_drive.driveToPointWithinTolerance(
+    //         Meters.of((DriverStation.isAutonomous() || m_autoTestingMode) ? 2.0 : 0.1), null)
+    //     && m_hasRunASingleCycle) {
     if (m_elevator.atSetpoint()
-        && (m_manipulator.atSetpoint() || (DriverStation.isAutonomous() || m_autoTestingMode))
-        && m_drive.driveToPointWithinTolerance(
-            Meters.of((DriverStation.isAutonomous() || m_autoTestingMode) ? 2.0 : 0.1), null)
+        && (m_manipulator.atSetpoint())
+        && m_drive.driveToPointWithinTolerance(Meters.of(0.1), null)
         && m_hasRunASingleCycle) {
       if (index < sequence.size() - 2) {
         Logger.recordOutput("AlgaeDescore/TransitionTime", Timer.getFPGATimestamp());
         updateRobotAction(sequence.get(index + 1));
       } else if (index == sequence.size() - 1) {
         // if we're on the last step then we want to go back to stow
-        if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
-          setBargeScoreRight();
-          updateRobotAction(RobotAction.kBargeAutoScore);
-          return;
-        } else {
-          m_manipulator.updateState(ManipulatorState.kAlgaeHold);
-        }
+        // if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
+        //   setBargeScoreRight();
+        //   updateRobotAction(RobotAction.kBargeAutoScore);
+        //   return;
+        // } else {
+        m_manipulator.updateState(ManipulatorState.kAlgaeHold);
+        // }
         setDefaultAction();
-      } else if ((DriverStation.isAutonomous() || m_autoTestingMode)
-          && index == sequence.size() - 2
-          && m_timer.hasElapsed(m_numAlgaeScoredAuto < 1 ? 1.0 : 1.0)) {
-        // if we in auto then wait enough time to descore
-        updateRobotAction(sequence.get(index + 1));
       }
+      // } else if ((DriverStation.isAutonomous() || m_autoTestingMode)
+      //     && index == sequence.size() - 2
+      //     && m_timer.hasElapsed(m_numAlgaeScoredAuto < 1 ? 1.0 : 1.0)) {
+      //   // if we in auto then wait enough time to descore
+      //   updateRobotAction(sequence.get(index + 1));
+      // }
       // if we're on the second to last step then don't advance and wait for controller input
     }
 
@@ -926,19 +938,19 @@ public class RobotState {
         break;
 
       case kAutoScore:
-      case kAutoAutoScore:
+        // case kAutoAutoScore:
         newDriveProfiles = DriveProfiles.kDriveToPoint;
         m_drive.setTargetPose(m_setpoint.drivePose());
         newElevatorState = ElevatorState.kScoring;
         newManipulatorState = ManipulatorState.kScoring;
         break;
 
-      case kAutoCoralIntaking:
-        newDriveProfiles = DriveProfiles.kDriveToPoint;
-        newIntakeState = IntakeState.kFunnelIntaking;
-        newElevatorState = ElevatorState.kIntaking;
-        newManipulatorState = ManipulatorState.kIntaking;
-        break;
+        // case kAutoCoralIntaking:
+        //   newDriveProfiles = DriveProfiles.kDriveToPoint;
+        //   newIntakeState = IntakeState.kFunnelIntaking;
+        //   newElevatorState = ElevatorState.kIntaking;
+        //   newManipulatorState = ManipulatorState.kIntaking;
+        //   break;
 
       case kDriveToProcessor:
         newDriveProfiles = DriveProfiles.kDriveToPoint;
@@ -963,7 +975,7 @@ public class RobotState {
       case kTeleopDefault:
         break;
 
-      case kAutoCoralOuttaking:
+        // case kAutoCoralOuttaking:
       case kCoralOuttaking:
         // don't change any other states since we want everything to stay in place
         newDriveProfiles = m_drive.getCurrentProfile();
@@ -996,24 +1008,24 @@ public class RobotState {
         break;
 
       case kBargeAutoScore:
-        if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
-          newDriveProfiles = DriveProfiles.kDriveToPoint;
-          m_drive.setTargetPose(
-              m_bargeLeftCage
-                  ? SetpointGenerator.generateBargeLeft(m_drive.getPose())
-                  : SetpointGenerator.generateBargeRight(m_drive.getPose()));
-        } else {
-          newDriveProfiles = DriveProfiles.kMeshedUserControls;
+        // if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
+        //   newDriveProfiles = DriveProfiles.kDriveToPoint;
+        //   m_drive.setTargetPose(
+        //       m_bargeLeftCage
+        //           ? SetpointGenerator.generateBargeLeft(m_drive.getPose())
+        //           : SetpointGenerator.generateBargeRight(m_drive.getPose()));
+        // } else {
+        newDriveProfiles = DriveProfiles.kMeshedUserControls;
 
-          Pose2d desPose;
-          if (m_bargeLeftCage) {
-            desPose = SetpointGenerator.generateBargeLeft(m_drive.getPose());
-          } else {
-            desPose = SetpointGenerator.generateBargeRight(m_drive.getPose());
-          }
-          m_drive.setMeshedTargetPose(desPose);
-          m_drive.setMeshedAxisUnlocked();
+        Pose2d desPose;
+        if (m_bargeLeftCage) {
+          desPose = SetpointGenerator.generateBargeLeft(m_drive.getPose());
+        } else {
+          desPose = SetpointGenerator.generateBargeRight(m_drive.getPose());
         }
+        m_drive.setMeshedTargetPose(desPose);
+        m_drive.setMeshedAxisUnlocked();
+        // }
         newManipulatorState = ManipulatorState.kAlgaeHold;
 
         break;
@@ -1052,37 +1064,37 @@ public class RobotState {
       case kAlgaeDescoringInitial:
         if (getUsingVision()) {
           newDriveProfiles = DriveProfiles.kDriveToPoint;
-          if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
-            if (m_numAlgaeScoredAuto < 1) {
-              m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
-            } else if (m_numAlgaeScoredAuto < 2) {
-              m_desiredAlgaeIndex =
-                  SetpointGenerator.getAlgaeIndex(
-                      new Pose2d(
-                              AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                              AllianceFlipUtil.shouldFlip()
-                                  ? Rotation2d.fromDegrees(-120)
-                                  : Rotation2d.fromDegrees(60))
-                          .transformBy(new Transform2d(4.0, 0.0, new Rotation2d())));
-            } else {
-              m_desiredAlgaeIndex =
-                  SetpointGenerator.getAlgaeIndex(
-                      new Pose2d(
-                              AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                              AllianceFlipUtil.shouldFlip()
-                                  ? Rotation2d.fromDegrees(120)
-                                  : Rotation2d.fromDegrees(-60))
-                          .transformBy(new Transform2d(4.0, 0.0, new Rotation2d())));
-            }
-          } else {
-            m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
-          }
+          // if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
+          //   if (m_numAlgaeScoredAuto < 1) {
+          //     m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+          //   } else if (m_numAlgaeScoredAuto < 2) {
+          //     m_desiredAlgaeIndex =
+          //         SetpointGenerator.getAlgaeIndex(
+          //             new Pose2d(
+          //                     AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+          //                     AllianceFlipUtil.shouldFlip()
+          //                         ? Rotation2d.fromDegrees(-120)
+          //                         : Rotation2d.fromDegrees(60))
+          //                 .transformBy(new Transform2d(4.0, 0.0, new Rotation2d())));
+          //   } else {
+          //     m_desiredAlgaeIndex =
+          //         SetpointGenerator.getAlgaeIndex(
+          //             new Pose2d(
+          //                     AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+          //                     AllianceFlipUtil.shouldFlip()
+          //                         ? Rotation2d.fromDegrees(120)
+          //                         : Rotation2d.fromDegrees(-60))
+          //                 .transformBy(new Transform2d(4.0, 0.0, new Rotation2d())));
+          //   }
+          // } else {
+          m_desiredAlgaeIndex = SetpointGenerator.getAlgaeIndex(m_drive.getPose());
+          // }
         }
-        if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
-          newElevatorState = ElevatorState.kStow;
-        } else {
-          newElevatorState = ElevatorState.kAlgaeDescoringInitial;
-        }
+        // if ((DriverStation.isAutonomous() || m_autoTestingMode)) {
+        //   newElevatorState = ElevatorState.kStow;
+        // } else {
+        newElevatorState = ElevatorState.kAlgaeDescoringInitial;
+        // }
 
         break;
 
@@ -1160,8 +1172,8 @@ public class RobotState {
     m_tertiaryTimer.stop();
     m_tertiaryTimer.reset();
 
-    m_loaderStationTimer.stop();
-    m_loaderStationTimer.reset();
+    // m_loaderStationTimer.stop();
+    // m_loaderStationTimer.reset();
 
     m_hasRunASingleCycle = false;
     m_hasRunTwoCycles = false;
@@ -1173,7 +1185,13 @@ public class RobotState {
     m_aprilTagVision.resetAutoAutoScoreMeasurements();
 
     // reset the scoring angles
-    if (newAction != RobotAction.kCoralOuttaking && newAction != RobotAction.kAutoCoralOuttaking) {
+    // if (newAction != RobotAction.kCoralOuttaking && newAction != RobotAction.kAutoCoralOuttaking)
+    // {
+    //   m_manipulator.setDesiredWristAngle(
+    //       Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
+    //   m_elevator.setDesiredHeight(ElevatorConstants.kStowHeight.get());
+    // }
+    if (newAction != RobotAction.kCoralOuttaking) {
       m_manipulator.setDesiredWristAngle(
           Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
       m_elevator.setDesiredHeight(ElevatorConstants.kStowHeight.get());
@@ -1260,8 +1278,8 @@ public class RobotState {
 
     setDefaultAction();
 
-    m_numCoralScoredAuto = 0;
-    m_numAlgaeScoredAuto = 0;
+    // m_numCoralScoredAuto = 0;
+    // m_numAlgaeScoredAuto = 0;
   }
 
   public void onDisable() {}
@@ -1354,13 +1372,13 @@ public class RobotState {
     return m_drive.getPose();
   }
 
-  public void incrementCoralScoredAuto() {
-    m_numCoralScoredAuto++;
-  }
+  // public void incrementCoralScoredAuto() {
+  //   m_numCoralScoredAuto++;
+  // }
 
-  public void decrementCoralScoredAuto() {
-    m_numCoralScoredAuto--;
-  }
+  // public void decrementCoralScoredAuto() {
+  //   m_numCoralScoredAuto--;
+  // }
 
   public ChassisSpeeds getRobotSpeeds() {
     return m_drive.getChassisSpeeds();
@@ -1427,15 +1445,15 @@ public class RobotState {
       // do nothing here because we don't want the timer to reset
       return;
     }
-    if ((DriverStation.isAutonomous() || m_autoTestingMode)
-        && m_profiles.getCurrentProfile() == RobotAction.kAutoAutoScore) {
-      if (m_aprilTagVision.getAutoAutoScoreMeasurements() > 30) {
-        m_led.updateState(LedState.kAutoscoreMeasurementsGood);
-      } else {
-        m_led.updateState(LedState.kAutoscoreMeasurementsBad);
-      }
-      return;
-    }
+    // if ((DriverStation.isAutonomous() || m_autoTestingMode)
+    //     && m_profiles.getCurrentProfile() == RobotAction.kAutoAutoScore) {
+    //   if (m_aprilTagVision.getAutoAutoScoreMeasurements() > 30) {
+    //     m_led.updateState(LedState.kAutoscoreMeasurementsGood);
+    //   } else {
+    //     m_led.updateState(LedState.kAutoscoreMeasurementsBad);
+    //   }
+    //   return;
+    // }
     // if we get here then we're in teleop so we should pick based on what level is selected
     switch (m_desiredReefHeight) {
       case L1:
@@ -1576,75 +1594,75 @@ public class RobotState {
     }
   }
 
-  public void setAutoSideLeft() {
-    m_autoLeft = true;
-  }
+  // public void setAutoSideLeft() {
+  //   m_autoLeft = true;
+  // }
 
-  public void setAutoSideRight() {
-    m_autoLeft = false;
-  }
+  // public void setAutoSideRight() {
+  //   m_autoLeft = false;
+  // }
 
-  public void setBargeAuto(boolean newValue) {
-    m_isBargeAuto = newValue;
-  }
+  // public void setBargeAuto(boolean newValue) {
+  //   m_isBargeAuto = newValue;
+  // }
 
-  public void setCitrusAuto(boolean newValue) {
-    m_isCitrusAuto = newValue;
-  }
+  // public void setCitrusAuto(boolean newValue) {
+  //   m_isCitrusAuto = newValue;
+  // }
 
   public void toggleTestingMode() {
     m_autoTestingMode = !m_autoTestingMode;
   }
 
-  public void testAutoCoralIntake() {
-    updateRobotAction(RobotAction.kAutoCoralIntaking);
-  }
+  // public void testAutoCoralIntake() {
+  //   updateRobotAction(RobotAction.kAutoCoralIntaking);
+  // }
 
-  public void testAutoAutoScore() {
-    if (m_numCoralScoredAuto < 2) {
-      if (m_autoLeft) {
-        setReefIndexLeft();
-      } else {
-        setReefIndexRight();
-      }
-    } else if (m_numCoralScoredAuto < 3) {
-      if (m_autoLeft) {
-        setReefIndexRight();
-      } else {
-        setReefIndexLeft();
-      }
-    } else {
-      // I. Hate. Math.
-      Pose2d pose;
-      if (m_isCitrusAuto) {
-        if (m_autoLeft) {
-          pose =
-              new Pose2d(
-                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                      Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
-                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-        } else {
-          pose =
-              new Pose2d(
-                      AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                      Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
-                  .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-        }
-      } else {
-        pose =
-            new Pose2d(
-                    AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
-                    AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
-                .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
-      }
-      if (m_autoLeft) {
-        setReefIndexLeft(pose);
-      } else {
-        setReefIndexRight(pose);
-      }
-    }
-    updateRobotAction(RobotAction.kAutoAutoScore);
-  }
+  // public void testAutoAutoScore() {
+  //   if (m_numCoralScoredAuto < 2) {
+  //     if (m_autoLeft) {
+  //       setReefIndexLeft();
+  //     } else {
+  //       setReefIndexRight();
+  //     }
+  //   } else if (m_numCoralScoredAuto < 3) {
+  //     if (m_autoLeft) {
+  //       setReefIndexRight();
+  //     } else {
+  //       setReefIndexLeft();
+  //     }
+  //   } else {
+  //     // I. Hate. Math.
+  //     Pose2d pose;
+  //     if (m_isCitrusAuto) {
+  //       if (m_autoLeft) {
+  //         pose =
+  //             new Pose2d(
+  //                     AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                     Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? -120 : 60))
+  //                 .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //       } else {
+  //         pose =
+  //             new Pose2d(
+  //                     AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                     Rotation2d.fromDegrees(AllianceFlipUtil.shouldFlip() ? 120 : -60))
+  //                 .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //       }
+  //     } else {
+  //       pose =
+  //           new Pose2d(
+  //                   AllianceFlipUtil.apply(FieldConstants.Reef.kCenter),
+  //                   AllianceFlipUtil.apply(Rotation2d.fromDegrees(180)))
+  //               .transformBy(new Transform2d(3.0, 0.0, new Rotation2d()));
+  //     }
+  //     if (m_autoLeft) {
+  //       setReefIndexLeft(pose);
+  //     } else {
+  //       setReefIndexRight(pose);
+  //     }
+  //   }
+  //   updateRobotAction(RobotAction.kAutoAutoScore);
+  // }
 
   public void superAlert() {
     m_led.updateState(LedState.kSuperAlert);

@@ -120,18 +120,30 @@ public class SetpointGenerator {
                     : Rotation2d.fromDegrees(180)));
 
     var manipulatorAngle = kManipulatorAngles.get(reefHeight).get();
+    // if (RobotState.getInstance() != null
+    //     && reefHeight == ReefHeight.L1
+    //     && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+    //         || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+    //   manipulatorAngle = kManipulatorL1Autoscore.get();
+    // }
     if (RobotState.getInstance() != null
         && reefHeight == ReefHeight.L1
-        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore)) {
       manipulatorAngle = kManipulatorL1Autoscore.get();
     }
+
+    // var elevatorHeight = kElevatorHeights.get(reefHeight).get();
+    // if (RobotState.getInstance() != null
+    //     && reefHeight == ReefHeight.L1
+    //     && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
+    //         || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+    //   elevatorHeight = kElevatorL1Autoscore.get();
+    // }
 
     var elevatorHeight = kElevatorHeights.get(reefHeight).get();
     if (RobotState.getInstance() != null
         && reefHeight == ReefHeight.L1
-        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore
-            || RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore)) {
+        && (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoScore)) {
       elevatorHeight = kElevatorL1Autoscore.get();
     }
 

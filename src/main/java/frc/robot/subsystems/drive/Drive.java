@@ -34,8 +34,8 @@ import frc.lib.littletonUtils.PoseEstimator;
 import frc.lib.littletonUtils.PoseEstimator.TimestampedVisionUpdate;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.RobotState;
-import frc.robot.RobotState.RobotAction;
+// import frc.robot.RobotState;
+// import frc.robot.RobotState.RobotAction;
 import frc.robot.util.AlertManager;
 import frc.robot.util.MeshedDrivingController;
 import frc.robot.util.SubsystemProfiles;
@@ -407,12 +407,14 @@ public class Drive extends SubsystemBase {
     pidVelocity =
         MathUtil.clamp(
             pidVelocity,
-            RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
-                ? -DriveConstants.kMaxAutoIntakeSpeed
-                : -DriveConstants.kMaxAutoscoreSpeed,
-            RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
-                ? DriveConstants.kMaxAutoIntakeSpeed
-                : DriveConstants.kMaxAutoscoreSpeed);
+            -DriveConstants.kMaxAutoscoreSpeed,
+            // RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
+            //     ? -DriveConstants.kMaxAutoIntakeSpeed
+            //     : -DriveConstants.kMaxAutoscoreSpeed,
+            DriveConstants.kMaxAutoscoreSpeed);
+    // RobotState.getInstance().getCurrentAction() == RobotAction.kAutoCoralIntaking
+    //     ? DriveConstants.kMaxAutoIntakeSpeed
+    //     : DriveConstants.kMaxAutoscoreSpeed);
     // pidVelocity =
     //     MathUtil.clamp(
     //         pidVelocity,

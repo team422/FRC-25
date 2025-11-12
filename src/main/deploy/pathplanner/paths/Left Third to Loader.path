@@ -3,38 +3,45 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 2.0,
-        "y": 7.0
+        "x": 3.4513668258101844,
+        "y": 5.1323408564814805
       },
       "prevControl": null,
       "nextControl": {
-        "x": 2.9632074652777765,
-        "y": 5.806842809606482
+        "x": 2.5686270254629617,
+        "y": 6.09456741898148
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Piece 3"
     },
     {
       "anchor": {
-        "x": 5.872772352430555,
-        "y": 6.343334780092593
+        "x": 1.6236371527777766,
+        "y": 6.9254806857638895
       },
       "prevControl": {
-        "x": 4.420406539351851,
-        "y": 7.8019896556712975
+        "x": 2.4363820167824066,
+        "y": 6.209401041666666
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Loader Station Left"
     }
   ],
   "rotationTargets": [],
   "constraintZones": [],
   "pointTowardsZones": [],
-  "eventMarkers": [],
+  "eventMarkers": [
+    {
+      "name": "Intake",
+      "waypointRelativePos": 0.5152873101635513,
+      "endWaypointRelativePos": null,
+      "command": null
+    }
+  ],
   "globalConstraints": {
-    "maxVelocity": 3.0,
-    "maxAcceleration": 3.0,
+    "maxVelocity": 8.0,
+    "maxAcceleration": 7.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
     "nominalVoltage": 12.0,
@@ -42,13 +49,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 35.05807095004782
+    "rotation": -50.74683226874685
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 0.0
+    "rotation": -54.88417339189678
   },
-  "useDefaultConstraints": true
+  "useDefaultConstraints": false
 }

@@ -24,6 +24,8 @@ import frc.robot.Constants.FieldConstants.ReefHeight;
 import frc.robot.RobotState;
 import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.Drive.DriveProfiles;
+import frc.robot.subsystems.manipulator.Manipulator;
 import org.littletonrobotics.junction.Logger;
 
 public class AutoFactory {
@@ -33,7 +35,7 @@ public class AutoFactory {
 
   private final Drive m_drive;
 
-  public AutoFactory(Drive drive) {
+  public AutoFactory(Drive drive, Manipulator manipulator) {
     m_drive = drive;
 
     NamedCommands.registerCommand(
@@ -64,19 +66,19 @@ public class AutoFactory {
               RobotState.getInstance().setDesiredReefHeight(ReefHeight.L3);
             }));
 
-    NamedCommands.registerCommand(
-        "Left side",
-        Commands.runOnce(
-            () -> {
-              RobotState.getInstance().setAutoSideLeft();
-            }));
+    // NamedCommands.registerCommand(
+    //     "Left side",
+    //     Commands.runOnce(
+    //         () -> {
+    //           RobotState.getInstance().setAutoSideLeft();
+    //         }));
 
-    NamedCommands.registerCommand(
-        "Right side",
-        Commands.runOnce(
-            () -> {
-              RobotState.getInstance().setAutoSideRight();
-            }));
+    // NamedCommands.registerCommand(
+    //     "Right side",
+    //     Commands.runOnce(
+    //         () -> {
+    //           RobotState.getInstance().setAutoSideRight();
+    //         }));
 
     new EventTrigger("Set Height L4")
         .onTrue(
@@ -103,14 +105,14 @@ public class AutoFactory {
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setReefIndexLeft();
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
                 }));
     new EventTrigger("Autoscore Right")
         .onTrue(
             Commands.runOnce(
                 () -> {
                   RobotState.getInstance().setReefIndexRight();
-                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
                 }));
 
     NamedCommands.registerCommand(
@@ -118,14 +120,14 @@ public class AutoFactory {
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setReefIndexLeft();
-              RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+              RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
             }));
     NamedCommands.registerCommand(
         "Autoscore Right",
         Commands.runOnce(
             () -> {
               RobotState.getInstance().setReefIndexRight();
-              RobotState.getInstance().updateRobotAction(RobotAction.kAutoAutoScore);
+              RobotState.getInstance().updateRobotAction(RobotAction.kAutoScore);
             }));
     NamedCommands.registerCommand(
         "Set Height L4",
@@ -140,39 +142,71 @@ public class AutoFactory {
               RobotState.getInstance().driveToProcessorPeriodic();
             }));
 
+    // NamedCommands.registerCommand(
+    //     "Barge Auto",
+    //     Commands.runOnce(
+    //         () -> {
+    //           RobotState.getInstance().setBargeAuto(true);
+    //         }));
+
+    // NamedCommands.registerCommand(
+    //     "Coral Auto",
+    //     Commands.runOnce(
+    //         () -> {
+    //           RobotState.getInstance().setBargeAuto(false);
+    //         }));
+
+    // NamedCommands.registerCommand(
+    //     "Citrus Auto",
+    //     Commands.runOnce(
+    //         () -> {
+    //           RobotState.getInstance().setCitrusAuto(true);
+    //         }));
+    // NamedCommands.registerCommand(
+    //     "Non-citrus Auto",
+    //     Commands.runOnce(
+    //         () -> {
+    //           RobotState.getInstance().setCitrusAuto(false);
+    //         }));
+
+    // NamedCommands.registerCommand(
+    //     "autoscoreFinish",
+    //     Commands.waitUntil(
+    //         () -> {
+    //           RobotAction s = RobotState.getInstance().getCurrentAction();
+    //           return s != RobotAction.kCoralOuttaking && s != RobotAction.kAutoAutoScore;
+    //         }));
+
     NamedCommands.registerCommand(
-        "Barge Auto",
+        "Intake",
         Commands.runOnce(
             () -> {
-              RobotState.getInstance().setBargeAuto(true);
+              RobotState.getInstance().updateRobotAction(RobotAction.kCoralIntaking);
+              m_drive.setDesiredHeading(Rotation2d.fromDegrees(130));
             }));
 
     NamedCommands.registerCommand(
-        "Coral Auto",
+        "UsePP",
         Commands.runOnce(
             () -> {
-              RobotState.getInstance().setBargeAuto(false);
+              m_drive.updateProfile(DriveProfiles.kPathplanner);
             }));
 
     NamedCommands.registerCommand(
-        "Citrus Auto",
-        Commands.runOnce(
-            () -> {
-              RobotState.getInstance().setCitrusAuto(true);
-            }));
-    NamedCommands.registerCommand(
-        "Non-citrus Auto",
-        Commands.runOnce(
-            () -> {
-              RobotState.getInstance().setCitrusAuto(false);
-            }));
-
-    NamedCommands.registerCommand(
-        "autoscoreFinish",
+        "WaitTillScored",
         Commands.waitUntil(
             () -> {
-              RobotAction s = RobotState.getInstance().getCurrentAction();
-              return s != RobotAction.kCoralOuttaking && s != RobotAction.kAutoAutoScore;
+              return !RobotState.getInstance().getCurrentAction().equals(RobotAction.kAutoScore)
+                  && !RobotState.getInstance()
+                      .getCurrentAction()
+                      .equals(RobotAction.kCoralOuttaking);
+            }));
+
+    NamedCommands.registerCommand(
+        "WaitTillInFunnel",
+        Commands.waitUntil(
+            () -> {
+              return manipulator.gamePieceInFunnel();
             }));
 
     new EventTrigger("Coral Intake Left")
@@ -202,7 +236,8 @@ public class AutoFactory {
             DriveConstants.kRobotMOI,
             new ModuleConfig(
                 DriveConstants.kWheelRadius,
-                DriveConstants.kMaxLinearSpeed,
+                // DriveConstants.kMaxLinearSpeed,
+                99,
                 1.7,
                 DCMotor.getKrakenX60Foc(1),
                 900,

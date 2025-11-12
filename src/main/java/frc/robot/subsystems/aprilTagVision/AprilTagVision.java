@@ -19,7 +19,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.AprilTagVisionConstants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.RobotState;
-import frc.robot.RobotState.RobotAction;
+// import frc.robot.RobotState.RobotAction;
 import frc.robot.subsystems.aprilTagVision.AprilTagVisionIO.AprilTagVisionInputs;
 import frc.robot.util.AlertManager;
 import java.util.ArrayList;
@@ -423,10 +423,11 @@ public class AprilTagVision extends SubsystemBase {
     // Send to RobotState
     RobotState.getInstance().addTimestampedVisionObservations(allVisionUpdates);
 
-    if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore) {
-      m_autoAutoScoreMeasurements += allVisionUpdates.size();
-      Logger.recordOutput("AprilTagVision/AutoAutoScoreMeasurements", m_autoAutoScoreMeasurements);
-    }
+    // if (RobotState.getInstance().getCurrentAction() == RobotAction.kAutoAutoScore) {
+    //   m_autoAutoScoreMeasurements += allVisionUpdates.size();
+    //   Logger.recordOutput("AprilTagVision/AutoAutoScoreMeasurements",
+    // m_autoAutoScoreMeasurements);
+    // }
 
     if (Constants.kUseAlerts && m_alertDeadzoneTimer.hasElapsed(20.0)) {
       for (int i = 0; i < m_noReadingsAlerts.length; i++) {

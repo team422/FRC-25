@@ -5,9 +5,15 @@
     "data": {
       "commands": [
         {
+          "type": "path",
+          "data": {
+            "pathName": "Left Starting"
+          }
+        },
+        {
           "type": "named",
           "data": {
-            "name": "Coral Auto"
+            "name": "Autoscore Left"
           }
         },
         {
