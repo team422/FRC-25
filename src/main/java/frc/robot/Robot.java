@@ -113,7 +113,7 @@ public class Robot extends LoggedRobot {
       }
     }
 
-    // RobotState.getInstance().updateRobotState();
+    RobotState.getInstance().updateRobotState();
 
     CommandScheduler.getInstance().run();
 

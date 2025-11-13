@@ -308,6 +308,15 @@ public final class Constants {
     public static final double kZeroVelocityThreshold = 0.03;
     public static final double kZeroCurrentTheshold = 10.0;
 
+    public static final LoggedTunableNumber kL1 =
+        new LoggedTunableNumber("Elevator L1 Height", 9.5);
+    public static final LoggedTunableNumber kL2 =
+        new LoggedTunableNumber("Elevator L2 Height", 27.0);
+    public static final LoggedTunableNumber kL3 =
+        new LoggedTunableNumber("Elevator L3 Height", 43.25);
+    public static final LoggedTunableNumber kL4 =
+        new LoggedTunableNumber("Elevator L4 Height", 71.0);
+
     // Simulation constants
     public static final double kSimGearing = kGearRatio;
     public static final double kSimMOI = .001;
