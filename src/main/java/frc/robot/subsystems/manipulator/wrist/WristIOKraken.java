@@ -20,6 +20,7 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.Constants.Ports;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -36,7 +37,7 @@ public class WristIOKraken implements WristIO {
   private StatusSignal<Temperature> m_temperature;
 
   public WristIOKraken(int port) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
 
     var currentLimits =
         new CurrentLimitsConfigs()
