@@ -106,4 +106,8 @@ public class Elevator extends SubsystemBase {
   public double getVelocity() {
     return m_inputs.leadingVelocity;
   }
+
+  public void zeroElevator() {
+    m_io.zero();
+  }
 }

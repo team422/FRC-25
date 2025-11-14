@@ -14,4 +14,6 @@ public interface DriverControls {
   public Trigger manualScore();
 
   public Trigger outtake();
+
+  public Trigger zero();
 }

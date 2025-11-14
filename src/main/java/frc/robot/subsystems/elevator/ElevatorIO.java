@@ -29,4 +29,6 @@ public interface ElevatorIO {
   public void setHeight(double height);
 
   public void setPIDFF(int slot, double p, double i, double d, double kG);
+
+  public void zero();
 }

@@ -13,6 +13,7 @@ import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.subsystems.manipulator.detector.CoralDetectorIOReal;
 import frc.robot.subsystems.manipulator.rollers.RollerIOKraken;
 import frc.robot.subsystems.manipulator.rollers.RollerIOSim;
 import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
@@ -53,10 +54,23 @@ public class RobotContainer {
       m_manipulator =
           new Manipulator(
               new RollerIOKraken(Ports.kManipulatorRoller),
-              new WristIOKraken(Ports.kManipulatorWrist));
+              new WristIOKraken(Ports.kManipulatorWrist),
+              new CoralDetectorIOReal(
+                  Ports.kManipulatorPhotoElectricOne,
+                  Ports.kManipulatorPhotoElectricTwo,
+                  Ports.kFunnelPhotoElectricOne,
+                  Ports.kFunnelPhotoElectricTwo));
     } else {
       m_elevator = new Elevator(new ElevatorIOSim());
-      m_manipulator = new Manipulator(new RollerIOSim(), new WristIOSim());
+      m_manipulator =
+          new Manipulator(
+              new RollerIOSim(),
+              new WristIOSim(),
+              new CoralDetectorIOReal(
+                  Ports.kManipulatorPhotoElectricOne,
+                  Ports.kManipulatorPhotoElectricTwo,
+                  Ports.kFunnelPhotoElectricOne,
+                  Ports.kFunnelPhotoElectricTwo));
     }
   }
 
@@ -130,6 +144,14 @@ public class RobotContainer {
                   } else {
                     RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
                   }
+                }));
+    m_driverControls
+        .zero()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  m_elevator.zeroElevator();
+                  RobotState.getInstance().setHeight(ElevatorConstants.kStowHeight.get());
                 }));
   }
 

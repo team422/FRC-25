@@ -52,4 +52,9 @@ public class ElevatorIOSim implements ElevatorIO {
     m_controller.setPID(p, i, d);
     m_kG = kG;
   }
+
+  @Override
+  public void zero() {
+    // TODO: impleement
+  }
 }

@@ -155,4 +155,9 @@ public class ElevatorIOKraken implements ElevatorIO {
     m_leadingMotor.getConfigurator().apply(configs);
     m_followingMotor.getConfigurator().apply(configs);
   }
+
+  public void zero() {
+    m_followingMotor.setPosition(0.0);
+    m_leadingMotor.setPosition(0.0);
+  }
 }

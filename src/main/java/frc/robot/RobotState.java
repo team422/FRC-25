@@ -61,7 +61,9 @@ public class RobotState {
       case kOuttaking:
         newManipState = ManipulatorState.kScoring;
       case kScoring:
-        newElevatorState = ElevatorState.kScoring;
+        if (!pieceInFunnel() && hasGamePiece()) {
+          newElevatorState = ElevatorState.kScoring;
+        }
         break;
 
       default:
@@ -101,5 +103,13 @@ public class RobotState {
   public void setHeight(double height) {
     m_desiredHeight = height;
     m_elevator.setHeight(height);
+  }
+
+  public boolean hasGamePiece() {
+    return m_manipulator.hasGamePiece();
+  }
+
+  public boolean pieceInFunnel() {
+    return m_manipulator.pieceInFunnel();
   }
 }

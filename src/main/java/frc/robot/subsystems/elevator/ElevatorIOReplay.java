@@ -10,4 +10,7 @@ public class ElevatorIOReplay implements ElevatorIO {
 
   @Override
   public void setPIDFF(int slot, double p, double i, double d, double kG) {}
+
+  @Override
+  public void zero() {}
 }

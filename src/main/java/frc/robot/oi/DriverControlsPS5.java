@@ -35,7 +35,13 @@ public class DriverControlsPS5 implements DriverControls {
     return m_controller.triangle();
   }
 
+  @Override
   public Trigger outtake() {
     return m_controller.R1();
+  }
+
+  @Override
+  public Trigger zero() {
+    return m_controller.cross();
   }
 }

@@ -6,6 +6,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
+import frc.robot.subsystems.manipulator.detector.CoralDectectorIO;
+import frc.robot.subsystems.manipulator.detector.DetectorInputsAutoLogged;
 import frc.robot.subsystems.manipulator.rollers.RollerIO;
 import frc.robot.subsystems.manipulator.rollers.RollerInputsAutoLogged;
 import frc.robot.subsystems.manipulator.wrist.WristIO;
@@ -17,9 +19,11 @@ import org.littletonrobotics.junction.Logger;
 public class Manipulator extends SubsystemBase {
   private RollerIO m_rollerIO;
   private WristIO m_wristIO;
+  private CoralDectectorIO m_detectorIO;
   private SubsystemProfiles<ManipulatorState> m_profiles;
   private RollerInputsAutoLogged m_rollerInputs;
   private WristInputsAutoLogged m_wristInputs;
+  private DetectorInputsAutoLogged m_detectorInputs;
 
   public enum ManipulatorState {
     kIdle,
@@ -27,12 +31,14 @@ public class Manipulator extends SubsystemBase {
     kOuttaking
   }
 
-  public Manipulator(RollerIO roller, WristIO wrist) {
+  public Manipulator(RollerIO roller, WristIO wrist, CoralDectectorIO detector) {
     m_rollerIO = roller;
     m_wristIO = wrist;
+    m_detectorIO = detector;
 
     m_wristInputs = new WristInputsAutoLogged();
     m_rollerInputs = new RollerInputsAutoLogged();
+    m_detectorInputs = new DetectorInputsAutoLogged();
 
     if (RobotBase.isReal()) {
       m_wristIO.setPIDFF(
@@ -79,9 +85,11 @@ public class Manipulator extends SubsystemBase {
 
     m_rollerIO.updateInputs(m_rollerInputs);
     m_wristIO.updateInputs(m_wristInputs);
+    m_detectorIO.updateInputs(m_detectorInputs);
     m_profiles.getPeriodicFunctionTimed().run();
     Logger.processInputs("Manipulator/Roller", m_rollerInputs);
     Logger.processInputs("Manipulator/Wrist", m_wristInputs);
+    Logger.processInputs("Manipulator/Detector", m_detectorInputs);
     Logger.recordOutput("Manipulator/state", m_profiles.getCurrentProfile());
   }
 
@@ -113,5 +121,17 @@ public class Manipulator extends SubsystemBase {
 
   public boolean atSetpoint() {
     return m_wristInputs.atSetpoint;
+  }
+
+  public boolean hasGamePiece() {
+    return m_detectorInputs.hasGamePiece;
+  }
+
+  public boolean pieceInFunnel() {
+    return m_detectorInputs.gamePieceInFunnel;
+  }
+
+  public boolean ready() {
+    return hasGamePiece() && !pieceInFunnel();
   }
 }
