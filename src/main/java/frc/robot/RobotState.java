@@ -22,6 +22,7 @@ public class RobotState {
   private Manipulator m_manipulator;
   private SubsystemProfiles<RobotAction> m_profiles;
   private static RobotState m_instance;
+  private double m_desiredHeight = 0;
 
   public RobotState(Elevator elevator, Manipulator manipulator) {
     m_elevator = elevator;
@@ -36,19 +37,14 @@ public class RobotState {
   }
 
   public void scoringPeriodic() {
-    if (m_elevator.atSetpoint()) {
-      if (m_elevator.getDesiredHeight() == ElevatorConstants.kL1.getAsDouble()) {
-        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL1.getAsDouble()));
-      } else if (m_elevator.getDesiredHeight() == ElevatorConstants.kL2.getAsDouble()) {
-        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL2.getAsDouble()));
-      } else if (m_elevator.getDesiredHeight() == ElevatorConstants.kL3.getAsDouble()) {
-        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL3.getAsDouble()));
-      } else if (m_elevator.getDesiredHeight() == ElevatorConstants.kL4.getAsDouble()) {
-        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL4.getAsDouble()));
-      }
-    } else {
-      m_manipulator.setAngle(
-          Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.getAsDouble()));
+    if (m_elevator.atSetpoint(ElevatorConstants.kL1.getAsDouble())) {
+      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL1.getAsDouble()));
+    } else if (m_elevator.atSetpoint(ElevatorConstants.kL2.getAsDouble())) {
+      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL2.getAsDouble()));
+    } else if (m_elevator.atSetpoint(ElevatorConstants.kL3.getAsDouble())) {
+      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL3.getAsDouble()));
+    } else if (m_elevator.atSetpoint(ElevatorConstants.kL4.getAsDouble())) {
+      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL4.getAsDouble()));
     }
   }
 
@@ -99,10 +95,11 @@ public class RobotState {
   }
 
   public boolean atSetpoints() {
-    return m_elevator.atSetpoint() && m_manipulator.atSetpoint();
+    return m_elevator.atSetpoint(m_desiredHeight) && m_manipulator.atSetpoint();
   }
 
   public void setHeight(double height) {
+    m_desiredHeight = height;
     m_elevator.setHeight(height);
   }
 }
