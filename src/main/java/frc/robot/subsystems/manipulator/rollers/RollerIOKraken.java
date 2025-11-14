@@ -27,7 +27,14 @@ public class RollerIOKraken implements RollerIO {
     m_statorCurrent = m_motor.getStatorCurrent();
     m_temperature = m_motor.getDeviceTemp();
 
-    StatusSignal.setUpdateFrequencyForAll(100, m_velocitySignal, m_voltageSignal, m_connected, m_supplyCurrent, m_statorCurrent, m_temperature);
+    StatusSignal.setUpdateFrequencyForAll(
+        100,
+        m_velocitySignal,
+        m_voltageSignal,
+        m_connected,
+        m_supplyCurrent,
+        m_statorCurrent,
+        m_temperature);
   }
 
   public void setVoltage(double volts) {

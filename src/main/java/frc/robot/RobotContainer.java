@@ -11,6 +11,12 @@ import frc.robot.oi.DriverControlsPS5;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.manipulator.Manipulator;
+import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.subsystems.manipulator.rollers.RollerIOKraken;
+import frc.robot.subsystems.manipulator.rollers.RollerIOSim;
+import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
+import frc.robot.subsystems.manipulator.wrist.WristIOSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -23,6 +29,7 @@ public class RobotContainer {
 
   // Subsystems
   private Elevator m_elevator;
+  private Manipulator m_manipulator;
 
   // Controller
   private DriverControls m_driverControls;
@@ -43,8 +50,13 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       m_elevator =
           new Elevator(new ElevatorIOKraken(Ports.kElevatorLead, Ports.kElevatorFollowing));
+      m_manipulator =
+          new Manipulator(
+              new RollerIOKraken(Ports.kManipulatorRoller),
+              new WristIOKraken(Ports.kManipulatorWrist));
     } else {
       m_elevator = new Elevator(new ElevatorIOSim());
+      m_manipulator = new Manipulator(new RollerIOSim(), new WristIOSim());
     }
   }
 
@@ -53,7 +65,7 @@ public class RobotContainer {
     // Auto commands
 
     // we start here so autofactory won't be null
-    RobotState.startInstance(m_elevator);
+    RobotState.startInstance(m_elevator, m_manipulator);
   }
 
   /** Configure the controllers. */
@@ -69,28 +81,32 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_elevator.setHeight(ElevatorConstants.kL1.getAsDouble());
+                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  RobotState.getInstance().setHeight(ElevatorConstants.kL1.getAsDouble());
                 }));
     m_driverControls
         .setL2()
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_elevator.setHeight(ElevatorConstants.kL2.getAsDouble());
+                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  RobotState.getInstance().setHeight(ElevatorConstants.kL2.getAsDouble());
                 }));
     m_driverControls
         .setL3()
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_elevator.setHeight(ElevatorConstants.kL3.getAsDouble());
+                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  RobotState.getInstance().setHeight(ElevatorConstants.kL3.getAsDouble());
                 }));
     m_driverControls
         .setL4()
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_elevator.setHeight(ElevatorConstants.kL4.getAsDouble());
+                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  RobotState.getInstance().setHeight(ElevatorConstants.kL4.getAsDouble());
                 }));
     m_driverControls
         .manualScore()
@@ -99,6 +115,18 @@ public class RobotContainer {
                 () -> {
                   if (RobotState.getInstance().getCurrAction() != RobotAction.kScoring) {
                     RobotState.getInstance().updateRobotAction(RobotAction.kScoring);
+                  } else {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
+                  }
+                }));
+    m_driverControls
+        .outtake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  if (RobotState.getInstance().atSetpoints()
+                      && RobotState.getInstance().getCurrAction() == RobotAction.kScoring) {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kOuttaking);
                   } else {
                     RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
                   }

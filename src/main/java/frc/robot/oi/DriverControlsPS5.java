@@ -34,4 +34,8 @@ public class DriverControlsPS5 implements DriverControls {
   public Trigger manualScore() {
     return m_controller.triangle();
   }
+
+  public Trigger outtake() {
+    return m_controller.R1();
+  }
 }

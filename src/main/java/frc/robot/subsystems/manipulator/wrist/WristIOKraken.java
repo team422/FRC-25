@@ -1,3 +1,112 @@
 package frc.robot.subsystems.manipulator.wrist;
 
-public class WristIOKraken implements WristIO {}
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SlotConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
+import edu.wpi.first.units.measure.Temperature;
+import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.CurrentLimitConstants;
+import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.ManipulatorConstants;
+
+public class WristIOKraken implements WristIO {
+  private TalonFX m_motor;
+  private TalonFXConfiguration m_configs;
+  private Rotation2d m_desired;
+  private PositionVoltage m_voltage = new PositionVoltage(0.0).withSlot(0).withEnableFOC(true);
+
+  private StatusSignal<Angle> m_position;
+  private StatusSignal<Voltage> m_voltageSignal;
+  private StatusSignal<AngularVelocity> m_velocity;
+  private StatusSignal<ConnectedMotorValue> m_connected;
+  private StatusSignal<Current> m_supplyCurrent;
+  private StatusSignal<Current> m_statorCurrent;
+  private StatusSignal<Temperature> m_temperature;
+
+  public WristIOKraken(int port) {
+    m_motor = new TalonFX(port);
+
+    var currentLimits =
+        new CurrentLimitsConfigs()
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(CurrentLimitConstants.kManipulatorWristDefaultSupplyLimit)
+            .withStatorCurrentLimitEnable(true)
+            .withStatorCurrentLimit(CurrentLimitConstants.kManipulatorWristDefaultStatorLimit);
+
+    var motorOutput =
+        new MotorOutputConfigs()
+            .withNeutralMode(NeutralModeValue.Brake)
+            .withInverted(InvertedValue.Clockwise_Positive);
+
+    var feedback =
+        new FeedbackConfigs().withSensorToMechanismRatio(ManipulatorConstants.kWristGearRatio);
+
+    m_configs =
+        new TalonFXConfiguration()
+            .withCurrentLimits(currentLimits)
+            .withMotorOutput(motorOutput)
+            .withFeedback(feedback);
+
+    m_motor.getConfigurator().apply(m_configs);
+
+    m_position = m_motor.getPosition();
+    m_voltageSignal = m_motor.getMotorVoltage();
+    m_velocity = m_motor.getVelocity();
+    m_connected = m_motor.getConnectedMotor();
+    m_supplyCurrent = m_motor.getSupplyCurrent();
+    m_statorCurrent = m_motor.getStatorCurrent();
+    m_temperature = m_motor.getDeviceTemp();
+
+    StatusSignal.setUpdateFrequencyForAll(
+        100,
+        m_position,
+        m_voltageSignal,
+        m_velocity,
+        m_connected,
+        m_supplyCurrent,
+        m_statorCurrent,
+        m_temperature);
+  }
+
+  @Override
+  public void updateInputs(WristInputs inputs) {
+    inputs.atSetpoint =
+        Math.abs(m_motor.getPosition().getValueAsDouble() - m_desired.getDegrees())
+            < ElevatorConstants.kHeightTolerance;
+    inputs.connected = m_connected.getValue() != ConnectedMotorValue.Unknown;
+    inputs.desired = m_desired.getDegrees();
+    inputs.position = m_position.getValueAsDouble();
+    inputs.statorCurrent = m_statorCurrent.getValueAsDouble();
+    inputs.supplyCurrent = m_supplyCurrent.getValueAsDouble();
+    inputs.temperature = m_temperature.getValueAsDouble();
+    inputs.velocity = m_velocity.getValueAsDouble();
+    inputs.voltage = m_voltageSignal.getValueAsDouble();
+  }
+
+  @Override
+  public void setAngle(Rotation2d angle) {
+    m_desired = angle;
+
+    m_motor.setControl(m_voltage.withPosition(angle.getRotations()));
+  }
+
+  @Override
+  public void setPIDFF(int slot, double p, double i, double d, double kS) {
+    var config = new SlotConfigs().withKP(p).withKI(i).withKD(d).withKS(kS);
+    config.SlotNumber = 0;
+
+    m_motor.getConfigurator().apply(config);
+  }
+}

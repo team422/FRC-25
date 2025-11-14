@@ -34,4 +34,9 @@ public class DriverControlsXbox implements DriverControls {
   public Trigger manualScore() {
     return m_controller.y();
   }
+
+  @Override
+  public Trigger outtake() {
+    return m_controller.rightBumper();
+  }
 }

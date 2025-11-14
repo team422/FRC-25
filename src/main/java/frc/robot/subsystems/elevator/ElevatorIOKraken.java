@@ -30,7 +30,8 @@ public class ElevatorIOKraken implements ElevatorIO {
   private double m_desiredHeight;
 
   private TalonFXConfiguration m_config;
-  private PositionVoltage m_positionVoltage;
+  private PositionVoltage m_positionVoltage =
+      new PositionVoltage(0.0).withSlot(0).withEnableFOC(true);
 
   private StatusSignal<Angle> m_leadingPosition;
   private StatusSignal<Angle> m_followingPosition;

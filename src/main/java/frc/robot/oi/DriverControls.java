@@ -12,4 +12,6 @@ public interface DriverControls {
   public Trigger setL4();
 
   public Trigger manualScore();
+
+  public Trigger outtake();
 }

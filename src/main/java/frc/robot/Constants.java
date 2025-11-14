@@ -609,6 +609,10 @@ public final class Constants {
     public static final LoggedTunableNumber kCoralOuttakeTimeout =
         new LoggedTunableNumber("Coral Outtake Timeout", 0.15);
 
+    public static final LoggedTunableNumber kL1 = new LoggedTunableNumber("Wrist L1 Angle", 112.0);
+    public static final LoggedTunableNumber kL2 = new LoggedTunableNumber("Wrist L2 Angle", 55.0);
+    public static final LoggedTunableNumber kL3 = new LoggedTunableNumber("Wrist L3 Angle", 55.0);
+    public static final LoggedTunableNumber kL4 = new LoggedTunableNumber("Wrist L4 Angle", 40.0);
     // Simulation constants
     public static final DCMotor kWristSimGearbox = DCMotor.getKrakenX60Foc(1);
     public static final double kWristSimGearing = kWristGearRatio;

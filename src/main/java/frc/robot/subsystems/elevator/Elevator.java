@@ -94,4 +94,16 @@ public class Elevator extends SubsystemBase {
   public void setHeight(double height) {
     m_desiredHeight = height;
   }
+
+  public boolean atSetpoint() {
+    return m_inputs.atSetpoint;
+  }
+
+  public double getDesiredHeight() {
+    return m_desiredHeight;
+  }
+
+  public double getVelocity() {
+    return m_inputs.leadingVelocity;
+  }
 }
