@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Celsius;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
@@ -14,6 +15,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.ConnectedMotorValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
@@ -23,6 +25,7 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.Ports;
 
 public class ElevatorIOKraken implements ElevatorIO {
   private TalonFX m_leadingMotor;
@@ -49,8 +52,8 @@ public class ElevatorIOKraken implements ElevatorIO {
   private StatusSignal<AngularVelocity> m_followingVelocity;
 
   public ElevatorIOKraken(int leadingPort, int followingPort) {
-    m_leadingMotor = new TalonFX(leadingPort);
-    m_followingMotor = new TalonFX(followingPort);
+    m_leadingMotor = new TalonFX(leadingPort, Ports.kMainCanivoreName);
+    m_followingMotor = new TalonFX(followingPort, Ports.kMainCanivoreName);
     m_desiredHeight = 0.0;
 
     var currentConfigs =
@@ -72,7 +75,9 @@ public class ElevatorIOKraken implements ElevatorIO {
             .withMotorOutput(motorOutput);
 
     m_leadingMotor.getConfigurator().apply(m_config);
-    m_followingMotor.getConfigurator().apply(m_config);
+    m_followingMotor
+        .getConfigurator()
+        .apply(m_config.MotorOutput.withInverted(InvertedValue.Clockwise_Positive));
 
     m_leadingMotor.getConfigurator().setPosition(0.0);
     m_followingMotor.getConfigurator().setPosition(0.0);
@@ -112,6 +117,21 @@ public class ElevatorIOKraken implements ElevatorIO {
 
   @Override
   public void updateInputs(ElevatorInputs inputs) {
+    BaseStatusSignal.refreshAll(
+        m_followingPosition,
+        m_leadingPosition,
+        m_followingConnected,
+        m_leadingConnected,
+        m_leadingVelocity,
+        m_followingVelocity,
+        m_leadingVoltage,
+        m_followingVoltage,
+        m_leadingSupplyCurrent,
+        m_followingSupplyCurrent,
+        m_leadingStatorCurrent,
+        m_followingStatorCurrent,
+        m_leadingTemperature,
+        m_followingTemperature);
     inputs.leadingHeight = m_leadingPosition.getValueAsDouble();
     inputs.followingHeight = m_followingPosition.getValueAsDouble();
     inputs.desiredHeight = m_desiredHeight;

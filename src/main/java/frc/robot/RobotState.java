@@ -61,9 +61,9 @@ public class RobotState {
       case kOuttaking:
         newManipState = ManipulatorState.kScoring;
       case kScoring:
-        if (!pieceInFunnel() && hasGamePiece()) {
-          newElevatorState = ElevatorState.kScoring;
-        }
+        // if (!pieceInFunnel() && hasGamePiece()) {
+        newElevatorState = ElevatorState.kScoring;
+        // }
         break;
 
       default:

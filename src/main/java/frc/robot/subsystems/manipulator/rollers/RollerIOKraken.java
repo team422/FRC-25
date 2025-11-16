@@ -7,6 +7,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Constants.Ports;
 
 public class RollerIOKraken implements RollerIO {
   private TalonFX m_motor;
@@ -18,7 +19,7 @@ public class RollerIOKraken implements RollerIO {
   private StatusSignal<Temperature> m_temperature;
 
   public RollerIOKraken(int port) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
 
     m_velocitySignal = m_motor.getVelocity();
     m_voltageSignal = m_motor.getMotorVoltage();

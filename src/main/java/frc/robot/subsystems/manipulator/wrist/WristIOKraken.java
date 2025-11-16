@@ -20,6 +20,8 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.Constants.Ports;
+import org.littletonrobotics.junction.Logger;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
@@ -36,7 +38,10 @@ public class WristIOKraken implements WristIO {
   private StatusSignal<Temperature> m_temperature;
 
   public WristIOKraken(int port) {
-    m_motor = new TalonFX(port);
+    m_motor = new TalonFX(port, Ports.kMainCanivoreName);
+    m_motor.setPosition(Rotation2d.fromDegrees(130).getRotations());
+
+    m_desired = new Rotation2d();
 
     var currentLimits =
         new CurrentLimitsConfigs()
@@ -87,7 +92,8 @@ public class WristIOKraken implements WristIO {
             < ElevatorConstants.kHeightTolerance;
     inputs.connected = m_connected.getValue() != ConnectedMotorValue.Unknown;
     inputs.desired = m_desired.getDegrees();
-    inputs.position = m_position.getValueAsDouble();
+    Logger.recordOutput("Elevator/here", m_desired.getDegrees());
+    inputs.position = Rotation2d.fromRotations(m_position.getValueAsDouble()).getDegrees();
     inputs.statorCurrent = m_statorCurrent.getValueAsDouble();
     inputs.supplyCurrent = m_supplyCurrent.getValueAsDouble();
     inputs.temperature = m_temperature.getValueAsDouble();
@@ -97,8 +103,11 @@ public class WristIOKraken implements WristIO {
 
   @Override
   public void setAngle(Rotation2d angle) {
-    m_desired = angle;
-
+    Logger.recordOutput("Elevator/nikhil", angle.getDegrees());
+    Logger.recordOutput("Elevator/kill", m_desired.getDegrees());
+    this.m_desired = angle;
+    Logger.recordOutput("Elevator/hate", angle.getDegrees());
+    Logger.recordOutput("Elevator/curr", m_desired.getDegrees());
     m_motor.setControl(m_voltage.withPosition(angle.getRotations()));
   }
 
