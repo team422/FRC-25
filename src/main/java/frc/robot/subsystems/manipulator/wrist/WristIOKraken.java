@@ -107,7 +107,7 @@ public class WristIOKraken implements WristIO {
     inputs.velocity = m_velocity.getValueAsDouble();
     inputs.voltage = m_voltageSignal.getValueAsDouble();
 
-    if (!m_reset && m_absoluteEncoder.get() != 0){
+    if (!m_reset && m_absoluteEncoder.get() != 0) {
       m_reset = true;
       zero();
     }
@@ -131,14 +131,18 @@ public class WristIOKraken implements WristIO {
     m_motor.getConfigurator().apply(config);
   }
 
-  private void zero(){
+  private void zero() {
     double raw = m_absoluteEncoder.get();
     raw += ManipulatorConstants.kWristOffset.getRotations();
     raw %= 1;
-    if (raw < 0){
+    if (raw < 0) {
       raw += 1;
     }
-    double rotations = Rotation2d.fromRotations(raw).div(ManipulatorConstants.kWristAbsoluteEncoderGearRatio).getRotations();
+    double rotations =
+        Rotation2d.fromRotations(raw)
+            .div(ManipulatorConstants.kWristAbsoluteEncoderGearRatio)
+            .plus(Rotation2d.fromDegrees(23))
+            .getRotations();
     m_motor.setPosition(rotations);
   }
 }
