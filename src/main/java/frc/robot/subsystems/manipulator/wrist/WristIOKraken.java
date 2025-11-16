@@ -41,7 +41,6 @@ public class WristIOKraken implements WristIO {
 
   public WristIOKraken(int port) {
     m_motor = new TalonFX(port, Ports.kMainCanivoreName);
-    m_motor.setPosition(Rotation2d.fromDegrees(130).getRotations());
 
     m_absoluteEncoder = new DutyCycleEncoder(Ports.kManipulatorAbsoluteEncoder);
     m_reset = false;
