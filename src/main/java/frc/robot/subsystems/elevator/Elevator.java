@@ -22,6 +22,7 @@ public class Elevator extends SubsystemBase {
   public Elevator(ElevatorIO io) {
     m_io = io;
     m_inputs = new ElevatorInputsAutoLogged();
+    m_desiredHeight = ElevatorConstants.kL1.get();
 
     HashMap<ElevatorState, Runnable> m_hash = new HashMap<>();
     m_hash.put(ElevatorState.kStow, this::stowPeriodic);
