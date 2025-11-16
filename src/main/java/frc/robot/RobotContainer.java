@@ -12,12 +12,12 @@ import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.manipulator.Manipulator;
-import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.subsystems.manipulator.detector.CoralDetectorIOReal;
 import frc.robot.subsystems.manipulator.rollers.RollerIOKraken;
 import frc.robot.subsystems.manipulator.rollers.RollerIOSim;
 import frc.robot.subsystems.manipulator.wrist.WristIOKraken;
 import frc.robot.subsystems.manipulator.wrist.WristIOSim;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -95,7 +95,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL1.getAsDouble());
                 }));
     m_driverControls
@@ -103,7 +103,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL2.getAsDouble());
                 }));
     m_driverControls
@@ -111,7 +111,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL3.getAsDouble());
                 }));
     m_driverControls
@@ -119,7 +119,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  m_manipulator.updateState(ManipulatorState.kIdle);
+                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL4.getAsDouble());
                 }));
     m_driverControls
@@ -138,6 +138,7 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
+                  Logger.recordOutput("AtSetpoints", RobotState.getInstance().atSetpoints());
                   if (RobotState.getInstance().atSetpoints()
                       && RobotState.getInstance().getCurrAction() == RobotAction.kScoring) {
                     RobotState.getInstance().updateRobotAction(RobotAction.kOuttaking);

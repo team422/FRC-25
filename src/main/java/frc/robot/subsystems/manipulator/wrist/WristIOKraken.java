@@ -17,14 +17,16 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.robot.Constants.CurrentLimitConstants;
-import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import org.littletonrobotics.junction.Logger;
 
 public class WristIOKraken implements WristIO {
   private TalonFX m_motor;
+  private DutyCycleEncoder m_absoluteEncoder;
+  private boolean m_reset;
   private TalonFXConfiguration m_configs;
   private Rotation2d m_desired;
   private PositionVoltage m_voltage = new PositionVoltage(0.0).withSlot(0).withEnableFOC(true);
@@ -40,6 +42,9 @@ public class WristIOKraken implements WristIO {
   public WristIOKraken(int port) {
     m_motor = new TalonFX(port, Ports.kMainCanivoreName);
     m_motor.setPosition(Rotation2d.fromDegrees(130).getRotations());
+
+    m_absoluteEncoder = new DutyCycleEncoder(Ports.kManipulatorAbsoluteEncoder);
+    m_reset = false;
 
     m_desired = new Rotation2d();
 
@@ -88,8 +93,10 @@ public class WristIOKraken implements WristIO {
   @Override
   public void updateInputs(WristInputs inputs) {
     inputs.atSetpoint =
-        Math.abs(m_motor.getPosition().getValueAsDouble() - m_desired.getDegrees())
-            < ElevatorConstants.kHeightTolerance;
+        Math.abs(
+                Rotation2d.fromRotations(m_motor.getPosition().getValueAsDouble()).getDegrees()
+                    - m_desired.getDegrees())
+            < ManipulatorConstants.kWristTolerance;
     inputs.connected = m_connected.getValue() != ConnectedMotorValue.Unknown;
     inputs.desired = m_desired.getDegrees();
     Logger.recordOutput("Elevator/here", m_desired.getDegrees());
@@ -99,6 +106,11 @@ public class WristIOKraken implements WristIO {
     inputs.temperature = m_temperature.getValueAsDouble();
     inputs.velocity = m_velocity.getValueAsDouble();
     inputs.voltage = m_voltageSignal.getValueAsDouble();
+
+    if (!m_reset && m_absoluteEncoder.get() != 0){
+      m_reset = true;
+      zero();
+    }
   }
 
   @Override
@@ -117,5 +129,16 @@ public class WristIOKraken implements WristIO {
     config.SlotNumber = 0;
 
     m_motor.getConfigurator().apply(config);
+  }
+
+  private void zero(){
+    double raw = m_absoluteEncoder.get();
+    raw += ManipulatorConstants.kWristOffset.getRotations();
+    raw %= 1;
+    if (raw < 0){
+      raw += 1;
+    }
+    double rotations = Rotation2d.fromRotations(raw).div(ManipulatorConstants.kWristAbsoluteEncoderGearRatio).getRotations();
+    m_motor.setPosition(rotations);
   }
 }

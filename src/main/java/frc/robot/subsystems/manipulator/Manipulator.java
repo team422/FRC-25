@@ -103,7 +103,7 @@ public class Manipulator extends SubsystemBase {
   }
 
   private void outtakingPeriodic() {
-    m_rollerIO.setVoltage(ManipulatorConstants.kRollerEjectVoltage.getAsDouble());
+    m_rollerIO.setVoltage(ManipulatorConstants.kRollerL4ScoringVoltage.get());
   }
 
   public void updateState(ManipulatorState state) {

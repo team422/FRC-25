@@ -20,10 +20,10 @@ public class AlertManager {
    * CommandScheduler.getInstance().run()} in the robot periodic to work properly.
    */
   public static void update() {
-    boolean anyActive = false;
-    for (Alert alert : m_alerts) {
-      anyActive |= alert.get();
-    }
+    // boolean anyActive = false;
+    // for (Alert alert : m_alerts) {
+    //   anyActive |= alert.get();
+    // }
 
     // if (anyActive) {
     //   RobotState.getInstance().triggerAlert();
