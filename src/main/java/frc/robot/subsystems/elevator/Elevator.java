@@ -96,7 +96,8 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean atSetpoint(double height) {
-    return Math.abs(m_inputs.leadingHeight - height) < ElevatorConstants.kHeightTolerance;
+    return Math.abs(m_inputs.leadingHeight - height) < ElevatorConstants.kMaxSkip
+        && Math.abs(m_desiredHeight - height) < ElevatorConstants.kMaxSkip;
   }
 
   public double getDesiredHeight() {

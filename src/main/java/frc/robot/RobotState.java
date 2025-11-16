@@ -45,6 +45,8 @@ public class RobotState {
       m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL3.getAsDouble()));
     } else if (m_elevator.atSetpoint(ElevatorConstants.kL4.getAsDouble())) {
       m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL4.getAsDouble()));
+    } else {
+      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
     }
   }
 
@@ -62,7 +64,7 @@ public class RobotState {
         newManipState = ManipulatorState.kScoring;
       case kScoring:
         // if (!pieceInFunnel() && hasGamePiece()) {
-          newElevatorState = ElevatorState.kScoring;
+        newElevatorState = ElevatorState.kScoring;
         // }
         break;
 

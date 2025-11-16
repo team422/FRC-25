@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.CurrentLimitConstants;
 import frc.robot.Constants.ElevatorConstants;
+import frc.robot.Constants.Ports;
 
 public class ElevatorIOKraken implements ElevatorIO {
   private TalonFX m_leadingMotor;
@@ -49,8 +50,8 @@ public class ElevatorIOKraken implements ElevatorIO {
   private StatusSignal<AngularVelocity> m_followingVelocity;
 
   public ElevatorIOKraken(int leadingPort, int followingPort) {
-    m_leadingMotor = new TalonFX(leadingPort);
-    m_followingMotor = new TalonFX(followingPort);
+    m_leadingMotor = new TalonFX(leadingPort, Ports.kMainCanivoreName);
+    m_followingMotor = new TalonFX(followingPort, Ports.kMainCanivoreName);
     m_desiredHeight = 0.0;
 
     var currentConfigs =

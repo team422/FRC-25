@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.littletonUtils.LoggedTunableNumber;
 import frc.robot.Constants.ManipulatorConstants;
-import frc.robot.Robot;
 import frc.robot.subsystems.manipulator.detector.CoralDectectorIO;
 import frc.robot.subsystems.manipulator.detector.DetectorInputsAutoLogged;
 import frc.robot.subsystems.manipulator.rollers.RollerIO;
@@ -69,7 +68,7 @@ public class Manipulator extends SubsystemBase {
     LoggedTunableNumber.ifChanged(
         hashCode(),
         () -> {
-          if (Robot.isReal()) {
+          if (RobotBase.isReal()) {
             m_wristIO.setPIDFF(
                 0,
                 ManipulatorConstants.kWristP.getAsDouble(),
@@ -100,7 +99,7 @@ public class Manipulator extends SubsystemBase {
 
   private void scoringPeriodic() {
     m_rollerIO.setVoltage(ManipulatorConstants.kRollerStowVoltage.getAsDouble());
-    m_wristIO.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.getAsDouble()));
+    // m_wristIO.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.getAsDouble()));
   }
 
   private void outtakingPeriodic() {
