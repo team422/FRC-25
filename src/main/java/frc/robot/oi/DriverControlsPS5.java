@@ -44,4 +44,9 @@ public class DriverControlsPS5 implements DriverControls {
   public Trigger zero() {
     return m_controller.cross();
   }
+
+  @Override
+  public Trigger intake() {
+    return m_controller.square();
+  }
 }

@@ -44,4 +44,9 @@ public class DriverControlsXbox implements DriverControls {
   public Trigger zero() {
     return m_controller.a();
   }
+
+  @Override
+  public Trigger intake() {
+    return m_controller.x();
+  }
 }

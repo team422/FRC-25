@@ -16,4 +16,6 @@ public interface DriverControls {
   public Trigger outtake();
 
   public Trigger zero();
+
+  public Trigger intake();
 }

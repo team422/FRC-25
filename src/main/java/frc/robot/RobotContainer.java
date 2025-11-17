@@ -11,6 +11,9 @@ import frc.robot.oi.DriverControlsPS5;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIOKraken;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIOKraken;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.subsystems.manipulator.detector.CoralDetectorIOReal;
 import frc.robot.subsystems.manipulator.rollers.RollerIOKraken;
@@ -31,6 +34,7 @@ public class RobotContainer {
   // Subsystems
   private Elevator m_elevator;
   private Manipulator m_manipulator;
+  private Intake m_intake;
 
   // Controller
   private DriverControls m_driverControls;
@@ -60,6 +64,7 @@ public class RobotContainer {
                   Ports.kManipulatorPhotoElectricTwo,
                   Ports.kFunnelPhotoElectricOne,
                   Ports.kFunnelPhotoElectricTwo));
+      m_intake = new Intake(new IntakeIOKraken(Ports.kIndexerTopMotor, Ports.kIndexerSideMotor));
     } else {
       m_elevator = new Elevator(new ElevatorIOSim());
       m_manipulator =
@@ -71,6 +76,7 @@ public class RobotContainer {
                   Ports.kManipulatorPhotoElectricTwo,
                   Ports.kFunnelPhotoElectricOne,
                   Ports.kFunnelPhotoElectricTwo));
+      m_intake = new Intake(new IntakeIOSim());
     }
   }
 
@@ -79,7 +85,7 @@ public class RobotContainer {
     // Auto commands
 
     // we start here so autofactory won't be null
-    RobotState.startInstance(m_elevator, m_manipulator);
+    RobotState.startInstance(m_elevator, m_manipulator, m_intake);
   }
 
   /** Configure the controllers. */
@@ -153,6 +159,17 @@ public class RobotContainer {
                 () -> {
                   m_elevator.zeroElevator();
                   RobotState.getInstance().setHeight(ElevatorConstants.kStowHeight.get());
+                }));
+    m_driverControls
+        .intake()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  if (RobotState.getInstance().getCurrAction() != RobotAction.kIntaking) {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kIntaking);
+                  } else {
+                    RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
+                  }
                 }));
   }
 

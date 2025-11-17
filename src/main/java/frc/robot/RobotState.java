@@ -5,6 +5,8 @@ import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.Elevator.ElevatorState;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.IntakeState;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
 import frc.robot.util.SubsystemProfiles;
@@ -15,25 +17,29 @@ public class RobotState {
   public enum RobotAction {
     kTeleopDefault,
     kScoring,
-    kOuttaking
+    kOuttaking,
+    kIntaking
   }
 
   private Elevator m_elevator;
   private Manipulator m_manipulator;
+  private Intake m_intake;
   private SubsystemProfiles<RobotAction> m_profiles;
   private static RobotState m_instance;
   private double m_desiredHeight = 0;
 
-  public RobotState(Elevator elevator, Manipulator manipulator) {
+  public RobotState(Elevator elevator, Manipulator manipulator, Intake intake) {
     m_elevator = elevator;
     m_manipulator = manipulator;
+    m_intake = intake;
 
-    HashMap<RobotAction, Runnable> m_hash = new HashMap<>();
-    m_hash.put(RobotAction.kTeleopDefault, () -> {});
-    m_hash.put(RobotAction.kOuttaking, this::scoringPeriodic);
-    m_hash.put(RobotAction.kScoring, this::scoringPeriodic);
+    HashMap<RobotAction, Runnable> hash = new HashMap<>();
+    hash.put(RobotAction.kTeleopDefault, () -> {});
+    hash.put(RobotAction.kOuttaking, this::scoringPeriodic);
+    hash.put(RobotAction.kScoring, this::scoringPeriodic);
+    hash.put(RobotAction.kIntaking, () -> {});
 
-    m_profiles = new SubsystemProfiles<>(m_hash, RobotAction.kTeleopDefault);
+    m_profiles = new SubsystemProfiles<>(hash, RobotAction.kTeleopDefault);
   }
 
   public void scoringPeriodic() {
@@ -58,6 +64,7 @@ public class RobotState {
   public void updateRobotAction(RobotAction action) {
     ElevatorState newElevatorState = ElevatorState.kStow;
     ManipulatorState newManipState = ManipulatorState.kIdle;
+    IntakeState newIntakeState = IntakeState.kIdle;
 
     switch (action) {
       case kOuttaking:
@@ -70,6 +77,8 @@ public class RobotState {
         newElevatorState = ElevatorState.kScoring;
         // }
         break;
+      case kIntaking:
+        newIntakeState = IntakeState.kIntaking;
 
       default:
         break;
@@ -83,6 +92,10 @@ public class RobotState {
       m_manipulator.updateState(newManipState);
     }
 
+    if (newIntakeState != m_intake.getState()) {
+      m_intake.updateState(newIntakeState);
+    }
+
     m_profiles.setCurrentProfile(action);
   }
 
@@ -90,9 +103,10 @@ public class RobotState {
     return m_instance;
   }
 
-  public static RobotState startInstance(Elevator elevator, Manipulator manipulator) {
+  public static RobotState startInstance(
+      Elevator elevator, Manipulator manipulator, Intake intake) {
     if (m_instance == null) {
-      m_instance = new RobotState(elevator, manipulator);
+      m_instance = new RobotState(elevator, manipulator, intake);
     }
     return m_instance;
   }
