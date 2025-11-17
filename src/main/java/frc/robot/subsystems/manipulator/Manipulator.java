@@ -27,7 +27,8 @@ public class Manipulator extends SubsystemBase {
   public enum ManipulatorState {
     kIdle,
     kScoring,
-    kOuttaking
+    kOuttaking,
+    kIntaking
   }
 
   public Manipulator(RollerIO roller, WristIO wrist, CoralDectectorIO detector) {
@@ -55,12 +56,13 @@ public class Manipulator extends SubsystemBase {
           0);
     }
 
-    HashMap<ManipulatorState, Runnable> m_hash = new HashMap<>();
-    m_hash.put(ManipulatorState.kIdle, this::idlePeriodic);
-    m_hash.put(ManipulatorState.kScoring, this::scoringPeriodic);
-    m_hash.put(ManipulatorState.kOuttaking, this::outtakingPeriodic);
+    HashMap<ManipulatorState, Runnable> hash = new HashMap<>();
+    hash.put(ManipulatorState.kIdle, this::idlePeriodic);
+    hash.put(ManipulatorState.kScoring, this::scoringPeriodic);
+    hash.put(ManipulatorState.kOuttaking, this::outtakingPeriodic);
+    hash.put(ManipulatorState.kIntaking, this::intakingPeriodic);
 
-    m_profiles = new SubsystemProfiles<>(m_hash, ManipulatorState.kIdle);
+    m_profiles = new SubsystemProfiles<>(hash, ManipulatorState.kIdle);
   }
 
   @Override
@@ -99,11 +101,15 @@ public class Manipulator extends SubsystemBase {
 
   private void scoringPeriodic() {
     m_rollerIO.setVoltage(ManipulatorConstants.kRollerStowVoltage.getAsDouble());
-    // m_wristIO.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.getAsDouble()));
   }
 
   private void outtakingPeriodic() {
     m_rollerIO.setVoltage(ManipulatorConstants.kRollerL4ScoringVoltage.get());
+  }
+
+  private void intakingPeriodic() {
+    m_wristIO.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristIntakeAngle.get()));
+    m_rollerIO.setVoltage(ManipulatorConstants.kRollerIntakeVoltage.get());
   }
 
   public void updateState(ManipulatorState state) {

@@ -101,7 +101,6 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL1.getAsDouble());
                 }));
     m_driverControls
@@ -109,7 +108,6 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL2.getAsDouble());
                 }));
     m_driverControls
@@ -117,7 +115,6 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL3.getAsDouble());
                 }));
     m_driverControls
@@ -125,7 +122,6 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  // m_manipulator.updateState(ManipulatorState.kIdle);
                   RobotState.getInstance().setHeight(ElevatorConstants.kL4.getAsDouble());
                 }));
     m_driverControls
@@ -133,7 +129,8 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                 () -> {
-                  if (RobotState.getInstance().getCurrAction() != RobotAction.kScoring) {
+                  if (RobotState.getInstance().getCurrAction() != RobotAction.kScoring
+                      && RobotState.getInstance().ready()) {
                     RobotState.getInstance().updateRobotAction(RobotAction.kScoring);
                   } else {
                     RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);

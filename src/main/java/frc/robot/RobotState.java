@@ -37,22 +37,32 @@ public class RobotState {
     hash.put(RobotAction.kTeleopDefault, () -> {});
     hash.put(RobotAction.kOuttaking, this::scoringPeriodic);
     hash.put(RobotAction.kScoring, this::scoringPeriodic);
-    hash.put(RobotAction.kIntaking, () -> {});
+    hash.put(RobotAction.kIntaking, this::intakingPeriodic);
 
     m_profiles = new SubsystemProfiles<>(hash, RobotAction.kTeleopDefault);
   }
 
   public void scoringPeriodic() {
-    if (m_elevator.atSetpoint(ElevatorConstants.kL1.getAsDouble())) {
-      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL1.getAsDouble()));
-    } else if (m_elevator.atSetpoint(ElevatorConstants.kL2.getAsDouble())) {
-      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL2.getAsDouble()));
-    } else if (m_elevator.atSetpoint(ElevatorConstants.kL3.getAsDouble())) {
-      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL3.getAsDouble()));
-    } else if (m_elevator.atSetpoint(ElevatorConstants.kL4.getAsDouble())) {
-      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL4.getAsDouble()));
+    if (ready()) {
+      if (m_elevator.atSetpoint(ElevatorConstants.kL1.getAsDouble())) {
+        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL1.getAsDouble()));
+      } else if (m_elevator.atSetpoint(ElevatorConstants.kL2.getAsDouble())) {
+        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL2.getAsDouble()));
+      } else if (m_elevator.atSetpoint(ElevatorConstants.kL3.getAsDouble())) {
+        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL3.getAsDouble()));
+      } else if (m_elevator.atSetpoint(ElevatorConstants.kL4.getAsDouble())) {
+        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kL4.getAsDouble()));
+      } else {
+        m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
+      }
     } else {
-      m_manipulator.setAngle(Rotation2d.fromDegrees(ManipulatorConstants.kWristStowAngle.get()));
+      updateRobotAction(RobotAction.kTeleopDefault);
+    }
+  }
+
+  public void intakingPeriodic() {
+    if (ready()) {
+      updateRobotAction(RobotAction.kTeleopDefault);
     }
   }
 
@@ -72,14 +82,13 @@ public class RobotState {
         newElevatorState = ElevatorState.kScoring;
         break;
       case kScoring:
-        // if (!pieceInFunnel() && hasGamePiece()) {
         newManipState = ManipulatorState.kScoring;
         newElevatorState = ElevatorState.kScoring;
-        // }
         break;
       case kIntaking:
         newIntakeState = IntakeState.kIntaking;
-
+        newManipState = ManipulatorState.kIntaking;
+        break;
       default:
         break;
     }
@@ -130,5 +139,9 @@ public class RobotState {
 
   public boolean pieceInFunnel() {
     return m_manipulator.pieceInFunnel();
+  }
+
+  public boolean ready() {
+    return m_manipulator.ready();
   }
 }
