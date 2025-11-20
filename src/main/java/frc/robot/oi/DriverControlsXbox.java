@@ -11,6 +11,26 @@ public class DriverControlsXbox implements DriverControls {
   }
 
   @Override
+  public double getForward() {
+    return -m_controller.getLeftY();
+  }
+
+  @Override
+  public double getStrafe() {
+    return -m_controller.getLeftX();
+  }
+
+  @Override
+  public double getTurn() {
+    return -m_controller.getRightX();
+  }
+
+  @Override
+  public Trigger resetFieldCentric() {
+    return m_controller.start();
+  }
+
+  @Override
   public Trigger setL1() {
     return m_controller.povDown();
   }
@@ -47,6 +67,6 @@ public class DriverControlsXbox implements DriverControls {
 
   @Override
   public Trigger intake() {
-    return m_controller.x();
+    return m_controller.leftBumper();
   }
 }

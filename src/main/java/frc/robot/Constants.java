@@ -72,11 +72,7 @@ public final class Constants {
 
   public static final class DriveConstants {
     public static final double kMaxLinearSpeed = 4.5; // meters per second
-    // Tommy - this constant is unused right now, see my comment in driveToPointPeriodic
     public static final double kMaxDriveToPointSpeed = 3.6;
-    // Tommy - delete these two constants after resolving the comment above
-    public static final double kMaxAutoscoreSpeed = 3.6;
-    public static final double kMaxAutoIntakeSpeed = 4.0;
     public static final double kMaxMeshedSpeed = 4.5;
     public static final double kMaxLinearAcceleration = 3.0; // meters per second squared
     public static final double kTrackWidthX = Units.inchesToMeters(22.75);

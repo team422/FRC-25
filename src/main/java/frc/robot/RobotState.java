@@ -3,6 +3,8 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.Drive.DriveProfiles;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.Elevator.ElevatorState;
 import frc.robot.subsystems.intake.Intake;
@@ -21,6 +23,7 @@ public class RobotState {
     kIntaking
   }
 
+  private Drive m_drive;
   private Elevator m_elevator;
   private Manipulator m_manipulator;
   private Intake m_intake;
@@ -28,7 +31,8 @@ public class RobotState {
   private static RobotState m_instance;
   private double m_desiredHeight = 0;
 
-  public RobotState(Elevator elevator, Manipulator manipulator, Intake intake) {
+  public RobotState(Drive drive, Elevator elevator, Manipulator manipulator, Intake intake) {
+    m_drive = drive;
     m_elevator = elevator;
     m_manipulator = manipulator;
     m_intake = intake;
@@ -72,6 +76,7 @@ public class RobotState {
   }
 
   public void updateRobotAction(RobotAction action) {
+    DriveProfiles newDriveState = DriveProfiles.kDefault;
     ElevatorState newElevatorState = ElevatorState.kStow;
     ManipulatorState newManipState = ManipulatorState.kIdle;
     IntakeState newIntakeState = IntakeState.kIdle;
@@ -105,6 +110,10 @@ public class RobotState {
       m_intake.updateState(newIntakeState);
     }
 
+    if (newDriveState != m_drive.getCurrentProfile()) {
+      m_drive.updateProfile(newDriveState);
+    }
+
     m_profiles.setCurrentProfile(action);
   }
 
@@ -113,9 +122,9 @@ public class RobotState {
   }
 
   public static RobotState startInstance(
-      Elevator elevator, Manipulator manipulator, Intake intake) {
+      Drive drive, Elevator elevator, Manipulator manipulator, Intake intake) {
     if (m_instance == null) {
-      m_instance = new RobotState(elevator, manipulator, intake);
+      m_instance = new RobotState(drive, elevator, manipulator, intake);
     }
     return m_instance;
   }
