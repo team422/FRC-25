@@ -69,4 +69,14 @@ public class DriverControlsPS5 implements DriverControls {
   public Trigger intake() {
     return m_controller.L1();
   }
+
+  @Override
+  public Trigger autoscoreLeft() {
+    return m_controller.square();
+  }
+
+  @Override
+  public Trigger autoscoreRight() {
+    return m_controller.circle();
+  }
 }

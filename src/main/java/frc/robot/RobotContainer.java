@@ -202,6 +202,22 @@ public class RobotContainer {
                     RobotState.getInstance().updateRobotAction(RobotAction.kTeleopDefault);
                   }
                 }));
+    m_driverControls
+        .autoscoreLeft()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setLeft();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoscore);
+                }));
+    m_driverControls
+        .autoscoreRight()
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  RobotState.getInstance().setRight();
+                  RobotState.getInstance().updateRobotAction(RobotAction.kAutoscore);
+                }));
   }
 
   /**

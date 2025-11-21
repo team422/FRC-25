@@ -165,7 +165,7 @@ public final class Constants {
         new LoggedTunableNumber("Meshed Drive Priority", 0.3);
 
     public static final LoggedTunableNumber kAutoscoreDeployDistance =
-        new LoggedTunableNumber("Autoscore Deploy Distance", 42.0);
+        new LoggedTunableNumber("Autoscore Deploy Distance", 5.0);
     public static final LoggedTunableNumber kAutoscoreOuttakeDistance =
         new LoggedTunableNumber("Autoscore Outtake Distance", 1.25);
     public static final LoggedTunableNumber kAutoscoreL1OuttakeDistance =

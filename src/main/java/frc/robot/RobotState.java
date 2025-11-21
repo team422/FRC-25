@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
@@ -11,6 +12,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.Intake.IntakeState;
 import frc.robot.subsystems.manipulator.Manipulator;
 import frc.robot.subsystems.manipulator.Manipulator.ManipulatorState;
+import frc.robot.util.SetpointGenerator;
 import frc.robot.util.SubsystemProfiles;
 import java.util.HashMap;
 import org.littletonrobotics.junction.Logger;
@@ -20,7 +22,8 @@ public class RobotState {
     kTeleopDefault,
     kScoring,
     kOuttaking,
-    kIntaking
+    kIntaking,
+    kAutoscore
   }
 
   private Drive m_drive;
@@ -30,6 +33,8 @@ public class RobotState {
   private SubsystemProfiles<RobotAction> m_profiles;
   private static RobotState m_instance;
   private double m_desiredHeight = 0;
+  private Pose2d m_desiredPose = new Pose2d();
+  private boolean left = true;
 
   public RobotState(Drive drive, Elevator elevator, Manipulator manipulator, Intake intake) {
     m_drive = drive;
@@ -42,6 +47,7 @@ public class RobotState {
     hash.put(RobotAction.kOuttaking, this::scoringPeriodic);
     hash.put(RobotAction.kScoring, this::scoringPeriodic);
     hash.put(RobotAction.kIntaking, this::intakingPeriodic);
+    hash.put(RobotAction.kAutoscore, this::autoscorePeriodic);
 
     m_profiles = new SubsystemProfiles<>(hash, RobotAction.kTeleopDefault);
   }
@@ -70,6 +76,38 @@ public class RobotState {
     }
   }
 
+  public void autoscorePeriodic() {
+    desiredPoses();
+
+    // if (Math.abs(m_drive.getPose().getTranslation().getDistance(m_desiredPose.getTranslation()))
+    //     < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())) {
+    //       scoringPeriodic();
+    //   if (m_elevator.getState() != ElevatorState.kScoring) {
+    //     m_elevator.updateState(ElevatorState.kScoring);
+    //   }
+    //   if (m_elevator.atSetpoint(m_desiredHeight)
+    //       && (m_manipulator.getState() != ManipulatorState.kScoring
+    //           || m_manipulator.getState() != ManipulatorState.kOuttaking)) {
+    //     m_manipulator.updateState(ManipulatorState.kScoring);
+    //   }
+
+    //   if(atSetpoints()) {
+    //     m_manipulator.updateState(ManipulatorState.kOuttaking);
+    //   }
+    // }
+  }
+
+  public void desiredPoses() {
+    if (!left) {
+      if (!SetpointGenerator.getRightScore(m_drive.getPose()).equals(m_desiredPose)) {
+        m_desiredPose = SetpointGenerator.getRightScore(m_drive.getPose());
+        m_drive.setTargetPose(m_desiredPose);
+      }
+    } else {
+      // TODO: add right
+    }
+  }
+
   public void updateRobotState() {
     m_profiles.getPeriodicFunctionTimed().run();
     Logger.recordOutput("RobotAction", m_profiles.getCurrentProfile());
@@ -82,6 +120,9 @@ public class RobotState {
     IntakeState newIntakeState = IntakeState.kIdle;
 
     switch (action) {
+      case kAutoscore:
+        newDriveState = DriveProfiles.kDriveToPoint;
+        break;
       case kOuttaking:
         newManipState = ManipulatorState.kOuttaking;
         newElevatorState = ElevatorState.kScoring;
@@ -152,5 +193,15 @@ public class RobotState {
 
   public boolean ready() {
     return m_manipulator.ready();
+  }
+
+  public void setLeft() {
+    left = true;
+    desiredPoses();
+  }
+
+  public void setRight() {
+    left = false;
+    desiredPoses();
   }
 }

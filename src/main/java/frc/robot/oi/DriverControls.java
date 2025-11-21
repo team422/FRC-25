@@ -26,4 +26,8 @@ public interface DriverControls {
   public Trigger zero();
 
   public Trigger intake();
+
+  public Trigger autoscoreLeft();
+
+  public Trigger autoscoreRight();
 }

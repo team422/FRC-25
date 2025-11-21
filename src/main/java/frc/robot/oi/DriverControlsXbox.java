@@ -69,4 +69,14 @@ public class DriverControlsXbox implements DriverControls {
   public Trigger intake() {
     return m_controller.leftBumper();
   }
+
+  @Override
+  public Trigger autoscoreLeft() {
+    return m_controller.x();
+  }
+
+  @Override
+  public Trigger autoscoreRight() {
+    return m_controller.b();
+  }
 }
