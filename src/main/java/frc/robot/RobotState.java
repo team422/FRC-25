@@ -2,6 +2,8 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ElevatorConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -32,7 +34,7 @@ public class RobotState {
   private Intake m_intake;
   private SubsystemProfiles<RobotAction> m_profiles;
   private static RobotState m_instance;
-  private double m_desiredHeight = 0;
+  private double m_desiredHeight = ElevatorConstants.kL1.get();
   private Pose2d m_desiredPose = new Pose2d();
   private boolean left = true;
 
@@ -79,22 +81,24 @@ public class RobotState {
   public void autoscorePeriodic() {
     desiredPoses();
 
-    // if (Math.abs(m_drive.getPose().getTranslation().getDistance(m_desiredPose.getTranslation()))
-    //     < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())) {
-    //       scoringPeriodic();
-    //   if (m_elevator.getState() != ElevatorState.kScoring) {
-    //     m_elevator.updateState(ElevatorState.kScoring);
-    //   }
-    //   if (m_elevator.atSetpoint(m_desiredHeight)
-    //       && (m_manipulator.getState() != ManipulatorState.kScoring
-    //           || m_manipulator.getState() != ManipulatorState.kOuttaking)) {
-    //     m_manipulator.updateState(ManipulatorState.kScoring);
-    //   }
+    if (Math.abs(m_drive.getPose().getTranslation().getDistance(m_desiredPose.getTranslation()))
+        < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())) {
+      if (m_elevator.getState() != ElevatorState.kScoring) {
+        m_elevator.updateState(ElevatorState.kScoring);
+      }
 
-    //   if(atSetpoints()) {
-    //     m_manipulator.updateState(ManipulatorState.kOuttaking);
-    //   }
-    // }
+      // see why this atSetpoint doesn't work here
+      if (m_elevator.atSetpoint(m_desiredHeight)
+          && (m_manipulator.getState() != ManipulatorState.kScoring
+              || m_manipulator.getState() != ManipulatorState.kOuttaking)) {
+        scoringPeriodic();
+        m_manipulator.updateState(ManipulatorState.kScoring);
+      }
+
+      if (autoscoreTime()) {
+        m_manipulator.updateState(ManipulatorState.kOuttaking);
+      }
+    }
   }
 
   public void desiredPoses() {
@@ -176,6 +180,12 @@ public class RobotState {
 
   public boolean atSetpoints() {
     return m_elevator.atSetpoint(m_desiredHeight) && m_manipulator.atSetpoint();
+  }
+
+  public boolean autoscoreTime() {
+    return atSetpoints()
+        && Math.abs(m_drive.getPose().getTranslation().getDistance(m_desiredPose.getTranslation()))
+            < Units.inchesToMeters(DriveConstants.kAutoscoreOuttakeDistance.get());
   }
 
   public void setHeight(double height) {

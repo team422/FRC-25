@@ -3,7 +3,6 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.lib.littletonUtils.AllianceRotateUtil;
-
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
