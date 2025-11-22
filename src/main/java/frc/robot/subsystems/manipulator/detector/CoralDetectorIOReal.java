@@ -26,7 +26,7 @@ public class CoralDetectorIOReal implements CoralDectectorIO {
   }
 
   public boolean hasGamePiece() {
-    return m_manipOne.get() && m_manipTwo.get();
+    return m_manipOne.get() || m_manipTwo.get();
   }
 
   public boolean pieceInFunnel() {

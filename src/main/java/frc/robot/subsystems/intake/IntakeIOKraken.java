@@ -40,7 +40,7 @@ public class IntakeIOKraken implements IntakeIO {
   private StatusSignal<Temperature> m_sideTemperature;
 
   public IntakeIOKraken(int top, int side) {
-    m_topMotor = new TalonFX(top, Ports.kMainCanivoreName);
+    m_topMotor = new TalonFX(top, Ports.kDriveCanivoreName);
     m_sideMotor = new TalonFX(side, Ports.kMainCanivoreName);
 
     var currentLimits =

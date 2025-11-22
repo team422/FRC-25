@@ -82,12 +82,12 @@ public class RobotState {
     desiredPoses();
 
     if (Math.abs(m_drive.getPose().getTranslation().getDistance(m_desiredPose.getTranslation()))
-        < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())) {
+            < Units.inchesToMeters(DriveConstants.kAutoscoreDeployDistance.get())
+        && ready()) {
       if (m_elevator.getState() != ElevatorState.kScoring) {
         m_elevator.updateState(ElevatorState.kScoring);
       }
 
-      // see why this atSetpoint doesn't work here
       if (m_elevator.atSetpoint(m_desiredHeight)
           && (m_manipulator.getState() != ManipulatorState.kScoring
               || m_manipulator.getState() != ManipulatorState.kOuttaking)) {
@@ -99,17 +99,15 @@ public class RobotState {
         m_manipulator.updateState(ManipulatorState.kOuttaking);
       }
     }
+
+    if (!hasGamePiece()) {
+      updateRobotAction(RobotAction.kTeleopDefault);
+    }
   }
 
   public void desiredPoses() {
-    if (!left) {
-      if (!SetpointGenerator.getRightScore(m_drive.getPose()).equals(m_desiredPose)) {
-        m_desiredPose = SetpointGenerator.getRightScore(m_drive.getPose());
-        m_drive.setTargetPose(m_desiredPose);
-      }
-    } else {
-      // TODO: add right
-    }
+    m_desiredPose = SetpointGenerator.getRightScore(m_drive.getPose(), left);
+    m_drive.setTargetPose(m_desiredPose);
   }
 
   public void updateRobotState() {
@@ -185,7 +183,8 @@ public class RobotState {
   public boolean autoscoreTime() {
     return atSetpoints()
         && Math.abs(m_drive.getPose().getTranslation().getDistance(m_desiredPose.getTranslation()))
-            < Units.inchesToMeters(DriveConstants.kAutoscoreOuttakeDistance.get());
+            < Units.inchesToMeters(DriveConstants.kAutoscoreOuttakeDistance.get())
+        && ready();
   }
 
   public void setHeight(double height) {
@@ -207,11 +206,9 @@ public class RobotState {
 
   public void setLeft() {
     left = true;
-    desiredPoses();
   }
 
   public void setRight() {
     left = false;
-    desiredPoses();
   }
 }
