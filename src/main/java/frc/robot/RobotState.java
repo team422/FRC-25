@@ -106,7 +106,7 @@ public class RobotState {
   }
 
   public void desiredPoses() {
-    m_desiredPose = SetpointGenerator.getRightScore(m_drive.getPose(), left);
+    m_desiredPose = SetpointGenerator.getAutoscorePosition(m_drive.getPose(), left);
     m_drive.setTargetPose(m_desiredPose);
   }
 
