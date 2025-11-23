@@ -8,7 +8,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.FieldConstants.Reef;
 import frc.robot.Constants.FieldConstants.ReefHeight;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
 public class SetpointGenerator {
@@ -18,20 +18,17 @@ public class SetpointGenerator {
   private static ArrayList<Pose2d> m_rightPoses = new ArrayList<>();
 
   static {
-    ArrayList<Pose2d> leftPoles = new ArrayList<>();
-    ArrayList<Pose2d> rightPoles = new ArrayList<>();
+    List<Pose2d> leftPoles = new ArrayList<>();
+    List<Pose2d> rightPoles = new ArrayList<>();
 
-    int i = 0;
-    for (Map<ReefHeight, Pose2d> poses : Reef.branchPositions2d) {
+    for (int i = 0; i < Reef.branchPositions2d.size(); i++) {
+      var poses = Reef.branchPositions2d.get(i);
       if (i % 2 == 0) {
         rightPoles.add(poses.get(ReefHeight.L1));
       } else {
         leftPoles.add(poses.get(ReefHeight.L1));
       }
-      i++;
     }
-
-    System.out.println(leftPoles.size());
 
     for (Pose2d pole : leftPoles) {
       var pose =
