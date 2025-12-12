@@ -29,6 +29,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Intake"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Back Left to Loader"
@@ -78,6 +84,12 @@
           }
         },
         {
+          "type": "named",
+          "data": {
+            "name": "Intake"
+          }
+        },
+        {
           "type": "path",
           "data": {
             "pathName": "Left Second to Loader"
@@ -118,6 +130,12 @@
           "type": "named",
           "data": {
             "name": "UsePP"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Intake"
           }
         },
         {
